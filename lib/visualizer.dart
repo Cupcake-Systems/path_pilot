@@ -44,14 +44,19 @@ class _VisualizerState extends State<Visualizer> {
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Container(
-        color: Colors.white,
-        padding: const EdgeInsets.all(2),
-        child: CustomPaint(
-          painter: LinePainter(instructions, 100, RobiConfig(0.035, 0.147)),
+    return Stack(
+      children: [
+        AppBar(title: const Text("Visual Editor")),
+        Center(
+          child: Container(
+            color: Colors.white,
+            padding: const EdgeInsets.all(2),
+            child: CustomPaint(
+              painter: LinePainter(instructions, 100, RobiConfig(0.035, 0.147)),
+            ),
+          ),
         ),
-      ),
+      ],
     );
   }
 }

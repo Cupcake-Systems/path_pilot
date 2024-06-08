@@ -30,9 +30,74 @@ class _EditorState extends State<Editor> {
             padding: const EdgeInsets.all(8.0),
             child: Column(
               children: [
+                AppBar(title: const Text("Instructions Editor")),
                 Expanded(
                   child: ReorderableListView.builder(
                     itemCount: widget.instructions.length,
+                    footer: Card.outlined(
+                      child: IconButton(
+                        style: IconButton.styleFrom(
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                        padding: const EdgeInsets.symmetric(vertical: 20),
+                        icon: const Icon(Icons.add),
+                        onPressed: () => showDialog<AvailableInstruction?>(
+                          context: context,
+                          builder: (BuildContext context) {
+                            AvailableInstruction selectedInstruction =
+                                AvailableInstruction.driveInstruction;
+                            return StatefulBuilder(
+                                builder: (context, setState) {
+                              return AlertDialog(
+                                title: const Text("Add Instruction"),
+                                content: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    RadioListTile<AvailableInstruction>(
+                                      title: const ListTile(
+                                        title: Text("Drive"),
+                                        leading: Icon(Icons.arrow_upward),
+                                      ),
+                                      value:
+                                          AvailableInstruction.driveInstruction,
+                                      groupValue: selectedInstruction,
+                                      onChanged: (value) => setState(
+                                          () => selectedInstruction = value!),
+                                    ),
+                                    RadioListTile<AvailableInstruction>(
+                                      title: const ListTile(
+                                        title: Text("Turn"),
+                                        leading: Icon(Icons.turn_right),
+                                      ),
+                                      value:
+                                          AvailableInstruction.turnInstruction,
+                                      groupValue: selectedInstruction,
+                                      onChanged: (value) => setState(
+                                          () => selectedInstruction = value!),
+                                    ),
+                                  ],
+                                ),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () => Navigator.pop(context),
+                                    child: const Text("Cancel"),
+                                  ),
+                                  TextButton(
+                                    onPressed: () {
+                                      Navigator.pop(context);
+                                      addInstruction(selectedInstruction);
+                                    },
+                                    child: const Text("Ok"),
+                                  ),
+                                ],
+                              );
+                            });
+                          },
+                        ),
+                      ),
+                    ),
                     itemBuilder: (context, i) {
                       final instruction = widget.instructions[i];
 
@@ -80,65 +145,12 @@ class _EditorState extends State<Editor> {
                   ),
                 ),
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  mainAxisAlignment: MainAxisAlignment.end,
                   children: [
-                    IconButton.filledTonal(
-                      icon: const Icon(Icons.add),
-                      onPressed: () => showDialog<AvailableInstruction?>(
-                        context: context,
-                        builder: (BuildContext context) {
-                          AvailableInstruction selectedInstruction =
-                              AvailableInstruction.driveInstruction;
-                          return StatefulBuilder(builder: (context, setState) {
-                            return AlertDialog(
-                              title: const Text("Add Instruction"),
-                              content: Column(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  RadioListTile<AvailableInstruction>(
-                                    title: const ListTile(
-                                      title: Text("Drive"),
-                                      leading: Icon(Icons.arrow_upward),
-                                    ),
-                                    value:
-                                        AvailableInstruction.driveInstruction,
-                                    groupValue: selectedInstruction,
-                                    onChanged: (value) => setState(
-                                        () => selectedInstruction = value!),
-                                  ),
-                                  RadioListTile<AvailableInstruction>(
-                                    title: const ListTile(
-                                      title: Text("Turn"),
-                                      leading: Icon(Icons.turn_right),
-                                    ),
-                                    value: AvailableInstruction.turnInstruction,
-                                    groupValue: selectedInstruction,
-                                    onChanged: (value) => setState(
-                                        () => selectedInstruction = value!),
-                                  ),
-                                ],
-                              ),
-                              actions: [
-                                TextButton(
-                                  onPressed: () => Navigator.pop(context),
-                                  child: const Text("Cancel"),
-                                ),
-                                TextButton(
-                                  onPressed: () {
-                                    Navigator.pop(context);
-                                    addInstruction(selectedInstruction);
-                                  },
-                                  child: const Text("Ok"),
-                                ),
-                              ],
-                            );
-                          });
-                        },
-                      ),
-                    ),
-                    ElevatedButton(
+                    OutlinedButton.icon(
                       onPressed: () => setState(widget.instructions.clear),
-                      child: const Text("Clear"),
+                      label: const Text("Clear"),
+                      icon: const Icon(Icons.delete),
                     )
                   ],
                 ),
