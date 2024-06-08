@@ -1,5 +1,5 @@
 import 'dart:math';
-import 'dart:ui';
+import 'package:vector_math/vector_math.dart';
 
 abstract class MissionInstruction {}
 
@@ -20,7 +20,7 @@ enum AvailableInstruction { driveInstruction, turnInstruction }
 
 abstract class InstructionResult {
   final double managedVelocity, endRotation;
-  final Offset endPosition;
+  final Vector2 endPosition;
 
   const InstructionResult(
       this.managedVelocity, this.endRotation, this.endPosition);
@@ -60,7 +60,7 @@ class Simulater {
   SimulationResult calculate(List<MissionInstruction> instructions) {
     List<InstructionResult> results = [];
 
-    InstructionResult prevInstruction = const DriveResult(0, 0, Offset.zero, 0);
+    InstructionResult prevInstruction = DriveResult(0, 0, Vector2.zero(), 0);
 
     double maxManagedVel = 0;
     double maxTargetVel = 0;
@@ -104,10 +104,10 @@ class Simulater {
     final managedVelocity = sqrt(pow(prevInstruction.managedVelocity, 2) +
         2 * instruction.acceleration * distanceCoveredByAcceleration);
 
-    final endOfDrive = Offset(
-        prevInstruction.endPosition.dx +
+    final endOfDrive = Vector2(
+        prevInstruction.endPosition.x +
             cosD(prevInstruction.endRotation) * instruction.distance,
-        prevInstruction.endPosition.dy -
+        prevInstruction.endPosition.y -
             sinD(prevInstruction.endRotation) * instruction.distance);
 
     return DriveResult(managedVelocity, prevInstruction.endRotation, endOfDrive,
@@ -128,20 +128,21 @@ class Simulater {
     double startAngle = 360 - rotation - 90;
     double sweepAngle = degree;
 
-    Offset center;
-    Offset endOffset;
-    Offset offset = prevInstructionResult.endPosition;
+    Vector2 center;
+    Vector2 endOffset;
+    Vector2 offset = prevInstructionResult.endPosition;
 
     if (instruction.left) {
       startAngle = -rotation + (90 - degree);
-      center = offset.translate(
-          cosD(rotation + 90) * radius, -sinD(rotation + 90) * radius);
-      endOffset = center.translate(cosD(rotation + (degree - 90)) * radius,
-          -sinD(rotation + (degree - 90)) * radius);
+      center = offset +
+          Vector2(cosD(rotation + 90) * radius, -sinD(rotation + 90) * radius);
+      endOffset = center +
+          Vector2(cosD(rotation + (degree - 90)) * radius,
+              -sinD(rotation + (degree - 90)) * radius);
     } else {
-      center = offset.translate(
+      center = offset + Vector2(
           -cosD(rotation + 90) * radius, sinD(rotation + 90) * radius);
-      endOffset = center.translate(cosD(startAngle + sweepAngle) * radius,
+      endOffset = center + Vector2(cosD(startAngle + sweepAngle) * radius,
           sinD(startAngle + sweepAngle) * radius);
     }
 
@@ -156,8 +157,8 @@ class Simulater {
   }
 }
 
-Offset polarToCartesian(double deg, double radius) =>
-    Offset(cosD(deg) * radius, sinD(deg) * radius);
+Vector2 polarToCartesian(double deg, double radius) =>
+    Vector2(cosD(deg) * radius, sinD(deg) * radius);
 
 double sinD(double deg) => sin(deg * (pi / 180));
 

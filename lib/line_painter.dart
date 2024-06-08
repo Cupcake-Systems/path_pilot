@@ -2,6 +2,7 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:robi_line_drawer/robi_utils.dart';
+import 'package:vector_math/vector_math.dart';
 
 
 class LinePainter extends CustomPainter {
@@ -19,7 +20,7 @@ class LinePainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    InstructionResult prevResult = const DriveResult(0, 0, Offset.zero, 0);
+    InstructionResult prevResult = DriveResult(0, 0, Vector2.zero(), 0);
 
     for (InstructionResult result in simulationResult.instructionResults) {
       if (result is DriveResult) {
@@ -44,12 +45,12 @@ class LinePainter extends CustomPainter {
         colors: colors,
         radius: 0.5 * (1 / sqrt2),
       ).createShader(Rect.fromCircle(
-          center: prevInstructionResult.endPosition * scale,
+          center: vecToOffset(prevInstructionResult.endPosition),
           radius: instructionResult.accelerationDistance * scale))
       ..strokeWidth = strokeWidth;
 
-    canvas.drawLine(prevInstructionResult.endPosition * scale,
-        instructionResult.endPosition * scale, accelerationPaint);
+    canvas.drawLine(vecToOffset(prevInstructionResult.endPosition),
+        vecToOffset(instructionResult.endPosition), accelerationPaint);
   }
 
   void drawTurn(InstructionResult prevInstructionResult, TurnResult instruction,
@@ -67,31 +68,30 @@ class LinePainter extends CustomPainter {
         instruction.turnRadius,
         degree,
         prevInstructionResult.endRotation,
-        prevInstructionResult.endPosition * scale,
+        prevInstructionResult.endPosition,
         left);
     canvas.drawPath(path, paint);
   }
 
   Path drawCirclePart(
-      double radius, double degree, double rotation, Offset offset, bool left) {
-    radius *= scale;
+      double radius, double degree, double rotation, Vector2 offset, bool left) {
 
     double startAngle = 360 - rotation - 90;
     double sweepAngle = degree;
 
-    Offset center;
+    Vector2 center;
 
     if (left) {
       startAngle = -rotation + (90 - degree);
-      center = offset.translate(
+      center = offset + Vector2(
           cosD(rotation + 90) * radius, -sinD(rotation + 90) * radius);
     } else {
-      center = offset.translate(
+      center = offset + Vector2(
           -cosD(rotation + 90) * radius, sinD(rotation + 90) * radius);
     }
 
     return Path()
-      ..arcTo(Rect.fromCircle(center: center, radius: radius),
+      ..arcTo(Rect.fromCircle(center: vecToOffset(center), radius: radius * scale),
           startAngle * (pi / 180), sweepAngle * (pi / 180), false);
   }
 
@@ -100,6 +100,8 @@ class LinePainter extends CustomPainter {
     int g = 255 - r;
     return Color.fromARGB(255, r, g, 0);
   }
+
+  Offset vecToOffset(Vector2 vec) => Offset(vec.x * scale, vec.y * scale);
 
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
