@@ -23,16 +23,17 @@ class EventListener {
 }
 
 class Visualizer extends StatefulWidget {
+  final List<MissionInstruction> initialInstructions;
   final EventListener listener;
 
-  const Visualizer({super.key, required this.listener});
+  const Visualizer({super.key, required this.initialInstructions, required this.listener});
 
   @override
   State<Visualizer> createState() => _VisualizerState();
 }
 
 class _VisualizerState extends State<Visualizer> {
-  List<MissionInstruction> instructions = [];
+  late List<MissionInstruction> instructions = widget.initialInstructions;
 
   @override
   void initState() {

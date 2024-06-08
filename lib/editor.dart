@@ -3,9 +3,8 @@ import 'package:robi_line_drawer/robi_utils.dart';
 import 'package:robi_line_drawer/visualizer.dart';
 
 class Editor extends StatefulWidget {
-  
   final List<MissionInstruction> instructions;
-  
+
   const Editor({super.key, required this.instructions});
 
   @override
@@ -19,7 +18,12 @@ class _EditorState extends State<Editor> {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        Flexible(child: Visualizer(listener: listener)),
+        Flexible(
+          child: Visualizer(
+            initialInstructions: widget.instructions,
+            listener: listener,
+          ),
+        ),
         const VerticalDivider(width: 0),
         Flexible(
           child: Padding(
