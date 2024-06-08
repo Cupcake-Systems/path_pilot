@@ -1,22 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:robi_line_drawer/robi_utils.dart';
 import 'package:robi_line_drawer/visualizer.dart';
-
-abstract class MissionInstruction {}
-
-class DriveInstruction extends MissionInstruction {
-  double distance, targetVelocity, acceleration;
-
-  DriveInstruction(this.distance, this.targetVelocity, this.acceleration);
-}
-
-class TurnInstruction extends MissionInstruction {
-  double turnDegree;
-  bool left;
-
-  TurnInstruction(this.turnDegree, this.left);
-}
-
-enum AvailableInstruction { driveInstruction, turnInstruction }
 
 class Editor extends StatefulWidget {
   const Editor({super.key});

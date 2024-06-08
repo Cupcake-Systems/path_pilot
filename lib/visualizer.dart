@@ -1,8 +1,8 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:robi_line_drawer/editor.dart';
 import 'package:robi_line_drawer/line_painter.dart';
+import 'package:robi_line_drawer/robi_utils.dart';
 
 class MyEvent {
   final List<MissionInstruction> instructions;
