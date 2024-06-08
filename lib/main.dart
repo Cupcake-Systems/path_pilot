@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:robi_line_drawer/editor.dart';
 
 void main() {
   runApp(const MyApp());
@@ -12,7 +13,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Robi Line Drawer',
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.cyan),
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.cyan, brightness: Brightness.dark),
         useMaterial3: true,
       ),
       home: const MyHomePage(),
@@ -35,6 +36,7 @@ class _MyHomePageState extends State<MyHomePage> {
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         title: const Text("Robi Line Drawer"),
       ),
+      body: const Editor(),
     );
   }
 }
