@@ -4,7 +4,7 @@ project(robi_line_drawer LANGUAGES CXX)
 
 # The name of the executable created for the application. Change this to change
 # the on-disk name of your application.
-set(BINARY_NAME "robi_line_drawer")
+set(BINARY_NAME "Robi Line Drawer")
 
 # Explicitly opt in to modern CMake behaviors to avoid warnings with recent
 # versions of CMake.
