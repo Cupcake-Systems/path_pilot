@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:robi_line_drawer/robi_utils.dart';
 import 'package:vector_math/vector_math.dart';
 
-
 class LinePainter extends CustomPainter {
   late SimulationResult simulationResult;
   final double scale;
@@ -73,26 +72,28 @@ class LinePainter extends CustomPainter {
     canvas.drawPath(path, paint);
   }
 
-  Path drawCirclePart(
-      double radius, double degree, double rotation, Vector2 offset, bool left) {
-
-    double startAngle = 360 - rotation - 90;
+  Path drawCirclePart(double radius, double degree, double rotation,
+      Vector2 offset, bool left) {
+    double startAngle = 270 - rotation;
     double sweepAngle = degree;
 
-    Vector2 center;
+    Vector2 center = polarToCartesian(rotation + 90, radius);
 
     if (left) {
-      startAngle = -rotation + (90 - degree);
-      center = offset + Vector2(
-          cosD(rotation + 90) * radius, -sinD(rotation + 90) * radius);
+      startAngle -= 180 + degree;
+      center.y *= -1;
     } else {
-      center = offset + Vector2(
-          -cosD(rotation + 90) * radius, sinD(rotation + 90) * radius);
+      center.x *= -1;
     }
 
+    center += offset;
+
     return Path()
-      ..arcTo(Rect.fromCircle(center: vecToOffset(center), radius: radius * scale),
-          startAngle * (pi / 180), sweepAngle * (pi / 180), false);
+      ..arcTo(
+          Rect.fromCircle(center: vecToOffset(center), radius: radius * scale),
+          startAngle * (pi / 180),
+          sweepAngle * (pi / 180),
+          false);
   }
 
   Color velocityToColor(double velocity) {

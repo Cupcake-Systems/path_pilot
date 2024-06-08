@@ -123,32 +123,25 @@ class Simulater {
         robiConfig.trackWidth * ((outerVel + innerVel) / (outerVel - innerVel));
 
     double rotation = prevInstructionResult.endRotation;
-    double degree = instruction.turnDegree;
+    double degree = instruction.turnDegree - 90;
 
-    double startAngle = 360 - rotation - 90;
-    double sweepAngle = degree;
-
-    Vector2 center;
+    Vector2 center = polarToCartesian(rotation + 90, radius);
     Vector2 endOffset;
     Vector2 offset = prevInstructionResult.endPosition;
 
     if (instruction.left) {
-      startAngle = -rotation + (90 - degree);
-      center = offset +
-          Vector2(cosD(rotation + 90) * radius, -sinD(rotation + 90) * radius);
+      center.y *= -1;
+      center += offset;
       endOffset = center +
-          Vector2(cosD(rotation + (degree - 90)) * radius,
-              -sinD(rotation + (degree - 90)) * radius);
-    } else {
-      center = offset + Vector2(
-          -cosD(rotation + 90) * radius, sinD(rotation + 90) * radius);
-      endOffset = center + Vector2(cosD(startAngle + sweepAngle) * radius,
-          sinD(startAngle + sweepAngle) * radius);
-    }
-
-    if (instruction.left) {
+          Vector2(cosD(rotation + degree) * radius,
+              -sinD(rotation + degree) * radius);
       rotation += instruction.turnDegree;
     } else {
+      center.x *= -1;
+      center += offset;
+      endOffset = center +
+          Vector2(cosD(-rotation + degree) * radius,
+              sinD(-rotation + degree) * radius);
       rotation -= instruction.turnDegree;
     }
 
