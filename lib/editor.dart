@@ -3,14 +3,16 @@ import 'package:robi_line_drawer/robi_utils.dart';
 import 'package:robi_line_drawer/visualizer.dart';
 
 class Editor extends StatefulWidget {
-  const Editor({super.key});
+  
+  final List<MissionInstruction> instructions;
+  
+  const Editor({super.key, required this.instructions});
 
   @override
   State<Editor> createState() => _EditorState();
 }
 
 class _EditorState extends State<Editor> {
-  List<MissionInstruction> instructions = [];
   EventListener listener = EventListener();
 
   @override
@@ -26,20 +28,20 @@ class _EditorState extends State<Editor> {
               children: [
                 Expanded(
                   child: ReorderableListView.builder(
-                    itemCount: instructions.length,
+                    itemCount: widget.instructions.length,
                     itemBuilder: (context, i) {
-                      final instruction = instructions[i];
+                      final instruction = widget.instructions[i];
 
                       if (instruction is DriveInstruction) {
                         return DriveInstructionEditor(
                           key: Key(i.toString()),
                           instruction: instruction,
                           textChanged: (newInstruction) {
-                            instructions[i] = newInstruction;
-                            listener.fireEvent(instructions);
+                            widget.instructions[i] = newInstruction;
+                            listener.fireEvent(widget.instructions);
                           },
                           removed: () {
-                            instructions.removeAt(i);
+                            widget.instructions.removeAt(i);
                             setState(() {});
                           },
                         );
@@ -50,11 +52,11 @@ class _EditorState extends State<Editor> {
                           key: Key(i.toString()),
                           instruction: instruction,
                           textChanged: (newInstruction) {
-                            instructions[i] = newInstruction;
-                            listener.fireEvent(instructions);
+                            widget.instructions[i] = newInstruction;
+                            listener.fireEvent(widget.instructions);
                           },
                           removed: () {
-                            instructions.removeAt(i);
+                            widget.instructions.removeAt(i);
                             setState(() {});
                           },
                         );
@@ -67,8 +69,8 @@ class _EditorState extends State<Editor> {
                         if (oldIndex < newIndex) {
                           newIndex -= 1;
                         }
-                        final item = instructions.removeAt(oldIndex);
-                        instructions.insert(newIndex, item);
+                        final item = widget.instructions.removeAt(oldIndex);
+                        widget.instructions.insert(newIndex, item);
                       });
                     },
                   ),
@@ -131,7 +133,7 @@ class _EditorState extends State<Editor> {
                       ),
                     ),
                     ElevatedButton(
-                      onPressed: () => setState(instructions.clear),
+                      onPressed: () => setState(widget.instructions.clear),
                       child: const Text("Clear"),
                     )
                   ],
@@ -147,14 +149,14 @@ class _EditorState extends State<Editor> {
   void addInstruction(AvailableInstruction instruction) {
     switch (instruction) {
       case AvailableInstruction.driveInstruction:
-        instructions.add(DriveInstruction(1, 0.5, 0.3));
+        widget.instructions.add(DriveInstruction(1, 0.5, 0.3));
         break;
       case AvailableInstruction.turnInstruction:
-        instructions.add(TurnInstruction(90, false));
+        widget.instructions.add(TurnInstruction(90, false));
         break;
     }
     setState(() {});
-    listener.fireEvent(instructions);
+    listener.fireEvent(widget.instructions);
   }
 }
 

@@ -1,12 +1,31 @@
 import 'dart:math';
 import 'package:vector_math/vector_math.dart';
 
-abstract class MissionInstruction {}
+abstract class MissionInstruction {
+  const MissionInstruction();
+
+  MissionInstruction.fromJson(Map<String, dynamic> json);
+
+  Map<String, dynamic> toJson();
+}
 
 class DriveInstruction extends MissionInstruction {
   double distance, targetVelocity, acceleration;
 
   DriveInstruction(this.distance, this.targetVelocity, this.acceleration);
+
+  @override
+  DriveInstruction.fromJson(Map<String, dynamic> json)
+      : distance = json["distance"]!,
+        targetVelocity = json["target_velocity"]!,
+        acceleration = json["acceleration"]!;
+
+  @override
+  Map<String, double> toJson() => {
+        "distance": distance,
+        "target_velocity": targetVelocity,
+        "acceleration": acceleration
+      };
 }
 
 class TurnInstruction extends MissionInstruction {
@@ -14,6 +33,17 @@ class TurnInstruction extends MissionInstruction {
   bool left;
 
   TurnInstruction(this.turnDegree, this.left);
+
+  @override
+  TurnInstruction.fromJson(Map<String, dynamic> json)
+      : turnDegree = json["turn_degree"]!,
+        left = json["turn_degree"]!;
+
+  @override
+  Map<String, dynamic> toJson() => {
+        "turn_degree": turnDegree,
+        "left": left,
+      };
 }
 
 enum AvailableInstruction { driveInstruction, turnInstruction }

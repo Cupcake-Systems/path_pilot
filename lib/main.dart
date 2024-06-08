@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:robi_line_drawer/editor.dart';
+import 'package:robi_line_drawer/file_browser.dart';
 
 void main() {
   runApp(const MyApp());
@@ -32,6 +32,6 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(body: Editor());
+    return const Scaffold(body: FileBrowser());
   }
 }
