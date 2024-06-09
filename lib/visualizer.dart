@@ -40,7 +40,7 @@ class Visualizer extends StatefulWidget {
 
 class _VisualizerState extends State<Visualizer> {
   late List<MissionInstruction> instructions = widget.initialInstructions;
-  double scale = 100;
+  double scale = 200;
 
   @override
   void initState() {
@@ -60,6 +60,7 @@ class _VisualizerState extends State<Visualizer> {
             child: Center(
               child: CustomPaint(
                 painter: LinePainter(instructions, scale, widget.robiConfig),
+                child: Container(),
               ),
             ),
           ),
@@ -69,13 +70,9 @@ class _VisualizerState extends State<Visualizer> {
               Expanded(
                 child: Slider(
                   value: scale,
-                  min: 1,
+                  min: 25,
                   max: 200,
-                  onChanged: (double value) {
-                    setState(() {
-                      scale = value;
-                    });
-                  },
+                  onChanged: (double value) => setState(() => scale = value),
                 ),
               ),
               SizedBox(width: 40, child: Text("${(scale).round()}%", textAlign: TextAlign.center)),

@@ -18,8 +18,59 @@ class LinePainter extends CustomPainter {
     strokeWidth = 5 * (scale.toDouble() / 100);
   }
 
+  void paintGrid(Canvas canvas, Size size) {
+    final Paint paint = Paint()
+      ..strokeWidth = 1
+      ..color = const Color.fromARGB(100, 255, 255, 255);
+
+    for (double x = 0; x <= size.width; x += scale) {
+      canvas.drawLine(Offset(x, 0), Offset(x, size.height), paint);
+    }
+
+    for (double y = 0; y <= size.height; y += scale) {
+      canvas.drawLine(Offset(0, y), Offset(size.width, y), paint);
+    }
+
+    paint
+      ..strokeWidth = 0.5
+      ..color = const Color.fromARGB(50, 255, 255, 255);
+
+    for (double x = scale / 2; x <= size.width; x += scale) {
+      canvas.drawLine(Offset(x, 0), Offset(x, size.height), paint);
+    }
+
+    for (double y = scale / 2; y <= size.height; y += scale) {
+      canvas.drawLine(Offset(0, y), Offset(size.width, y), paint);
+    }
+  }
+
+  void paintScale(Canvas canvas, Size size) {
+    final Paint paint = Paint()
+      ..strokeWidth = 1
+      ..color = const Color.fromARGB(255, 255, 255, 255);
+
+    canvas.drawLine(
+        Offset(1, size.height - 20), Offset(99, size.height - 20), paint);
+    canvas.drawLine(
+        Offset(100, size.height - 25), Offset(100, size.height - 15), paint);
+    canvas.drawLine(
+        Offset(0, size.height - 25), Offset(0, size.height - 15), paint);
+
+    final textSpan = TextSpan(text: "${(100.0 / scale).toStringAsFixed(2)}m");
+    final textPainter =
+        TextPainter(text: textSpan, textDirection: TextDirection.ltr);
+    textPainter.layout(minWidth: 0, maxWidth: size.width);
+    const xCenter = 30.0;
+    final yCenter = (size.height - textPainter.height) - 20;
+
+    textPainter.paint(canvas, Offset(xCenter, yCenter));
+  }
+
   @override
   void paint(Canvas canvas, Size size) {
+    paintGrid(canvas, size);
+    paintScale(canvas, size);
+
     InstructionResult prevResult = DriveResult(0, 0, Vector2.zero(), 0);
 
     for (InstructionResult result in simulationResult.instructionResults) {
