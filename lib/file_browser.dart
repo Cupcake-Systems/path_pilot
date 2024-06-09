@@ -7,6 +7,7 @@ import 'package:path/path.dart';
 import 'package:robi_line_drawer/editor.dart';
 import 'package:robi_line_drawer/robi_path_serializer.dart';
 import 'package:robi_line_drawer/robi_utils.dart';
+import 'package:robi_line_drawer/settings/settings.dart';
 
 class FileBrowser extends StatefulWidget {
   const FileBrowser({super.key});
@@ -71,19 +72,32 @@ class _FileBrowserState extends State<FileBrowser>
                         child: const MenuAcceleratorLabel('&Save as...'),
                       ),
                       MenuItemButton(
-                        leadingIcon: const Icon(Icons.info),
+                        leadingIcon: const Icon(Icons.settings),
                         onPressed: () {
-                          showAboutDialog(
-                            context: context,
-                            applicationName: "Robi Line Drawer",
-                            applicationVersion: "1.0.0",
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (context) => const SettingsPage(),
+                            ),
                           );
                         },
-                        child: const MenuAcceleratorLabel('&About'),
+                        child: const MenuAcceleratorLabel('&Preferences'),
                       ),
                     ],
                     child: const MenuAcceleratorLabel('&File'),
                   ),
+                  SubmenuButton(menuChildren: [
+                    MenuItemButton(
+                      leadingIcon: const Icon(Icons.info),
+                      onPressed: () {
+                        showAboutDialog(
+                          context: context,
+                          applicationName: "Robi Line Drawer",
+                          applicationVersion: "1.0.0",
+                        );
+                      },
+                      child: const MenuAcceleratorLabel('&About'),
+                    ),
+                  ], child: const MenuAcceleratorLabel("&Help")),
                 ],
               ),
             ),
@@ -133,8 +147,10 @@ class _FileBrowserState extends State<FileBrowser>
                                                 padding: EdgeInsets.zero,
                                                 onPressed: () {
                                                   setState(() {
-                                                    instructionTable.remove(file);
-                                                    if (instructionTable.isEmpty)
+                                                    instructionTable
+                                                        .remove(file);
+                                                    if (instructionTable
+                                                        .isEmpty)
                                                       focusedFile = null;
                                                   });
                                                 },
