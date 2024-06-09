@@ -55,15 +55,15 @@ class LinePainter extends CustomPainter {
       ..strokeWidth = 1
       ..color = white;
 
-    canvas.drawLine(
-        Offset(1, size.height - 20), Offset(99, size.height - 20), paint);
-    canvas.drawLine(
-        Offset(100, size.height - 25), Offset(100, size.height - 15), paint);
-    canvas.drawLine(
-        Offset(0, size.height - 25), Offset(0, size.height - 15), paint);
+    canvas.drawLine(Offset(size.width / 2 - 49, size.height - 20),
+        Offset(size.width / 2 + 49, size.height - 20), paint);
+    canvas.drawLine(Offset(size.width / 2 - 50, size.height - 25),
+        Offset(size.width / 2 - 50, size.height - 15), paint);
+    canvas.drawLine(Offset(size.width / 2 + 50, size.height - 25),
+        Offset(size.width / 2 + 50, size.height - 15), paint);
 
     paintText("${(100.0 / scale).toStringAsFixed(2)}m",
-        Offset(30, size.height - 20), canvas, size);
+        Offset(size.width / 2, size.height - 22), canvas, size);
   }
 
   void paintText(String text, Offset offset, Canvas canvas, Size size) {
@@ -72,7 +72,9 @@ class LinePainter extends CustomPainter {
         TextPainter(text: textSpan, textDirection: TextDirection.ltr);
     textPainter.layout(minWidth: 0, maxWidth: size.width);
     textPainter.paint(
-        canvas, Offset(offset.dx, offset.dy - textPainter.height));
+        canvas,
+        Offset(offset.dx - textPainter.width / 2,
+            offset.dy - textPainter.height));
   }
 
   void paintVelocityScale(Canvas canvas, Size size) {
@@ -107,9 +109,9 @@ class LinePainter extends CustomPainter {
         Paint()
           ..color = white
           ..strokeWidth = 1);
-    paintText("0m/s", lineStart.translate(-15, -7), canvas, size);
-    paintText("${simulationResult.maxTargetedVelocity}m/s",
-        lineEnd.translate(-20, -7), canvas, size);
+    paintText("0m/s", lineStart.translate(0,-7), canvas, size);
+    paintText("${simulationResult.maxTargetedVelocity.toStringAsFixed(2)}m/s",
+        lineEnd.translate(0, -7), canvas, size);
   }
 
   @override
