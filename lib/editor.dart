@@ -5,9 +5,10 @@ import 'package:robi_line_drawer/visualizer.dart';
 class Editor extends StatefulWidget {
   final List<MissionInstruction> instructions;
   final RobiConfig robiConfig;
+  final void Function() exportPressed;
 
   const Editor(
-      {super.key, required this.instructions, required this.robiConfig});
+      {super.key, required this.instructions, required this.robiConfig, required this.exportPressed});
 
   @override
   State<Editor> createState() => _EditorState();
@@ -154,7 +155,14 @@ class _EditorState extends State<Editor> {
                       onPressed: () => setState(widget.instructions.clear),
                       label: const Text("Clear"),
                       icon: const Icon(Icons.delete),
-                    )
+                    ),
+                    const SizedBox(width: 10),
+                    OutlinedButton.icon(
+                      iconAlignment: IconAlignment.end,
+                      onPressed: widget.exportPressed,
+                      label: const Text("Export"),
+                      icon: const Icon(Icons.chevron_right),
+                    ),
                   ],
                 ),
               ],

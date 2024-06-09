@@ -10,6 +10,8 @@ import 'package:robi_line_drawer/robi_path_serializer.dart';
 import 'package:robi_line_drawer/robi_utils.dart';
 import 'package:robi_line_drawer/settings/settings.dart';
 
+import 'exporter.dart';
+
 class FileBrowser extends StatefulWidget {
   const FileBrowser({super.key});
 
@@ -139,11 +141,11 @@ class _FileBrowserState extends State<FileBrowser>
                         leadingIcon: const Icon(Icons.info),
                         onPressed: () {
                           showAboutDialog(
-                            context: context,
-                            applicationName: "Robi Line Drawer",
-                            applicationVersion: "1.0.0",
-                            applicationLegalese: "© Copyright Finn Drünert 2024"
-                          );
+                              context: context,
+                              applicationName: "Robi Line Drawer",
+                              applicationVersion: "1.0.0",
+                              applicationLegalese:
+                                  "© Copyright Finn Drünert 2024");
                         },
                         child: const MenuAcceleratorLabel('&About'),
                       ),
@@ -184,9 +186,24 @@ class _FileBrowserState extends State<FileBrowser>
                     ),
                     body: TabBarView(
                       children: instructionTable.values
-                          .map((instructions) => Editor(
+                          .map(
+                            (instructions) => Editor(
                               instructions: instructions,
-                              robiConfig: selectedRobiConfig))
+                              robiConfig: selectedRobiConfig,
+                              exportPressed: () async {
+                                final path = await FilePicker.platform.saveFile(
+                                  dialogTitle: "Please select an output file:",
+                                  fileName: "exported.json",
+                                );
+                                if (path == null) return;
+                                Exporter.saveToFile(
+                                  File(path),
+                                  selectedRobiConfig,
+                                  instructions,
+                                );
+                              },
+                            ),
+                          )
                           .toList(),
                     ),
                   ),

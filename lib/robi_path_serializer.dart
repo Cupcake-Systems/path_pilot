@@ -14,7 +14,15 @@ class InstructionContainer {
     throw UnsupportedError("");
   }
 
-  InstructionContainer(this.type, this.instruction);
+  InstructionContainer(this.instruction) {
+    if (instruction is DriveInstruction) {
+      type = AvailableInstruction.driveInstruction;
+    } else if (instruction is TurnInstruction) {
+      type = AvailableInstruction.turnInstruction;
+    } else {
+      throw UnsupportedError("");
+    }
+  }
 
   InstructionContainer.fromJson(Map<String, dynamic> json) {
     type = getInstructionTypeFromString(json["type"]);
@@ -39,15 +47,7 @@ class RobiPathSerializer {
   static String encode(List<MissionInstruction> instructions) {
     final List<InstructionContainer> containers = [];
     for (final inst in instructions) {
-      AvailableInstruction type;
-      if (inst is DriveInstruction) {
-        type = AvailableInstruction.driveInstruction;
-      } else if (inst is TurnInstruction) {
-        type = AvailableInstruction.turnInstruction;
-      } else {
-        throw UnsupportedError("");
-      }
-      containers.add(InstructionContainer(type, inst));
+      containers.add(InstructionContainer(inst));
     }
     return jsonEncode(containers.map((e) => e.toJson()).toList());
   }

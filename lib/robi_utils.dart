@@ -212,4 +212,12 @@ class RobiConfig {
   final String? name;
 
   RobiConfig(this.wheelRadius, this.trackWidth, {this.name});
+
+  RobiConfig.fromJson(Map<String, dynamic> json)
+      : wheelRadius = json["wheel_radius"],
+        trackWidth = json["track_width"],
+        name = json["name"];
+
+  Map<String, dynamic> toJson() =>
+      {"wheel_radius": wheelRadius, "track_width": trackWidth, "name": name};
 }
