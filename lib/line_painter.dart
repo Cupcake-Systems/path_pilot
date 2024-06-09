@@ -35,6 +35,10 @@ class LinePainter extends CustomPainter {
 
   void drawDrive(InstructionResult prevInstructionResult,
       DriveResult instructionResult, Canvas canvas) {
+    if (prevInstructionResult.endPosition == instructionResult.endPosition) {
+      return;
+    }
+
     List<Color> colors = [
       velocityToColor(prevInstructionResult.managedVelocity),
       velocityToColor(instructionResult.managedVelocity)
@@ -55,6 +59,10 @@ class LinePainter extends CustomPainter {
 
   void drawTurn(InstructionResult prevInstructionResult, TurnResult instruction,
       Canvas canvas) {
+    if (prevInstructionResult.endPosition == instruction.endPosition) {
+      return;
+    }
+
     final paint = Paint()
       ..color = velocityToColor(prevInstructionResult.managedVelocity)
       ..strokeWidth = strokeWidth

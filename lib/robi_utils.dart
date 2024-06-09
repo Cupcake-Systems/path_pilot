@@ -120,7 +120,7 @@ class Simulater {
     return SimulationResult(results, maxTargetVel, maxManagedVel);
   }
 
-  InstructionResult simulateDrive(
+  DriveResult simulateDrive(
       InstructionResult prevInstruction, DriveInstruction instruction) {
     double distanceCoveredByAcceleration = (pow(instruction.targetVelocity, 2) -
                 pow(prevInstruction.managedVelocity, 2))
@@ -131,27 +131,47 @@ class Simulater {
       distanceCoveredByAcceleration = instruction.distance;
     }
 
-    final managedVelocity = sqrt(pow(prevInstruction.managedVelocity, 2) +
-        2 * instruction.acceleration * distanceCoveredByAcceleration);
+    double managedVelocity = pow(prevInstruction.managedVelocity, 2).toDouble();
+    double thing = 2 * instruction.acceleration * distanceCoveredByAcceleration;
+    if (instruction.targetVelocity < prevInstruction.managedVelocity) {
+      thing *= -1;
+    }
+
+    managedVelocity = sqrt(managedVelocity + thing);
+
+    double drivenDistance = distanceCoveredByAcceleration;
+
+    if (managedVelocity > 0) {
+      double timeForRemainingDistance =
+          (instruction.distance - distanceCoveredByAcceleration) /
+              managedVelocity;
+
+      drivenDistance += managedVelocity * timeForRemainingDistance;
+    }
 
     final endOfDrive = Vector2(
         prevInstruction.endPosition.x +
-            cosD(prevInstruction.endRotation) * instruction.distance,
+            cosD(prevInstruction.endRotation) * drivenDistance,
         prevInstruction.endPosition.y -
-            sinD(prevInstruction.endRotation) * instruction.distance);
+            sinD(prevInstruction.endRotation) * drivenDistance);
 
     return DriveResult(managedVelocity, prevInstruction.endRotation, endOfDrive,
         distanceCoveredByAcceleration);
   }
 
-  InstructionResult simulateTurn(
+  TurnResult simulateTurn(
       InstructionResult prevInstructionResult, TurnInstruction instruction) {
+    if (prevInstructionResult.managedVelocity <= 0) {
+      return TurnResult(0, prevInstructionResult.endRotation,
+          prevInstructionResult.endPosition, 0, 0, 0);
+    }
+
     final outerVel = prevInstructionResult.managedVelocity * 1.2;
     final innerVel = prevInstructionResult.managedVelocity * 0.8;
 
-    final radius =
-        robiConfig.trackWidth * ((outerVel + innerVel) / (outerVel - innerVel));
-
+    final radius = robiConfig.trackWidth /
+        2 *
+        ((outerVel + innerVel) / (outerVel - innerVel));
     double rotation = prevInstructionResult.endRotation;
     double degree = instruction.turnDegree - 90;
 
