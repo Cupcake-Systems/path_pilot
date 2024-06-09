@@ -23,25 +23,29 @@ class LinePainter extends CustomPainter {
   void paintGrid(Canvas canvas, Size size) {
     final Paint paint = Paint()
       ..strokeWidth = 1
-      ..color = const Color.fromARGB(100, 255, 255, 255);
+      ..color = white.withAlpha(100);
 
-    for (double x = 0; x <= size.width; x += scale) {
+    for (double x = size.width / 2 % scale; x <= size.width; x += scale) {
       canvas.drawLine(Offset(x, 0), Offset(x, size.height), paint);
     }
 
-    for (double y = 0; y <= size.height; y += scale) {
+    for (double y = size.height / 2 % scale; y <= size.height; y += scale) {
       canvas.drawLine(Offset(0, y), Offset(size.width, y), paint);
     }
 
     paint
       ..strokeWidth = 0.5
-      ..color = const Color.fromARGB(50, 255, 255, 255);
+      ..color = white.withAlpha(50);
 
-    for (double x = scale / 2; x <= size.width; x += scale) {
+    for (double x = scale / 2 + size.width / 2 % scale;
+        x <= size.width;
+        x += scale) {
       canvas.drawLine(Offset(x, 0), Offset(x, size.height), paint);
     }
 
-    for (double y = scale / 2; y <= size.height; y += scale) {
+    for (double y = scale / 2 + size.height / 2 % scale;
+        y <= size.height;
+        y += scale) {
       canvas.drawLine(Offset(0, y), Offset(size.width, y), paint);
     }
   }
@@ -111,24 +115,25 @@ class LinePainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     paintGrid(canvas, size);
-    paintScale(canvas, size);
-    paintVelocityScale(canvas, size);
 
     InstructionResult prevResult = DriveResult(0, 0, Vector2.zero(), 0);
 
     for (InstructionResult result in simulationResult.instructionResults) {
       if (result is DriveResult) {
-        drawDrive(prevResult, result, canvas);
+        drawDrive(prevResult, result, canvas, size);
       } else if (result is TurnResult) {
-        drawTurn(prevResult, result, canvas);
+        drawTurn(prevResult, result, canvas, size);
       }
 
       prevResult = result;
     }
+
+    paintScale(canvas, size);
+    paintVelocityScale(canvas, size);
   }
 
   void drawDrive(InstructionResult prevInstructionResult,
-      DriveResult instructionResult, Canvas canvas) {
+      DriveResult instructionResult, Canvas canvas, Size size) {
     if (prevInstructionResult.endPosition == instructionResult.endPosition) {
       return;
     }
@@ -143,16 +148,16 @@ class LinePainter extends CustomPainter {
         colors: colors,
         radius: 0.5 / sqrt2,
       ).createShader(Rect.fromCircle(
-          center: vecToOffset(prevInstructionResult.endPosition),
+          center: vecToOffset(prevInstructionResult.endPosition, size),
           radius: instructionResult.accelerationDistance * scale))
       ..strokeWidth = strokeWidth;
 
-    canvas.drawLine(vecToOffset(prevInstructionResult.endPosition),
-        vecToOffset(instructionResult.endPosition), accelerationPaint);
+    canvas.drawLine(vecToOffset(prevInstructionResult.endPosition, size),
+        vecToOffset(instructionResult.endPosition, size), accelerationPaint);
   }
 
   void drawTurn(InstructionResult prevInstructionResult, TurnResult instruction,
-      Canvas canvas) {
+      Canvas canvas, Size size) {
     if (prevInstructionResult.endPosition == instruction.endPosition) {
       return;
     }
@@ -171,12 +176,13 @@ class LinePainter extends CustomPainter {
         degree,
         prevInstructionResult.endRotation,
         prevInstructionResult.endPosition,
-        left);
+        left,
+        size);
     canvas.drawPath(path, paint);
   }
 
   Path drawCirclePart(double radius, double degree, double rotation,
-      Vector2 offset, bool left) {
+      Vector2 offset, bool left, Size size) {
     double startAngle = 270 - rotation;
     double sweepAngle = degree;
 
@@ -193,10 +199,12 @@ class LinePainter extends CustomPainter {
 
     return Path()
       ..arcTo(
-          Rect.fromCircle(center: vecToOffset(center), radius: radius * scale),
-          startAngle * (pi / 180),
-          sweepAngle * (pi / 180),
-          false);
+        Rect.fromCircle(
+            center: vecToOffset(center, size), radius: radius * scale),
+        startAngle * (pi / 180),
+        sweepAngle * (pi / 180),
+        false,
+      );
   }
 
   Color velocityToColor(double velocity) {
@@ -206,7 +214,9 @@ class LinePainter extends CustomPainter {
     return Color.fromARGB(255, r, g, 0);
   }
 
-  Offset vecToOffset(Vector2 vec) => Offset(vec.x * scale, vec.y * scale);
+  Offset vecToOffset(Vector2 vec, Size size) =>
+      Offset(vec.x * scale, vec.y * scale)
+          .translate(size.width / 2, size.height / 2);
 
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
