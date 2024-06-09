@@ -3,11 +3,13 @@ import 'dart:io';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:path/path.dart';
+import 'package:robi_line_drawer/constants.dart';
 import 'package:robi_line_drawer/editor.dart';
 import 'package:robi_line_drawer/robi_config.dart';
 import 'package:robi_line_drawer/robi_path_serializer.dart';
 import 'package:robi_line_drawer/robi_utils.dart';
 import 'package:robi_line_drawer/settings/settings.dart';
+import 'package:url_launcher/url_launcher_string.dart';
 
 import 'exporter.dart';
 
@@ -137,14 +139,37 @@ class _FileBrowserState extends State<FileBrowser>
                   SubmenuButton(
                     menuChildren: [
                       MenuItemButton(
+                        leadingIcon: const Icon(Icons.bug_report),
+                        onPressed: () => launchUrlString("$repoUrl/issues/new"),
+                        child: const MenuAcceleratorLabel('&Report A Bug'),
+                      ),
+                      MenuItemButton(
+                        leadingIcon: const Icon(Icons.check_circle),
+                        onPressed: () =>
+                            launchUrlString("$repoUrl/issues?q=is%3Aissue"),
+                        child: const MenuAcceleratorLabel('&Known Issues'),
+                      ),
+                      MenuItemButton(
                         leadingIcon: const Icon(Icons.info),
                         onPressed: () {
                           showAboutDialog(
-                              context: context,
-                              applicationName: "Robi Line Drawer",
-                              applicationVersion: "1.0.0",
-                              applicationLegalese:
-                                  "© Copyright Finn Drünert 2024");
+                            context: context,
+                            applicationName: "Robi Line Drawer",
+                            applicationVersion: "1.0.0",
+                            applicationLegalese:
+                                "© Copyright Finn Drünert 2024",
+                            children: [
+                              Card(
+                                child: InkWell(
+                                  onTap: () => launchUrlString(repoUrl),
+                                  child: const Padding(
+                                    padding: EdgeInsets.all(8),
+                                    child: Text("GitHub Repo"),
+                                  ),
+                                ),
+                              )
+                            ],
+                          );
                         },
                         child: const MenuAcceleratorLabel('&About'),
                       ),
