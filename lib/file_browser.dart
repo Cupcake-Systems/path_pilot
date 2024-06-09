@@ -33,6 +33,11 @@ class _FileBrowserState extends State<FileBrowser>
                   SubmenuButton(
                     menuChildren: [
                       MenuItemButton(
+                        leadingIcon: const Icon(Icons.add),
+                        onPressed: newFile,
+                        child: const MenuAcceleratorLabel('&New'),
+                      ),
+                      MenuItemButton(
                         leadingIcon: const Icon(Icons.folder),
                         onPressed: () async {
                           final result = await FilePicker.platform.pickFiles(
@@ -199,6 +204,22 @@ class _FileBrowserState extends State<FileBrowser>
 
     RobiPathSerializer.saveToFile(
         file, instructionTable[focusedFile!.absolute.path]!);
+
+    setState(() => focusedFile = file);
+  }
+
+  Future<void> newFile() async {
+    final result = await FilePicker.platform.saveFile(
+        dialogTitle: "Please select an output file:",
+        fileName: "new.robi_script.json");
+
+    if (result == null) return;
+
+    final file = File(result);
+
+    instructionTable[file.absolute.path] = [];
+
+    RobiPathSerializer.saveToFile(file, []);
 
     setState(() => focusedFile = file);
   }
