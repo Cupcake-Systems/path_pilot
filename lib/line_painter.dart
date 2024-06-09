@@ -8,13 +8,14 @@ class LinePainter extends CustomPainter {
   late SimulationResult simulationResult;
   final double scale;
   final RobiConfig robiConfig;
-  static const double strokeWidth = 5;
-  late Simulater simulater;
+  late final double strokeWidth;
+  late final Simulater simulater;
 
   LinePainter(
       List<MissionInstruction> instructions, this.scale, this.robiConfig) {
     simulater = Simulater(robiConfig);
     simulationResult = simulater.calculate(instructions);
+    strokeWidth = 5 * (scale.toDouble() / 100);
   }
 
   @override
