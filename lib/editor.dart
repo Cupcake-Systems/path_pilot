@@ -155,6 +155,7 @@ class _EditorState extends State<Editor> {
                           },
                           simulationResult: simulationResult,
                           instructionIndex: i,
+                          robiConfig: widget.robiConfig,
                         );
                       } else {
                         throw UnsupportedError("");
@@ -209,7 +210,7 @@ class _EditorState extends State<Editor> {
         inst = DriveInstruction(1, 0.5, 0.3);
         break;
       case AvailableInstruction.turnInstruction:
-        inst = TurnInstruction(90, false);
+        inst = TurnInstruction(90, false, 0.1);
         break;
     }
     setState(() => instructions.add(inst));
@@ -382,6 +383,7 @@ class TurnInstructionEditor extends StatefulWidget {
   final TurnInstruction instruction;
   final SimulationResult simulationResult;
   final int instructionIndex;
+  final RobiConfig robiConfig;
 
   final Function() removed;
   final Function(TurnInstruction newInstruction) textChanged;
@@ -392,7 +394,8 @@ class TurnInstructionEditor extends StatefulWidget {
       required this.textChanged,
       required this.removed,
       required this.simulationResult,
-      required this.instructionIndex});
+      required this.instructionIndex,
+      required this.robiConfig});
 
   @override
   State<TurnInstructionEditor> createState() => _TurnInstructionEditorState();
@@ -471,6 +474,24 @@ class _TurnInstructionEditorState extends State<TurnInstructionEditor> {
                           DropdownMenuEntry(value: false, label: "right"),
                         ],
                       ),
+                      const Text("with a "),
+                      IntrinsicWidth(
+                        child: Form(
+                          child: TextFormField(
+                            style: const TextStyle(fontSize: 14),
+                            initialValue: "${widget.instruction.radius * 100}",
+                            onChanged: (String? value) {
+                              if (value == null || value.isEmpty) return;
+                              final tried = double.tryParse(value);
+                              if (tried == null) return;
+                              widget.instruction.radius = tried / 100;
+                              widget.textChanged(widget.instruction);
+                            },
+                            inputFormatters: inputFormatters,
+                          ),
+                        ),
+                      ),
+                      const Text("cm inner radius")
                     ],
                   ),
                 ),

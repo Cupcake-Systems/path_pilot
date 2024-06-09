@@ -33,19 +33,19 @@ class DriveInstruction extends MissionInstruction {
 class TurnInstruction extends MissionInstruction {
   double turnDegree;
   bool left;
+  double radius;
 
-  TurnInstruction(this.turnDegree, this.left);
+  TurnInstruction(this.turnDegree, this.left, this.radius);
 
   @override
   TurnInstruction.fromJson(Map<String, dynamic> json)
-      : turnDegree = json["turn_degree"]!,
-        left = json["left"]!;
+      : turnDegree = json["turn_degree"],
+        left = json["left"],
+        radius = json["radius"];
 
   @override
-  Map<String, dynamic> toJson() => {
-        "turn_degree": turnDegree,
-        "left": left,
-      };
+  Map<String, dynamic> toJson() =>
+      {"turn_degree": turnDegree, "left": left, "radius": radius};
 }
 
 enum AvailableInstruction { driveInstruction, turnInstruction }
@@ -66,10 +66,10 @@ class DriveResult extends InstructionResult {
 }
 
 class TurnResult extends InstructionResult {
-  final double turnRadius, outerVelocity, innerVelocity;
+  final double turnRadius;
 
   TurnResult(super.managedVelocity, super.endRotation, super.endPosition,
-      this.turnRadius, this.outerVelocity, this.innerVelocity);
+      this.turnRadius);
 }
 
 class SimulationResult {
@@ -165,15 +165,11 @@ class Simulator {
       InstructionResult prevInstructionResult, TurnInstruction instruction) {
     if (prevInstructionResult.managedVelocity <= 0) {
       return TurnResult(0, prevInstructionResult.endRotation,
-          prevInstructionResult.endPosition, 0, 0, 0);
+          prevInstructionResult.endPosition, 0);
     }
 
-    final outerVel = prevInstructionResult.managedVelocity * 1.2;
-    final innerVel = prevInstructionResult.managedVelocity * 0.8;
+    double radius = instruction.radius + robiConfig.trackWidth / 2;
 
-    final radius = robiConfig.trackWidth /
-        2 *
-        ((outerVel + innerVel) / (outerVel - innerVel));
     double rotation = prevInstructionResult.endRotation;
     double degree = instruction.turnDegree - 90;
 
@@ -197,8 +193,8 @@ class Simulator {
       rotation -= instruction.turnDegree;
     }
 
-    return TurnResult(prevInstructionResult.managedVelocity, rotation,
-        endOffset, radius, outerVel, innerVel);
+    return TurnResult(
+        prevInstructionResult.managedVelocity, rotation, endOffset, radius);
   }
 }
 
