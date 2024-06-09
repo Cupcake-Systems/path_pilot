@@ -2,6 +2,9 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:robi_line_drawer/robi_utils.dart';
+import 'package:vector_math/vector_math.dart';
+
+final startResult = DriveResult(0, 0, Vector2.zero(), 0);
 
 class InstructionContainer {
   late final AvailableInstruction type;
@@ -55,7 +58,8 @@ class RobiPathSerializer {
   static Iterable<MissionInstruction>? decode(String json) {
     try {
       final List<dynamic> decoded = jsonDecode(json);
-      return decoded.map((e) => InstructionContainer.fromJson(e).instruction);
+      final parsed = decoded.map((e) => InstructionContainer.fromJson(e).instruction);
+      return parsed;
     } on Exception {
       return null;
     }

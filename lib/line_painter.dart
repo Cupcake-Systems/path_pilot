@@ -1,22 +1,18 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:robi_line_drawer/robi_path_serializer.dart';
 import 'package:robi_line_drawer/robi_utils.dart';
 import 'package:vector_math/vector_math.dart';
 
 class LinePainter extends CustomPainter {
-  late SimulationResult simulationResult;
+  final SimulationResult simulationResult;
   final double scale;
-  final RobiConfig robiConfig;
   late final double strokeWidth;
-  late final Simulator simulater;
 
   static const Color white = Color(0xFFFFFFFF);
 
-  LinePainter(
-      List<MissionInstruction> instructions, this.scale, this.robiConfig) {
-    simulater = Simulator(robiConfig);
-    simulationResult = simulater.calculate(instructions);
+  LinePainter(this.scale, this.simulationResult) {
     strokeWidth = 5 * (scale.toDouble() / 100);
   }
 
@@ -73,8 +69,8 @@ class LinePainter extends CustomPainter {
     textPainter.layout(minWidth: 0, maxWidth: size.width);
     textPainter.paint(
         canvas,
-        Offset(offset.dx - textPainter.width / 2,
-            offset.dy - textPainter.height));
+        Offset(
+            offset.dx - textPainter.width / 2, offset.dy - textPainter.height));
   }
 
   void paintVelocityScale(Canvas canvas, Size size) {
@@ -109,7 +105,7 @@ class LinePainter extends CustomPainter {
         Paint()
           ..color = white
           ..strokeWidth = 1);
-    paintText("0m/s", lineStart.translate(0,-7), canvas, size);
+    paintText("0m/s", lineStart.translate(0, -7), canvas, size);
     paintText("${simulationResult.maxTargetedVelocity.toStringAsFixed(2)}m/s",
         lineEnd.translate(0, -7), canvas, size);
   }
@@ -118,7 +114,7 @@ class LinePainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     paintGrid(canvas, size);
 
-    InstructionResult prevResult = DriveResult(0, 0, Vector2.zero(), 0);
+    InstructionResult prevResult = startResult;
 
     for (InstructionResult result in simulationResult.instructionResults) {
       if (result is DriveResult) {

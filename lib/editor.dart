@@ -1,6 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:robi_line_drawer/robi_utils.dart';
 import 'package:robi_line_drawer/visualizer.dart';
+
+import 'robi_path_serializer.dart';
+
+final inputFormatters = [
+  FilteringTextInputFormatter.allow(RegExp(r'^(\d+)?\.?\d{0,5}'))
+];
 
 class Editor extends StatefulWidget {
   final List<MissionInstruction> instructions;
@@ -8,14 +15,25 @@ class Editor extends StatefulWidget {
   final void Function() exportPressed;
 
   const Editor(
-      {super.key, required this.instructions, required this.robiConfig, required this.exportPressed});
+      {super.key,
+      required this.instructions,
+      required this.robiConfig,
+      required this.exportPressed});
 
   @override
   State<Editor> createState() => _EditorState();
 }
 
 class _EditorState extends State<Editor> {
-  EventListener listener = EventListener();
+  late SimulationResult simulationResult;
+  late final List<MissionInstruction> instructions = widget.instructions;
+  double scale = 200;
+
+  @override
+  void initState() {
+    super.initState();
+    simulationResult = Simulator(widget.robiConfig).calculate(instructions);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -23,9 +41,10 @@ class _EditorState extends State<Editor> {
       children: [
         Flexible(
           child: Visualizer(
-            initialInstructions: widget.instructions,
-            listener: listener,
-            robiConfig: widget.robiConfig,
+            simulationResult: simulationResult,
+            key: ValueKey(simulationResult),
+            scale: scale,
+            scaleChanged: (newScale) => scale = newScale,
           ),
         ),
         const VerticalDivider(width: 0),
@@ -37,7 +56,7 @@ class _EditorState extends State<Editor> {
                 AppBar(title: const Text("Instructions Editor")),
                 Expanded(
                   child: ReorderableListView.builder(
-                    itemCount: widget.instructions.length,
+                    itemCount: instructions.length,
                     footer: Card.outlined(
                       child: IconButton(
                         style: IconButton.styleFrom(
@@ -103,48 +122,50 @@ class _EditorState extends State<Editor> {
                       ),
                     ),
                     itemBuilder: (context, i) {
-                      final instruction = widget.instructions[i];
+                      final instruction = instructions[i];
+
+                      Widget w;
 
                       if (instruction is DriveInstruction) {
-                        return DriveInstructionEditor(
+                        w = DriveInstructionEditor(
                           key: Key(i.toString()),
                           instruction: instruction,
                           textChanged: (newInstruction) {
-                            widget.instructions[i] = newInstruction;
-                            listener.fireEvent(widget.instructions);
+                            instructions[i] = newInstruction;
+                            rerunSimulationAndUpdate();
                           },
                           removed: () {
-                            widget.instructions.removeAt(i);
-                            setState(() {});
+                            instructions.removeAt(i);
+                            rerunSimulationAndUpdate();
                           },
+                          simulationResult: simulationResult,
+                          instructionIndex: i,
                         );
-                      }
-
-                      if (instruction is TurnInstruction) {
-                        return TurnInstructionEditor(
-                          key: Key(i.toString()),
+                      } else if (instruction is TurnInstruction) {
+                        w = TurnInstructionEditor(
+                          key: Key("$i$simulationResult"),
                           instruction: instruction,
                           textChanged: (newInstruction) {
-                            widget.instructions[i] = newInstruction;
-                            listener.fireEvent(widget.instructions);
+                            instructions[i] = newInstruction;
+                            rerunSimulationAndUpdate();
                           },
                           removed: () {
-                            widget.instructions.removeAt(i);
-                            setState(() {});
+                            instructions.removeAt(i);
+                            rerunSimulationAndUpdate();
                           },
+                          simulationResult: simulationResult,
+                          instructionIndex: i,
                         );
+                      } else {
+                        throw UnsupportedError("");
                       }
-
-                      throw UnsupportedError("");
+                      return w;
                     },
                     onReorder: (int oldIndex, int newIndex) {
-                      setState(() {
-                        if (oldIndex < newIndex) {
-                          newIndex -= 1;
-                        }
-                        final item = widget.instructions.removeAt(oldIndex);
-                        widget.instructions.insert(newIndex, item);
-                      });
+                      if (oldIndex < newIndex) newIndex -= 1;
+                      instructions.insert(
+                          newIndex, instructions.removeAt(oldIndex));
+                      rerunSimulationAndUpdate();
                     },
                   ),
                 ),
@@ -152,14 +173,19 @@ class _EditorState extends State<Editor> {
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
                     OutlinedButton.icon(
-                      onPressed: () => setState(widget.instructions.clear),
+                      onPressed: () {
+                        instructions.clear();
+                        rerunSimulationAndUpdate();
+                      },
                       label: const Text("Clear"),
                       icon: const Icon(Icons.delete),
                     ),
                     const SizedBox(width: 10),
                     OutlinedButton.icon(
                       iconAlignment: IconAlignment.end,
-                      onPressed: widget.exportPressed,
+                      onPressed: simulationResult.instructionResults.isEmpty
+                          ? null
+                          : widget.exportPressed,
                       label: const Text("Export"),
                       icon: const Icon(Icons.chevron_right),
                     ),
@@ -173,17 +199,21 @@ class _EditorState extends State<Editor> {
     );
   }
 
+  void rerunSimulationAndUpdate() => setState(() =>
+      simulationResult = Simulator(widget.robiConfig).calculate(instructions));
+
   void addInstruction(AvailableInstruction instruction) {
+    MissionInstruction inst;
     switch (instruction) {
       case AvailableInstruction.driveInstruction:
-        widget.instructions.add(DriveInstruction(1, 0.5, 0.3));
+        inst = DriveInstruction(1, 0.5, 0.3);
         break;
       case AvailableInstruction.turnInstruction:
-        widget.instructions.add(TurnInstruction(90, false));
+        inst = TurnInstruction(90, false);
         break;
     }
-    setState(() {});
-    listener.fireEvent(widget.instructions);
+    setState(() => instructions.add(inst));
+    rerunSimulationAndUpdate();
   }
 }
 
@@ -196,72 +226,135 @@ double? asdf(TextEditingController controller, String? value) {
 
 class DriveInstructionEditor extends StatelessWidget {
   final DriveInstruction instruction;
+  final SimulationResult simulationResult;
+  final int instructionIndex;
 
   final Function(DriveInstruction newInstruction) textChanged;
   final Function() removed;
 
-  late final TextEditingController distanceController =
-      TextEditingController(text: instruction.distance.toString());
-  late final TextEditingController velocityController =
-      TextEditingController(text: instruction.targetVelocity.toString());
-  late final TextEditingController accelerationController =
-      TextEditingController(text: instruction.acceleration.toString());
+  late final String? warningMessage;
 
   DriveInstructionEditor(
       {super.key,
       required this.instruction,
       required this.textChanged,
-      required this.removed});
+      required this.removed,
+      required this.simulationResult,
+      required this.instructionIndex}) {
+    final instructionResult =
+        simulationResult.instructionResults[instructionIndex];
+    final prevResult =
+        simulationResult.instructionResults.elementAtOrNull(instructionIndex) ??
+            startResult;
+
+    final isLastInstruction =
+        instructionIndex == simulationResult.instructionResults.length - 1;
+
+    if (!isLastInstruction &&
+        prevResult.managedVelocity <= 0 &&
+        instruction.targetVelocity <= 0) {
+      warningMessage = "Zero velocity";
+    } else if ((instruction.targetVelocity - instructionResult.managedVelocity)
+            .abs() >
+        0.000001) {
+      warningMessage =
+          "Robi will only reach ${(instructionResult.managedVelocity * 100).toStringAsFixed(2)} cm/s";
+    } else if (isLastInstruction && instructionResult.managedVelocity > 0) {
+      warningMessage = "Robi will not stop at the end";
+    } else {
+      warningMessage = null;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Card(
-      child: Padding(
-        padding:
-            const EdgeInsets.only(left: 10, right: 40, top: 10, bottom: 10),
-        child: Row(
-          children: [
-            Expanded(
+      child: Column(
+        children: [
+          Padding(
+            padding:
+                const EdgeInsets.only(right: 40, left: 10, top: 5, bottom: 5),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.arrow_upward),
+                      const SizedBox(width: 10),
+                      const Text("Drive "),
+                      IntrinsicWidth(
+                        child: TextFormField(
+                          style: const TextStyle(fontSize: 14),
+                          initialValue: instruction.distance.toString(),
+                          onChanged: (String? value) {
+                            if (value == null || value.isEmpty) return;
+                            final tried = double.tryParse(value);
+                            if (tried == null) return;
+                            instruction.distance = tried;
+                            textChanged(instruction);
+                          },
+                          inputFormatters: inputFormatters,
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      const Text("m with a targeted velocity of "),
+                      IntrinsicWidth(
+                        child: TextFormField(
+                          style: const TextStyle(fontSize: 14),
+                          initialValue: "${instruction.targetVelocity * 100}",
+                          onChanged: (String? value) {
+                            if (value == null || value.isEmpty) return;
+                            final tried = double.tryParse(value);
+                            if (tried == null) return;
+                            instruction.targetVelocity = tried / 100.0;
+                            textChanged(instruction);
+                          },
+                          inputFormatters: inputFormatters,
+                        ),
+                      ),
+                      const Text("cm/s accelerating at"),
+                      const SizedBox(width: 10),
+                      IntrinsicWidth(
+                        child: TextFormField(
+                          style: const TextStyle(fontSize: 14),
+                          initialValue: "${instruction.acceleration * 100}",
+                          onChanged: (String? value) {
+                            if (value == null || value.isEmpty) return;
+                            final tried = double.tryParse(value);
+                            if (tried == null) return;
+                            instruction.acceleration = tried / 100.0;
+                            textChanged(instruction);
+                          },
+                          inputFormatters: inputFormatters,
+                        ),
+                      ),
+                      const Text("cm/s²"),
+                    ],
+                  ),
+                ),
+                IconButton(onPressed: removed, icon: const Icon(Icons.delete))
+              ],
+            ),
+          ),
+          if (warningMessage != null) ...[
+            const Divider(height: 0),
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                  borderRadius:
+                      const BorderRadius.vertical(bottom: Radius.circular(10)),
+                  color: Colors.yellow.withAlpha(50)),
               child: Row(
-                mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(Icons.arrow_upward),
+                  const Icon(Icons.warning),
                   const SizedBox(width: 10),
-                  const Text("Drive "),
-                  Flexible(
-                    child: createTextField(
-                      distanceController,
-                      "Distance",
-                      (value) => instruction.distance = value,
-                      () => instruction.distance,
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  const Text("m with a targeted velocity of "),
-                  Flexible(
-                    child: createTextField(
-                      velocityController,
-                      "Target Velocity",
-                      (value) => instruction.targetVelocity = value,
-                      () => instruction.targetVelocity,
-                    ),
-                  ),
-                  const Text(" m/s accelerating at"),
-                  const SizedBox(width: 10),
-                  Flexible(
-                    child: createTextField(
-                        accelerationController,
-                        "Acceleration",
-                        (value) => instruction.acceleration = value,
-                        () => instruction.acceleration),
-                  ),
-                  const Text(" m/s²"),
+                  Text(warningMessage!),
                 ],
               ),
             ),
-            IconButton(onPressed: removed, icon: const Icon(Icons.delete))
-          ],
-        ),
+          ]
+        ],
       ),
     );
   }
@@ -287,6 +380,8 @@ class DriveInstructionEditor extends StatelessWidget {
 
 class TurnInstructionEditor extends StatefulWidget {
   final TurnInstruction instruction;
+  final SimulationResult simulationResult;
+  final int instructionIndex;
 
   final Function() removed;
   final Function(TurnInstruction newInstruction) textChanged;
@@ -295,7 +390,9 @@ class TurnInstructionEditor extends StatefulWidget {
       {super.key,
       required this.instruction,
       required this.textChanged,
-      required this.removed});
+      required this.removed,
+      required this.simulationResult,
+      required this.instructionIndex});
 
   @override
   State<TurnInstructionEditor> createState() => _TurnInstructionEditorState();
@@ -305,64 +402,101 @@ class _TurnInstructionEditorState extends State<TurnInstructionEditor> {
   late final TextEditingController rotation =
       TextEditingController(text: widget.instruction.turnDegree.toString());
 
+  String? warningMessage;
+
   @override
   Widget build(BuildContext context) {
+    final turnResult = widget.simulationResult
+        .instructionResults[widget.instructionIndex] as TurnResult;
+
+    final prevResult = widget.simulationResult.instructionResults
+            .elementAtOrNull(widget.instructionIndex) ??
+        startResult;
+
+    if (widget.instructionIndex ==
+            widget.simulationResult.instructionResults.length - 1 &&
+        turnResult.managedVelocity > 0) {
+      warningMessage = "Robi will not stop at the end";
+    } else if (prevResult.managedVelocity <= 0) {
+      warningMessage = "Zero velocity";
+    } else {
+      warningMessage = null;
+    }
+
     return Card(
-      child: Padding(
-        padding:
-            const EdgeInsets.only(left: 10, right: 40, top: 10, bottom: 10),
-        child: Row(
-          children: [
-            Expanded(
-              child: Row(
-                children: [
-                  Icon(widget.instruction.left
-                      ? Icons.turn_left
-                      : Icons.turn_right),
-                  const SizedBox(width: 10),
-                  const Text("Turn "),
-                  Flexible(
-                    child: Builder(builder: (context) {
-                      final controller = TextEditingController(
-                          text: widget.instruction.turnDegree.toString());
-                      return TextField(
-                        controller: controller,
-                        keyboardType: TextInputType.number,
-                        decoration: const InputDecoration(hintText: "Degree"),
-                        onChanged: (String? value) {
-                          final res = asdf(controller, value);
-                          if (res == null) {
-                            controller.text =
-                                widget.instruction.turnDegree.toString();
-                            return;
-                          }
-                          widget.instruction.turnDegree = res;
+      child: Column(
+        children: [
+          Padding(
+            padding:
+                const EdgeInsets.only(right: 40, left: 10, top: 5, bottom: 5),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Row(
+                    children: [
+                      Icon(widget.instruction.left
+                          ? Icons.turn_left
+                          : Icons.turn_right),
+                      const SizedBox(width: 10),
+                      const Text("Turn "),
+                      IntrinsicWidth(
+                        child: Form(
+                          child: TextFormField(
+                            style: const TextStyle(fontSize: 14),
+                            initialValue:
+                                widget.instruction.turnDegree.toString(),
+                            onChanged: (String? value) {
+                              if (value == null || value.isEmpty) return;
+                              final tried = double.tryParse(value);
+                              if (tried == null) return;
+                              widget.instruction.turnDegree = tried;
+                              widget.textChanged(widget.instruction);
+                            },
+                            inputFormatters: inputFormatters,
+                          ),
+                        ),
+                      ),
+                      const Text("° to the "),
+                      DropdownMenu(
+                        textStyle: const TextStyle(fontSize: 14),
+                        width: 100,
+                        inputDecorationTheme: const InputDecorationTheme(),
+                        initialSelection: widget.instruction.left,
+                        onSelected: (bool? value) {
+                          setState(() => widget.instruction.left = value!);
                           widget.textChanged(widget.instruction);
                         },
-                      );
-                    }),
+                        dropdownMenuEntries: const [
+                          DropdownMenuEntry(value: true, label: "left"),
+                          DropdownMenuEntry(value: false, label: "right"),
+                        ],
+                      ),
+                    ],
                   ),
-                  const Text("° to the "),
-                  Flexible(
-                    child: DropdownMenu(
-                      initialSelection: widget.instruction.left,
-                      onSelected: (bool? value) {
-                        setState(() => widget.instruction.left = value!);
-                        widget.textChanged(widget.instruction);
-                      },
-                      dropdownMenuEntries: const [
-                        DropdownMenuEntry(value: true, label: "left"),
-                        DropdownMenuEntry(value: false, label: "right"),
-                      ],
-                    ),
-                  ),
+                ),
+                IconButton(
+                    onPressed: widget.removed, icon: const Icon(Icons.delete)),
+              ],
+            ),
+          ),
+          if (warningMessage != null) ...[
+            const Divider(height: 0),
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                  borderRadius:
+                      const BorderRadius.vertical(bottom: Radius.circular(10)),
+                  color: Colors.yellow.withAlpha(50)),
+              child: Row(
+                children: [
+                  const Icon(Icons.warning),
+                  const SizedBox(width: 10),
+                  Text(warningMessage!),
                 ],
               ),
             ),
-            IconButton(
-                onPressed: widget.removed, icon: const Icon(Icons.delete)),
           ],
-        ),
+        ],
       ),
     );
   }

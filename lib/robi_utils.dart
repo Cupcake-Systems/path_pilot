@@ -1,6 +1,8 @@
 import 'dart:math';
 import 'package:vector_math/vector_math.dart';
 
+import 'robi_path_serializer.dart';
+
 abstract class MissionInstruction {
   const MissionInstruction();
 
@@ -90,7 +92,7 @@ class Simulator {
   SimulationResult calculate(List<MissionInstruction> instructions) {
     List<InstructionResult> results = [];
 
-    InstructionResult prevInstruction = DriveResult(0, 0, Vector2.zero(), 0);
+    InstructionResult prevInstruction = startResult;
 
     double maxManagedVel = 0;
     double maxTargetVel = 0;

@@ -1,37 +1,17 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:robi_line_drawer/line_painter.dart';
 import 'package:robi_line_drawer/robi_utils.dart';
 
-class MyEvent {
-  final List<MissionInstruction> instructions;
-
-  const MyEvent(this.instructions);
-}
-
-class EventListener {
-  final StreamController<MyEvent> _controller =
-      StreamController<MyEvent>.broadcast();
-
-  Stream<MyEvent> get eventStream => _controller.stream;
-
-  void fireEvent(List<MissionInstruction> instructions) =>
-      _controller.add(MyEvent(instructions));
-
-  void dispose() => _controller.close();
-}
-
 class Visualizer extends StatefulWidget {
-  final List<MissionInstruction> initialInstructions;
-  final EventListener listener;
-  final RobiConfig robiConfig;
+  final SimulationResult simulationResult;
+  final double scale;
+  final void Function(double scale) scaleChanged;
 
   const Visualizer({
     super.key,
-    required this.initialInstructions,
-    required this.listener,
-    required this.robiConfig,
+    required this.simulationResult,
+    required this.scale,
+    required this.scaleChanged,
   });
 
   @override
@@ -39,20 +19,13 @@ class Visualizer extends StatefulWidget {
 }
 
 class _VisualizerState extends State<Visualizer> {
-  late List<MissionInstruction> instructions = widget.initialInstructions;
-  double scale = 200;
-
-  @override
-  void initState() {
-    super.initState();
-    widget.listener.eventStream
-        .listen((event) => setState(() => instructions = event.instructions));
-  }
+  late var simulationResult = widget.simulationResult;
+  late double scale = widget.scale;
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.all(8.0),
+      padding: const EdgeInsets.all(8),
       child: Column(
         children: [
           AppBar(title: const Text("Visual Editor")),
@@ -65,7 +38,7 @@ class _VisualizerState extends State<Visualizer> {
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(10),
                 child: CustomPaint(
-                  painter: LinePainter(instructions, scale, widget.robiConfig),
+                  painter: LinePainter(scale, simulationResult),
                   child: Container(),
                 ),
               ),
@@ -79,13 +52,16 @@ class _VisualizerState extends State<Visualizer> {
                   value: scale,
                   min: 25,
                   max: 200,
-                  onChanged: (double value) => setState(() => scale = value),
+                  onChanged: (double value) {
+                    setState(() => scale = value);
+                    widget.scaleChanged(scale);
+                  },
                 ),
               ),
               SizedBox(
-                  width: 40,
-                  child:
-                      Text("${(scale).round()}%", textAlign: TextAlign.center)),
+                width: 40,
+                child: Text("${(scale).round()}%", textAlign: TextAlign.center),
+              ),
             ],
           )
         ],
