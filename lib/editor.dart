@@ -4,8 +4,10 @@ import 'package:robi_line_drawer/visualizer.dart';
 
 class Editor extends StatefulWidget {
   final List<MissionInstruction> instructions;
+  final RobiConfig robiConfig;
 
-  const Editor({super.key, required this.instructions});
+  const Editor(
+      {super.key, required this.instructions, required this.robiConfig});
 
   @override
   State<Editor> createState() => _EditorState();
@@ -21,7 +23,8 @@ class _EditorState extends State<Editor> {
         Flexible(
           child: Visualizer(
             initialInstructions: widget.instructions,
-            listener: listener, robiConfig: RobiConfig(0.035, 0.147),
+            listener: listener,
+            robiConfig: widget.robiConfig,
           ),
         ),
         const VerticalDivider(width: 0),

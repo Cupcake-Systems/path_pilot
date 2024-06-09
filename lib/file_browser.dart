@@ -5,6 +5,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:path/path.dart';
 import 'package:robi_line_drawer/editor.dart';
+import 'package:robi_line_drawer/robi_config.dart';
 import 'package:robi_line_drawer/robi_path_serializer.dart';
 import 'package:robi_line_drawer/robi_utils.dart';
 import 'package:robi_line_drawer/settings/settings.dart';
@@ -19,7 +20,10 @@ class FileBrowser extends StatefulWidget {
 class _FileBrowserState extends State<FileBrowser>
     with TickerProviderStateMixin {
   File? focusedFile;
-  Map<String, List<MissionInstruction>> instructionTable = {};
+  final Map<String, List<MissionInstruction>> instructionTable = {};
+
+  RobiConfig selectedRobiConfig = RobiConfig(0.035, 0.147, name: "Default");
+  late final List<RobiConfig> robiConfigs = [selectedRobiConfig];
 
   @override
   Widget build(BuildContext context) {
@@ -51,6 +55,7 @@ class _FileBrowserState extends State<FileBrowser>
                         },
                         child: const MenuAcceleratorLabel('&Open'),
                       ),
+                      const Divider(height: 0),
                       MenuItemButton(
                         leadingIcon: const Icon(Icons.save),
                         onPressed: focusedFile == null
@@ -71,6 +76,7 @@ class _FileBrowserState extends State<FileBrowser>
                         onPressed: focusedFile == null ? null : saveAs,
                         child: const MenuAcceleratorLabel('&Save as...'),
                       ),
+                      const Divider(height: 0),
                       MenuItemButton(
                         leadingIcon: const Icon(Icons.settings),
                         onPressed: () {
@@ -85,19 +91,64 @@ class _FileBrowserState extends State<FileBrowser>
                     ],
                     child: const MenuAcceleratorLabel('&File'),
                   ),
-                  SubmenuButton(menuChildren: [
-                    MenuItemButton(
-                      leadingIcon: const Icon(Icons.info),
-                      onPressed: () {
-                        showAboutDialog(
+                  SubmenuButton(
+                    menuChildren: [
+                      MenuItemButton(
+                        leadingIcon: const Icon(Icons.add),
+                        onPressed: () => showDialog(
                           context: context,
-                          applicationName: "Robi Line Drawer",
-                          applicationVersion: "1.0.0",
-                        );
-                      },
-                      child: const MenuAcceleratorLabel('&About'),
-                    ),
-                  ], child: const MenuAcceleratorLabel("&Help")),
+                          builder: (context) => RobiConfigurator(
+                              addedConfig: (config) => setState(() {
+                                    robiConfigs.add(config);
+                                    selectedRobiConfig = config;
+                                  }),
+                              index: robiConfigs.length),
+                        ),
+                        child: const MenuAcceleratorLabel('&New'),
+                      ),
+                      const Divider(height: 0),
+                      SubmenuButton(
+                        menuChildren: [
+                          for (int i = 0; i < robiConfigs.length; ++i)
+                            RadioMenuButton(
+                              trailingIcon: robiConfigs.length <= 1
+                                  ? null
+                                  : IconButton(
+                                      icon: const Icon(Icons.delete),
+                                      onPressed: () => setState(() {
+                                        robiConfigs.remove(robiConfigs[i]);
+                                        selectedRobiConfig = robiConfigs[0];
+                                      }),
+                                    ),
+                              value: robiConfigs[i],
+                              groupValue: selectedRobiConfig,
+                              onChanged: (value) =>
+                                  setState(() => selectedRobiConfig = value!),
+                              child: MenuAcceleratorLabel(
+                                  robiConfigs[i].name ?? '&Config ${i + 1}'),
+                            )
+                        ],
+                        child: const MenuAcceleratorLabel('&Select'),
+                      ),
+                    ],
+                    child: const MenuAcceleratorLabel("&Robi Config"),
+                  ),
+                  SubmenuButton(
+                    menuChildren: [
+                      MenuItemButton(
+                        leadingIcon: const Icon(Icons.info),
+                        onPressed: () {
+                          showAboutDialog(
+                            context: context,
+                            applicationName: "Robi Line Drawer",
+                            applicationVersion: "1.0.0",
+                          );
+                        },
+                        child: const MenuAcceleratorLabel('&About'),
+                      ),
+                    ],
+                    child: const MenuAcceleratorLabel("&Help"),
+                  ),
                 ],
               ),
             ),
@@ -123,46 +174,7 @@ class _FileBrowserState extends State<FileBrowser>
                                 tabAlignment: TabAlignment.start,
                                 isScrollable: true,
                                 labelColor: Colors.white,
-                                tabs: instructionTable.keys
-                                    .map(
-                                      (file) => SizedBox(
-                                        height: 30,
-                                        child: Row(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.spaceBetween,
-                                          mainAxisSize: MainAxisSize.min,
-                                          children: [
-                                            const Icon(Icons.edit_document,
-                                                size: 15),
-                                            const SizedBox(width: 10),
-                                            Text(
-                                              basename(file).split(".")[0],
-                                              textAlign: TextAlign.center,
-                                            ),
-                                            const SizedBox(width: 10),
-                                            SizedBox(
-                                              width: 20,
-                                              height: 20,
-                                              child: IconButton(
-                                                padding: EdgeInsets.zero,
-                                                onPressed: () {
-                                                  setState(() {
-                                                    instructionTable
-                                                        .remove(file);
-                                                    if (instructionTable
-                                                        .isEmpty)
-                                                      focusedFile = null;
-                                                  });
-                                                },
-                                                iconSize: 17,
-                                                icon: const Icon(Icons.close),
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    )
-                                    .toList(),
+                                tabs: buildTabs(),
                               ),
                             ),
                           ],
@@ -171,8 +183,9 @@ class _FileBrowserState extends State<FileBrowser>
                     ),
                     body: TabBarView(
                       children: instructionTable.values
-                          .map((instructions) =>
-                              Editor(instructions: instructions))
+                          .map((instructions) => Editor(
+                              instructions: instructions,
+                              robiConfig: selectedRobiConfig))
                           .toList(),
                     ),
                   ),
@@ -180,6 +193,39 @@ class _FileBrowserState extends State<FileBrowser>
         ),
       ],
     );
+  }
+
+  List<Widget> buildTabs() {
+    return instructionTable.keys
+        .map(
+          (file) => SizedBox(
+            height: 30,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.edit_document, size: 15),
+                const SizedBox(width: 10),
+                Text(basename(file).split(".")[0], textAlign: TextAlign.center),
+                const SizedBox(width: 10),
+                SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: IconButton(
+                    padding: EdgeInsets.zero,
+                    onPressed: () => setState(() {
+                      instructionTable.remove(file);
+                      if (instructionTable.isEmpty) focusedFile = null;
+                    }),
+                    iconSize: 17,
+                    icon: const Icon(Icons.close),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        )
+        .toList();
   }
 
   Future<void> openTab(BuildContext context, File tab) async {

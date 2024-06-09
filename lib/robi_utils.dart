@@ -189,6 +189,7 @@ double cosD(double deg) => cos(deg * (pi / 180));
 
 class RobiConfig {
   final double wheelRadius, trackWidth;
+  final String? name;
 
-  RobiConfig(this.wheelRadius, this.trackWidth);
+  RobiConfig(this.wheelRadius, this.trackWidth, {this.name});
 }
