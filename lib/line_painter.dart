@@ -34,14 +34,14 @@ class LinePainter extends CustomPainter {
       ..color = white.withAlpha(50);
 
     for (double x = scale / 2 + size.width / 2 % scale;
-        x <= size.width;
-        x += scale) {
+    x <= size.width;
+    x += scale) {
       canvas.drawLine(Offset(x, 0), Offset(x, size.height), paint);
     }
 
     for (double y = scale / 2 + size.height / 2 % scale;
-        y <= size.height;
-        y += scale) {
+    y <= size.height;
+    y += scale) {
       canvas.drawLine(Offset(0, y), Offset(size.width, y), paint);
     }
   }
@@ -65,7 +65,7 @@ class LinePainter extends CustomPainter {
   void paintText(String text, Offset offset, Canvas canvas, Size size) {
     final textSpan = TextSpan(text: text);
     final textPainter =
-        TextPainter(text: textSpan, textDirection: TextDirection.ltr);
+    TextPainter(text: textSpan, textDirection: TextDirection.ltr);
     textPainter.layout(minWidth: 0, maxWidth: size.width);
     textPainter.paint(
         canvas,
@@ -156,7 +156,8 @@ class LinePainter extends CustomPainter {
 
   void drawTurn(InstructionResult prevInstructionResult, TurnResult instruction,
       Canvas canvas, Size size) {
-    if (prevInstructionResult.endPosition == instruction.endPosition) {
+    if (prevInstructionResult.endPosition == instruction.endPosition &&
+        instruction.endRotation % 360 > 0.00001) {
       return;
     }
 
@@ -166,7 +167,7 @@ class LinePainter extends CustomPainter {
       ..style = PaintingStyle.stroke;
 
     final degree =
-        (prevInstructionResult.endRotation - instruction.endRotation).abs();
+    (prevInstructionResult.endRotation - instruction.endRotation).abs();
     final left = prevInstructionResult.endRotation < instruction.endRotation;
 
     final path = drawCirclePart(
@@ -195,19 +196,25 @@ class LinePainter extends CustomPainter {
 
     center += offset;
 
-    return Path()
+    Path p = Path();
+
+    if (degree >= 360) {
+      p.addOval(Rect.fromCircle(center: vecToOffset(center, size), radius: radius * scale));
+    }
+
+    return p
       ..arcTo(
         Rect.fromCircle(
             center: vecToOffset(center, size), radius: radius * scale),
         startAngle * (pi / 180),
         sweepAngle * (pi / 180),
-        false,
+        true,
       );
   }
 
   Color velocityToColor(double velocity) {
     int r =
-        ((1 - velocity / simulationResult.maxTargetedVelocity) * 255).round();
+    ((1 - velocity / simulationResult.maxTargetedVelocity) * 255).round();
     int g = 255 - r;
     return Color.fromARGB(255, r, g, 0);
   }
