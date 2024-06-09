@@ -58,12 +58,8 @@ class _VisualizerState extends State<Visualizer> {
           AppBar(title: const Text("Visual Editor")),
           Expanded(
             child: Center(
-              child: Container(
-                color: Colors.white,
-                padding: const EdgeInsets.all(2),
-                child: CustomPaint(
-                  painter: LinePainter(instructions, scale, widget.robiConfig),
-                ),
+              child: CustomPaint(
+                painter: LinePainter(instructions, scale, widget.robiConfig),
               ),
             ),
           ),
