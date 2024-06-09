@@ -57,10 +57,17 @@ class _VisualizerState extends State<Visualizer> {
         children: [
           AppBar(title: const Text("Visual Editor")),
           Expanded(
-            child: Center(
-              child: CustomPaint(
-                painter: LinePainter(instructions, scale, widget.robiConfig),
-                child: Container(),
+            child: Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: Colors.grey),
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(10),
+                child: CustomPaint(
+                  painter: LinePainter(instructions, scale, widget.robiConfig),
+                  child: Container(),
+                ),
               ),
             ),
           ),
@@ -75,7 +82,10 @@ class _VisualizerState extends State<Visualizer> {
                   onChanged: (double value) => setState(() => scale = value),
                 ),
               ),
-              SizedBox(width: 40, child: Text("${(scale).round()}%", textAlign: TextAlign.center)),
+              SizedBox(
+                  width: 40,
+                  child:
+                      Text("${(scale).round()}%", textAlign: TextAlign.center)),
             ],
           )
         ],

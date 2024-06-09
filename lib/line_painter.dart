@@ -83,8 +83,8 @@ class LinePainter extends CustomPainter {
       velocityToColor(simulationResult.maxTargetedVelocity)
     ];
 
-    final lineStart = Offset(size.width - 120, size.height - 20);
-    final lineEnd = Offset(size.width - 20, size.height - 20);
+    final lineStart = Offset(size.width - 130, size.height - 20);
+    final lineEnd = Offset(size.width - 30, size.height - 20);
 
     final accelerationPaint = Paint()
       ..shader = RadialGradient(
