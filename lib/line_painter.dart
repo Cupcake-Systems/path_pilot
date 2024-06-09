@@ -9,11 +9,13 @@ class LinePainter extends CustomPainter {
   final double scale;
   final RobiConfig robiConfig;
   late final double strokeWidth;
-  late final Simulater simulater;
+  late final Simulator simulater;
+
+  static const Color white = Color(0xFFFFFFFF);
 
   LinePainter(
       List<MissionInstruction> instructions, this.scale, this.robiConfig) {
-    simulater = Simulater(robiConfig);
+    simulater = Simulator(robiConfig);
     simulationResult = simulater.calculate(instructions);
     strokeWidth = 5 * (scale.toDouble() / 100);
   }
@@ -47,7 +49,7 @@ class LinePainter extends CustomPainter {
   void paintScale(Canvas canvas, Size size) {
     final Paint paint = Paint()
       ..strokeWidth = 1
-      ..color = const Color.fromARGB(255, 255, 255, 255);
+      ..color = white;
 
     canvas.drawLine(
         Offset(1, size.height - 20), Offset(99, size.height - 20), paint);
@@ -56,20 +58,61 @@ class LinePainter extends CustomPainter {
     canvas.drawLine(
         Offset(0, size.height - 25), Offset(0, size.height - 15), paint);
 
-    final textSpan = TextSpan(text: "${(100.0 / scale).toStringAsFixed(2)}m");
+    paintText("${(100.0 / scale).toStringAsFixed(2)}m",
+        Offset(30, size.height - 20), canvas, size);
+  }
+
+  void paintText(String text, Offset offset, Canvas canvas, Size size) {
+    final textSpan = TextSpan(text: text);
     final textPainter =
         TextPainter(text: textSpan, textDirection: TextDirection.ltr);
     textPainter.layout(minWidth: 0, maxWidth: size.width);
-    const xCenter = 30.0;
-    final yCenter = (size.height - textPainter.height) - 20;
+    textPainter.paint(
+        canvas, Offset(offset.dx, offset.dy - textPainter.height));
+  }
 
-    textPainter.paint(canvas, Offset(xCenter, yCenter));
+  void paintVelocityScale(Canvas canvas, Size size) {
+    if (simulationResult.maxTargetedVelocity <= 0) return;
+
+    List<Color> colors = [
+      velocityToColor(0),
+      velocityToColor(simulationResult.maxTargetedVelocity)
+    ];
+
+    final lineStart = Offset(size.width - 120, size.height - 20);
+    final lineEnd = Offset(size.width - 20, size.height - 20);
+
+    final accelerationPaint = Paint()
+      ..shader = RadialGradient(
+        colors: colors,
+        radius: 0.5 / sqrt2,
+      ).createShader(
+          Rect.fromCircle(center: lineStart, radius: lineEnd.dx - lineStart.dx))
+      ..strokeWidth = 10;
+
+    canvas.drawLine(lineStart, lineEnd, accelerationPaint);
+    canvas.drawLine(
+        lineStart.translate(-1, -5),
+        lineStart.translate(-1, 5),
+        Paint()
+          ..color = white
+          ..strokeWidth = 1);
+    canvas.drawLine(
+        lineEnd.translate(1, -5),
+        lineEnd.translate(1, 5),
+        Paint()
+          ..color = white
+          ..strokeWidth = 1);
+    paintText("0m/s", lineStart.translate(-15, -7), canvas, size);
+    paintText("${simulationResult.maxTargetedVelocity}m/s",
+        lineEnd.translate(-20, -7), canvas, size);
   }
 
   @override
   void paint(Canvas canvas, Size size) {
     paintGrid(canvas, size);
     paintScale(canvas, size);
+    paintVelocityScale(canvas, size);
 
     InstructionResult prevResult = DriveResult(0, 0, Vector2.zero(), 0);
 
@@ -98,7 +141,7 @@ class LinePainter extends CustomPainter {
     final accelerationPaint = Paint()
       ..shader = RadialGradient(
         colors: colors,
-        radius: 0.5 * (1 / sqrt2),
+        radius: 0.5 / sqrt2,
       ).createShader(Rect.fromCircle(
           center: vecToOffset(prevInstructionResult.endPosition),
           radius: instructionResult.accelerationDistance * scale))
@@ -157,7 +200,8 @@ class LinePainter extends CustomPainter {
   }
 
   Color velocityToColor(double velocity) {
-    int r = (velocity / simulationResult.maxTargetedVelocity * 255).round();
+    int r =
+        ((1 - velocity / simulationResult.maxTargetedVelocity) * 255).round();
     int g = 255 - r;
     return Color.fromARGB(255, r, g, 0);
   }

@@ -82,10 +82,10 @@ class SimulationResult {
   );
 }
 
-class Simulater {
+class Simulator {
   final RobiConfig robiConfig;
 
-  const Simulater(this.robiConfig);
+  const Simulator(this.robiConfig);
 
   SimulationResult calculate(List<MissionInstruction> instructions) {
     List<InstructionResult> results = [];
