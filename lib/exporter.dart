@@ -34,5 +34,5 @@ class Exporter {
 
   static Future<File> saveToFile(File file, RobiConfig config,
           List<MissionInstruction> instructions) =>
-      file.writeAsString(encoding: ascii, encode(config, instructions));
+      file.writeAsString(encode(config, instructions));
 }

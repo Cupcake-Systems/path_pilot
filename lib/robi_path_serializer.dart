@@ -33,6 +33,8 @@ class InstructionContainer {
       instruction = DriveInstruction.fromJson(json["instruction"]);
     } else if (type == AvailableInstruction.turnInstruction) {
       instruction = TurnInstruction.fromJson(json["instruction"]);
+    } else {
+      throw UnsupportedError("");
     }
   }
 
@@ -45,7 +47,7 @@ class InstructionContainer {
 class RobiPathSerializer {
   static Future<File> saveToFile(
           File file, List<MissionInstruction> instructions) =>
-      file.writeAsString(encoding: ascii, encode(instructions));
+      file.writeAsString(encode(instructions));
 
   static String encode(List<MissionInstruction> instructions) {
     final List<InstructionContainer> containers = [];
@@ -58,7 +60,8 @@ class RobiPathSerializer {
   static Iterable<MissionInstruction>? decode(String json) {
     try {
       final List<dynamic> decoded = jsonDecode(json);
-      final parsed = decoded.map((e) => InstructionContainer.fromJson(e).instruction);
+      final parsed =
+          decoded.map((e) => InstructionContainer.fromJson(e).instruction);
       return parsed;
     } on Exception {
       return null;

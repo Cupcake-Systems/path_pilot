@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
@@ -250,7 +249,7 @@ class _FileBrowserState extends State<FileBrowser>
     final Iterable<MissionInstruction>? newInstructions;
 
     if (!instructionTable.containsKey(tab.absolute.path)) {
-      final data = await tab.readAsString(encoding: ascii);
+      final data = await tab.readAsString();
       newInstructions = RobiPathSerializer.decode(data);
 
       if (newInstructions == null) {
