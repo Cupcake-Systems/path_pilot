@@ -1,7 +1,11 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:robi_line_drawer/constants.dart';
 import 'package:robi_line_drawer/file_browser.dart';
 
 void main() {
+  LicenseRegistry.addLicense(() => Stream<LicenseEntry>.value(
+      const LicenseEntryWithLineBreaks(<String>["robi_line_drawer"], license)));
   runApp(const MyApp());
 }
 

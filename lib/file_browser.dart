@@ -142,6 +142,7 @@ class _FileBrowserState extends State<FileBrowser>
                             context: context,
                             applicationName: "Robi Line Drawer",
                             applicationVersion: "1.0.0",
+                            applicationLegalese: "© Copyright Finn Drünert 2024"
                           );
                         },
                         child: const MenuAcceleratorLabel('&About'),
