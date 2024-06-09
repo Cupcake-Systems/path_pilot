@@ -21,7 +21,7 @@ class _EditorState extends State<Editor> {
         Flexible(
           child: Visualizer(
             initialInstructions: widget.instructions,
-            listener: listener,
+            listener: listener, robiConfig: RobiConfig(0.035, 0.147),
           ),
         ),
         const VerticalDivider(width: 0),
