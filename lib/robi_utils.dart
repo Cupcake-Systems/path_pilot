@@ -39,7 +39,7 @@ class TurnInstruction extends MissionInstruction {
   @override
   TurnInstruction.fromJson(Map<String, dynamic> json)
       : turnDegree = json["turn_degree"]!,
-        left = json["turn_degree"]!;
+        left = json["left"]!;
 
   @override
   Map<String, dynamic> toJson() => {
