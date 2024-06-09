@@ -90,39 +90,62 @@ class _FileBrowserState extends State<FileBrowser>
               : DefaultTabController(
                   length: instructionTable.length,
                   child: Scaffold(
-                    appBar: AppBar(
-                      flexibleSpace: Column(
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        children: [
-                          TabBar(
-                            tabAlignment: TabAlignment.start,
-                            isScrollable: true,
-                            tabs: instructionTable.keys
-                                .map(
-                                  (file) => SizedBox(
-                                    width: 200,
-                                    height: 54,
-                                    child: ListTile(
-                                      leading: const Icon(Icons.edit_document),
-                                      title: Tab(
-                                          text: basename(file).split(".")[0]),
-                                      trailing: IconButton(
-                                        onPressed: () {
-                                          setState(() {
-                                            instructionTable.remove(file);
-                                            if (instructionTable.isEmpty) focusedFile = null;
-                                          });
-                                        },
-                                        icon: const Icon(Icons.close),
+                    appBar: PreferredSize(
+                      preferredSize: const Size.fromHeight(32),
+                      child: AppBar(
+                        flexibleSpace: Column(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            SizedBox(
+                              child: TabBar(
+                                labelPadding:
+                                    const EdgeInsets.symmetric(horizontal: 5),
+                                tabAlignment: TabAlignment.start,
+                                isScrollable: true,
+                                labelColor: Colors.white,
+                                tabs: instructionTable.keys
+                                    .map(
+                                      (file) => SizedBox(
+                                        height: 30,
+                                        child: Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.spaceBetween,
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            const Icon(Icons.edit_document,
+                                                size: 15),
+                                            const SizedBox(width: 10),
+                                            Text(
+                                              basename(file).split(".")[0],
+                                              textAlign: TextAlign.center,
+                                            ),
+                                            const SizedBox(width: 10),
+                                            SizedBox(
+                                              width: 20,
+                                              height: 20,
+                                              child: IconButton(
+                                                padding: EdgeInsets.zero,
+                                                onPressed: () {
+                                                  setState(() {
+                                                    instructionTable.remove(file);
+                                                    if (instructionTable.isEmpty)
+                                                      focusedFile = null;
+                                                  });
+                                                },
+                                                iconSize: 17,
+                                                icon: const Icon(Icons.close),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
                                       ),
-                                      dense: true,
-                                      contentPadding: EdgeInsets.zero,
-                                    ),
-                                  ),
-                                )
-                                .toList(),
-                          )
-                        ],
+                                    )
+                                    .toList(),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                     body: TabBarView(
