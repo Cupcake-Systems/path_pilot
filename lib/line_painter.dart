@@ -3,7 +3,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:robi_line_drawer/robi_path_serializer.dart';
 import 'package:robi_line_drawer/robi_utils.dart';
-import 'package:vector_math/vector_math.dart';
+import 'package:vector_math/vector_math.dart' show Vector2;
 
 class LinePainter extends CustomPainter {
   final SimulationResult simulationResult;
@@ -34,14 +34,14 @@ class LinePainter extends CustomPainter {
       ..color = white.withAlpha(50);
 
     for (double x = scale / 2 + size.width / 2 % scale;
-    x <= size.width;
-    x += scale) {
+        x <= size.width;
+        x += scale) {
       canvas.drawLine(Offset(x, 0), Offset(x, size.height), paint);
     }
 
     for (double y = scale / 2 + size.height / 2 % scale;
-    y <= size.height;
-    y += scale) {
+        y <= size.height;
+        y += scale) {
       canvas.drawLine(Offset(0, y), Offset(size.width, y), paint);
     }
   }
@@ -65,7 +65,7 @@ class LinePainter extends CustomPainter {
   void paintText(String text, Offset offset, Canvas canvas, Size size) {
     final textSpan = TextSpan(text: text);
     final textPainter =
-    TextPainter(text: textSpan, textDirection: TextDirection.ltr);
+        TextPainter(text: textSpan, textDirection: TextDirection.ltr);
     textPainter.layout(minWidth: 0, maxWidth: size.width);
     textPainter.paint(
         canvas,
@@ -156,34 +156,34 @@ class LinePainter extends CustomPainter {
 
   void drawTurn(InstructionResult prevInstructionResult, TurnResult instruction,
       Canvas canvas, Size size) {
-    if (prevInstructionResult.endPosition == instruction.endPosition &&
-        instruction.endRotation % 360 > 0.00001) {
+    if (prevInstructionResult.endPosition == instruction.endPosition) {
       return;
     }
 
-    final paint = Paint()
-      ..color = velocityToColor(prevInstructionResult.managedVelocity)
-      ..strokeWidth = strokeWidth
-      ..style = PaintingStyle.stroke;
-
     final degree =
-    (prevInstructionResult.endRotation - instruction.endRotation).abs();
+        (prevInstructionResult.endRotation - instruction.endRotation).abs();
     final left = prevInstructionResult.endRotation < instruction.endRotation;
 
-    final path = drawCirclePart(
+    List<Color> colors = [
+      velocityToColor(prevInstructionResult.managedVelocity),
+      velocityToColor(instruction.managedVelocity)
+    ];
+
+    drawCirclePart(
         instruction.turnRadius,
         degree,
         prevInstructionResult.endRotation,
         prevInstructionResult.endPosition,
         left,
-        size);
-    canvas.drawPath(path, paint);
+        canvas,
+        size,
+        colors);
   }
 
-  Path drawCirclePart(double radius, double degree, double rotation,
-      Vector2 offset, bool left, Size size) {
+  void drawCirclePart(double radius, double degree, double rotation,
+      Vector2 offset, bool left, Canvas canvas, Size size, List<Color> colors) {
     double startAngle = 270 - rotation;
-    double sweepAngle = degree;
+    double sweepAngle = degree % 360;
 
     Vector2 center = polarToCartesian(rotation + 90, radius);
 
@@ -196,25 +196,42 @@ class LinePainter extends CustomPainter {
 
     center += offset;
 
-    Path p = Path();
+    final rect = Rect.fromCircle(
+        center: vecToOffset(center, size), radius: radius * scale);
 
-    if (degree >= 360) {
-      p.addOval(Rect.fromCircle(center: vecToOffset(center, size), radius: radius * scale));
+    double o = startAngle;
+
+    if (left) {
+      colors = colors.reversed.toList();
     }
 
-    return p
-      ..arcTo(
-        Rect.fromCircle(
-            center: vecToOffset(center, size), radius: radius * scale),
-        startAngle * (pi / 180),
-        sweepAngle * (pi / 180),
-        true,
-      );
+    final paint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = strokeWidth
+      ..shader = SweepGradient(
+        colors: colors,
+        stops: [0, degree / 360],
+        transform: GradientRotation(o * (pi / 180)),
+      ).createShader(rect);
+
+    if (degree >= 360) {
+      canvas.drawCircle(vecToOffset(center, size), radius * scale, paint);
+    }
+
+    canvas.drawArc(
+      rect,
+      startAngle * (pi / 180),
+      sweepAngle * (pi / 180),
+      false,
+      paint,
+    );
+
+    //canvas.drawCircle(vecToOffset(center, size), scale * radius, paint);
   }
 
   Color velocityToColor(double velocity) {
     int r =
-    ((1 - velocity / simulationResult.maxTargetedVelocity) * 255).round();
+        ((1 - velocity / simulationResult.maxTargetedVelocity) * 255).round();
     int g = 255 - r;
     return Color.fromARGB(255, r, g, 0);
   }

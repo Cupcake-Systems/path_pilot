@@ -6,12 +6,14 @@ class Visualizer extends StatefulWidget {
   final SimulationResult simulationResult;
   final double scale;
   final void Function(double scale) scaleChanged;
+  final RobiConfig robiConfig;
 
   const Visualizer({
     super.key,
     required this.simulationResult,
     required this.scale,
     required this.scaleChanged,
+    required this.robiConfig,
   });
 
   @override
@@ -38,7 +40,10 @@ class _VisualizerState extends State<Visualizer> {
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(10),
                 child: CustomPaint(
-                  painter: LinePainter(scale, simulationResult),
+                  painter: LinePainter(
+                    scale,
+                    simulationResult,
+                  ),
                   child: Container(),
                 ),
               ),

@@ -163,12 +163,28 @@ class Simulator {
 
   TurnResult simulateTurn(
       InstructionResult prevInstructionResult, TurnInstruction instruction) {
-    if (prevInstructionResult.managedVelocity <= 0) {
+    if (prevInstructionResult.managedVelocity <= 0 ||
+        instruction.turnDegree <= 0) {
       return TurnResult(0, prevInstructionResult.endRotation,
           prevInstructionResult.endPosition, 0);
     }
 
     double radius = instruction.radius + robiConfig.trackWidth / 2;
+
+    final innerDistance = radius * pi * instruction.turnDegree / 180;
+    final outerDistance = (instruction.radius + robiConfig.trackWidth) *
+        pi *
+        instruction.turnDegree /
+        180;
+
+    double innerVelocity;
+
+    if (prevInstructionResult is TurnResult) {
+      innerVelocity = prevInstructionResult.managedVelocity;
+    } else {
+      double timeForCompletion = outerDistance / prevInstructionResult.managedVelocity;
+      innerVelocity = innerDistance / timeForCompletion;
+    }
 
     double rotation = prevInstructionResult.endRotation;
     double degree = instruction.turnDegree - 90;
@@ -193,8 +209,7 @@ class Simulator {
       rotation -= instruction.turnDegree;
     }
 
-    return TurnResult(
-        prevInstructionResult.managedVelocity, rotation, endOffset, radius);
+    return TurnResult(innerVelocity, rotation, endOffset, radius);
   }
 }
 

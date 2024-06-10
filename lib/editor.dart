@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:robi_line_drawer/robi_utils.dart';
@@ -45,6 +47,7 @@ class _EditorState extends State<Editor> {
             key: ValueKey(simulationResult),
             scale: scale,
             scaleChanged: (newScale) => scale = newScale,
+            robiConfig: widget.robiConfig,
           ),
         ),
         const VerticalDivider(width: 0),
@@ -110,7 +113,16 @@ class _EditorState extends State<Editor> {
                                   TextButton(
                                     onPressed: () {
                                       Navigator.pop(context);
-                                      addInstruction(selectedInstruction);
+                                      addInstruction(
+                                          selectedInstruction,
+                                          simulationResult.instructionResults
+                                                  .lastOrNull ??
+                                              startResult,
+                                          simulationResult.instructionResults
+                                                  .lastWhere(
+                                                      (e) => e is DriveResult,
+                                                      orElse: () => startResult)
+                                              as DriveResult);
                                     },
                                     child: const Text("Ok"),
                                   ),
@@ -143,7 +155,7 @@ class _EditorState extends State<Editor> {
                         );
                       } else if (instruction is TurnInstruction) {
                         w = TurnInstructionEditor(
-                          key: Key("$i$simulationResult"),
+                          key: Key("$i"),
                           instruction: instruction,
                           textChanged: (newInstruction) {
                             instructions[i] = newInstruction;
@@ -203,11 +215,25 @@ class _EditorState extends State<Editor> {
   void rerunSimulationAndUpdate() => setState(() =>
       simulationResult = Simulator(widget.robiConfig).calculate(instructions));
 
-  void addInstruction(AvailableInstruction instruction) {
+  void addInstruction(AvailableInstruction instruction,
+      InstructionResult prevInstResult, DriveResult lastDriveResult) {
     MissionInstruction inst;
+
     switch (instruction) {
       case AvailableInstruction.driveInstruction:
-        inst = DriveInstruction(1, 0.5, 0.3);
+        double acceleration = 0.3;
+        double targetVel = 0.5;
+        double distance = 1;
+
+        if (prevInstResult is TurnResult) {
+          targetVel = lastDriveResult.managedVelocity;
+          distance =
+              (pow(targetVel, 2) - pow(prevInstResult.managedVelocity, 2)) /
+                  (2 * acceleration);
+        }
+
+        inst = DriveInstruction(roundToDigits(distance, 2),
+            roundToDigits(targetVel, 2), acceleration);
         break;
       case AvailableInstruction.turnInstruction:
         inst = TurnInstruction(90, false, 0.1);
@@ -223,6 +249,11 @@ double? asdf(TextEditingController controller, String? value) {
   if (value.isEmpty) return 0;
   final parsed = double.tryParse(value);
   return parsed;
+}
+
+double roundToDigits(double num, int digits) {
+  final e = pow(10, digits);
+  return (num * e).roundToDouble() / e;
 }
 
 class DriveInstructionEditor extends StatelessWidget {
@@ -443,20 +474,18 @@ class _TurnInstructionEditorState extends State<TurnInstructionEditor> {
                       const SizedBox(width: 10),
                       const Text("Turn "),
                       IntrinsicWidth(
-                        child: Form(
-                          child: TextFormField(
-                            style: const TextStyle(fontSize: 14),
-                            initialValue:
-                                widget.instruction.turnDegree.toString(),
-                            onChanged: (String? value) {
-                              if (value == null || value.isEmpty) return;
-                              final tried = double.tryParse(value);
-                              if (tried == null) return;
-                              widget.instruction.turnDegree = tried;
-                              widget.textChanged(widget.instruction);
-                            },
-                            inputFormatters: inputFormatters,
-                          ),
+                        child: TextFormField(
+                          style: const TextStyle(fontSize: 14),
+                          initialValue:
+                              widget.instruction.turnDegree.toString(),
+                          onChanged: (String? value) {
+                            if (value == null || value.isEmpty) return;
+                            final tried = double.tryParse(value);
+                            if (tried == null) return;
+                            widget.instruction.turnDegree = tried;
+                            widget.textChanged(widget.instruction);
+                          },
+                          inputFormatters: inputFormatters,
                         ),
                       ),
                       const Text("° to the "),
@@ -466,7 +495,7 @@ class _TurnInstructionEditorState extends State<TurnInstructionEditor> {
                         inputDecorationTheme: const InputDecorationTheme(),
                         initialSelection: widget.instruction.left,
                         onSelected: (bool? value) {
-                          setState(() => widget.instruction.left = value!);
+                          widget.instruction.left = value!;
                           widget.textChanged(widget.instruction);
                         },
                         dropdownMenuEntries: const [
@@ -476,22 +505,21 @@ class _TurnInstructionEditorState extends State<TurnInstructionEditor> {
                       ),
                       const Text("with a "),
                       IntrinsicWidth(
-                        child: Form(
-                          child: TextFormField(
-                            style: const TextStyle(fontSize: 14),
-                            initialValue: "${widget.instruction.radius * 100}",
-                            onChanged: (String? value) {
-                              if (value == null || value.isEmpty) return;
-                              final tried = double.tryParse(value);
-                              if (tried == null) return;
-                              widget.instruction.radius = tried / 100;
-                              widget.textChanged(widget.instruction);
-                            },
-                            inputFormatters: inputFormatters,
-                          ),
+                        child: TextFormField(
+                          style: const TextStyle(fontSize: 14),
+                          initialValue: "${widget.instruction.radius * 100}",
+                          onChanged: (String? value) {
+                            if (value == null || value.isEmpty) return;
+                            final tried = double.tryParse(value);
+                            if (tried == null) return;
+                            widget.instruction.radius = tried / 100;
+                            widget.textChanged(widget.instruction);
+                          },
+                          inputFormatters: inputFormatters,
                         ),
                       ),
-                      const Text("cm inner radius")
+                      Text(
+                          "cm inner radius, final velocity: ${(turnResult.managedVelocity * 100).toStringAsFixed(2)}cm/s")
                     ],
                   ),
                 ),
