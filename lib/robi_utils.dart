@@ -135,11 +135,20 @@ class Simulator {
 
     double managedVelocity = pow(prevInstruction.managedVelocity, 2).toDouble();
     double thing = 2 * instruction.acceleration * distanceCoveredByAcceleration;
+
+    // If decelerating (target velocity < previous managed velocity), flip the sign of 'thing'
     if (instruction.targetVelocity < prevInstruction.managedVelocity) {
-      thing *= -1;
+      thing = -thing;
     }
 
-    managedVelocity = sqrt(managedVelocity + thing);
+    double finalVelocitySquared = managedVelocity + thing;
+
+    // Ensure the result is non-negative before taking the square root
+    if (finalVelocitySquared < 0) {
+      finalVelocitySquared = 0;
+    }
+
+    managedVelocity = sqrt(finalVelocitySquared);
 
     double drivenDistance = distanceCoveredByAcceleration;
 
@@ -182,7 +191,8 @@ class Simulator {
     if (prevInstructionResult is TurnResult) {
       innerVelocity = prevInstructionResult.managedVelocity;
     } else {
-      double timeForCompletion = outerDistance / prevInstructionResult.managedVelocity;
+      double timeForCompletion =
+          outerDistance / prevInstructionResult.managedVelocity;
       innerVelocity = innerDistance / timeForCompletion;
     }
 
