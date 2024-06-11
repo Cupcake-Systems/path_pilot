@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:robi_line_drawer/line_painter.dart';
-import 'package:robi_line_drawer/robi_utils.dart';
+import 'package:robi_line_drawer/editor/line_painter.dart';
+import 'package:robi_line_drawer/robi_api/robi_utils.dart';
 
 class Visualizer extends StatefulWidget {
   final SimulationResult simulationResult;

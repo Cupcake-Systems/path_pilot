@@ -2,10 +2,10 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:robi_line_drawer/robi_utils.dart';
-import 'package:robi_line_drawer/visualizer.dart';
+import 'package:robi_line_drawer/robi_api/robi_utils.dart';
+import 'package:robi_line_drawer/editor/visualizer.dart';
 
-import 'robi_path_serializer.dart';
+import '../robi_api/robi_path_serializer.dart';
 
 final inputFormatters = [
   FilteringTextInputFormatter.allow(RegExp(r'^(\d+)?\.?\d{0,5}'))

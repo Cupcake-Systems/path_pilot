@@ -1,8 +1,8 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
-import 'package:robi_line_drawer/robi_path_serializer.dart';
-import 'package:robi_line_drawer/robi_utils.dart';
+import 'package:robi_line_drawer/robi_api/robi_path_serializer.dart';
+import 'package:robi_line_drawer/robi_api/robi_utils.dart';
 import 'package:vector_math/vector_math.dart' show Vector2;
 
 class LinePainter extends CustomPainter {

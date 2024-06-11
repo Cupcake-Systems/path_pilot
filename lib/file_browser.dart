@@ -4,10 +4,10 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:path/path.dart';
 import 'package:robi_line_drawer/constants.dart';
-import 'package:robi_line_drawer/editor.dart';
-import 'package:robi_line_drawer/robi_config.dart';
-import 'package:robi_line_drawer/robi_path_serializer.dart';
-import 'package:robi_line_drawer/robi_utils.dart';
+import 'package:robi_line_drawer/editor/editor.dart';
+import 'package:robi_line_drawer/robi_api/robi_config.dart';
+import 'package:robi_line_drawer/robi_api/robi_path_serializer.dart';
+import 'package:robi_line_drawer/robi_api/robi_utils.dart';
 import 'package:robi_line_drawer/settings/settings.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 
