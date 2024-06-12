@@ -1,4 +1,5 @@
 import 'dart:math';
+import 'package:flutter/cupertino.dart';
 import 'package:vector_math/vector_math.dart';
 
 import 'robi_path_serializer.dart';
@@ -6,21 +7,20 @@ import 'robi_path_serializer.dart';
 abstract class MissionInstruction {
   const MissionInstruction();
 
-  MissionInstruction.fromJson(Map<String, dynamic> json);
-
   Map<String, dynamic> toJson();
 }
 
-class DriveInstruction extends MissionInstruction {
-  double distance, targetVelocity, acceleration;
+abstract class DriveInstruction extends MissionInstruction {
+  @protected
+  double _distance, _targetVelocity, _acceleration;
 
-  DriveInstruction(this.distance, this.targetVelocity, this.acceleration);
+  double get distance => _distance;
 
-  @override
-  DriveInstruction.fromJson(Map<String, dynamic> json)
-      : distance = json["distance"]!,
-        targetVelocity = json["target_velocity"]!,
-        acceleration = json["acceleration"]!;
+  double get targetVelocity => _targetVelocity;
+
+  double get acceleration => _acceleration;
+
+  DriveInstruction(this._distance, this._targetVelocity, this._acceleration);
 
   @override
   Map<String, double> toJson() => {
@@ -28,6 +28,75 @@ class DriveInstruction extends MissionInstruction {
         "target_velocity": targetVelocity,
         "acceleration": acceleration
       };
+}
+
+class DriveForwardInstruction extends DriveInstruction {
+  set distance(double value) => _distance = value;
+
+  set targetVelocity(double value) => _targetVelocity = value;
+
+  set acceleration(double value) => _acceleration = value;
+
+  DriveForwardInstruction(
+      super.distance, super.targetVelocity, super.acceleration);
+
+  @override
+  DriveForwardInstruction.fromJson(Map<String, dynamic> json)
+      : super(
+            json["distance"]!, json["target_velocity"]!, json["acceleration"]!);
+}
+
+class AccelerateOverDistanceInstruction extends DriveForwardInstruction {
+  @protected
+  final double initialVelocity;
+
+  @override
+  set acceleration(double newAcceleration) {
+    _acceleration = newAcceleration;
+    _targetVelocity =
+        sqrt(pow(initialVelocity, 2) + 2 * acceleration * distance);
+  }
+
+  @override
+  set distance(double newDistance) {
+    _distance = newDistance;
+    _targetVelocity =
+        sqrt(pow(initialVelocity, 2) + 2 * acceleration * distance);
+  }
+
+  AccelerateOverDistanceInstruction(
+      {required this.initialVelocity,
+      required double distance,
+      required double acceleration})
+      : super(
+            distance,
+            sqrt(pow(initialVelocity, 2) + 2 * acceleration * distance),
+            acceleration);
+}
+
+class AccelerateOverTimeInstruction extends DriveForwardInstruction {
+  @protected
+  double _time, initialVelocity;
+
+  double get time => _time;
+
+  set time(double newTime) {
+    _time = newTime;
+    _targetVelocity = initialVelocity + acceleration * _time;
+    _distance = initialVelocity * _time + 0.5 * acceleration * pow(_time, 2);
+  }
+
+  @override
+  set acceleration(double newAcceleration) {
+    _acceleration = newAcceleration;
+    _targetVelocity = initialVelocity + acceleration * _time;
+    _distance = initialVelocity * _time + 0.5 * acceleration * pow(_time, 2);
+  }
+
+  AccelerateOverTimeInstruction(
+      this.initialVelocity, this._time, double acceleration)
+      : super(initialVelocity * _time + 0.5 * acceleration * pow(_time, 2),
+            initialVelocity + acceleration * _time, acceleration);
 }
 
 class TurnInstruction extends MissionInstruction {
@@ -124,10 +193,16 @@ class Simulator {
 
   DriveResult simulateDrive(
       InstructionResult prevInstruction, DriveInstruction instruction) {
-    double distanceCoveredByAcceleration = (pow(instruction.targetVelocity, 2) -
-                pow(prevInstruction.managedVelocity, 2))
-            .abs() /
-        (2 * instruction.acceleration);
+    double distanceCoveredByAcceleration;
+
+    if (instruction.acceleration > 0) {
+      distanceCoveredByAcceleration = (pow(instruction.targetVelocity, 2) -
+                  pow(prevInstruction.managedVelocity, 2))
+              .abs() /
+          (2 * instruction.acceleration);
+    } else {
+      distanceCoveredByAcceleration = 0;
+    }
 
     if (distanceCoveredByAcceleration > instruction.distance) {
       distanceCoveredByAcceleration = instruction.distance;

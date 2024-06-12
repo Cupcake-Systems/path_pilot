@@ -30,7 +30,7 @@ class InstructionContainer {
   InstructionContainer.fromJson(Map<String, dynamic> json) {
     type = getInstructionTypeFromString(json["type"]);
     if (type == AvailableInstruction.driveInstruction) {
-      instruction = DriveInstruction.fromJson(json["instruction"]);
+      instruction = DriveForwardInstruction.fromJson(json["instruction"]);
     } else if (type == AvailableInstruction.turnInstruction) {
       instruction = TurnInstruction.fromJson(json["instruction"]);
     } else {
