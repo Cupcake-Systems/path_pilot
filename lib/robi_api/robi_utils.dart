@@ -51,6 +51,20 @@ class DriveForwardDistanceInstruction extends DriveForwardInstruction {
       : super(distance, initialVelocity, 0.0);
 }
 
+class DriveForwardTimeInstruction extends DriveForwardInstruction {
+
+  @protected
+  double _time;
+
+  set time(double value) {
+    _time = value;
+    distance = _time * _targetVelocity;
+  }
+
+  DriveForwardTimeInstruction(this._time, double initialVelocity)
+      : super(initialVelocity * _time, initialVelocity, 0.0);
+}
+
 class AccelerateOverDistanceInstruction extends DriveForwardInstruction {
   @protected
   final double initialVelocity;

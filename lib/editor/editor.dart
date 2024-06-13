@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:robi_line_drawer/editor/instructions/accelerate_over_distance.dart';
 import 'package:robi_line_drawer/editor/instructions/drive_distance.dart';
+import 'package:robi_line_drawer/editor/instructions/drive_time.dart';
 import 'package:robi_line_drawer/robi_api/robi_utils.dart';
 import 'package:robi_line_drawer/editor/visualizer.dart';
 
@@ -48,6 +49,7 @@ class _EditorState extends State<Editor> {
     UserInstruction.accelerateOverDistance: Icons.speed,
     UserInstruction.accelerateOverTime: Icons.speed,
     UserInstruction.driveDistance: Icons.arrow_upward,
+    UserInstruction.driveTime: Icons.arrow_upward,
   };
 
   @override
@@ -235,6 +237,23 @@ class _EditorState extends State<Editor> {
                             rerunSimulationAndUpdate();
                           },
                         );
+                      } else if (instruction.runtimeType ==
+                          DriveForwardTimeInstruction) {
+                        return DriveTimeEditor(
+                          key: Key("$i"),
+                          instruction:
+                              instruction as DriveForwardTimeInstruction,
+                          simulationResult: simulationResult,
+                          instructionIndex: i,
+                          change: (newInstruction) {
+                            instructions[i] = newInstruction;
+                            rerunSimulationAndUpdate();
+                          },
+                          removed: () {
+                            instructions.removeAt(i);
+                            rerunSimulationAndUpdate();
+                          },
+                        );
                       }
                       throw UnsupportedError("");
                     },
@@ -311,6 +330,9 @@ class _EditorState extends State<Editor> {
         inst = AccelerateOverTimeInstruction(
             prevInstResult.managedVelocity, 1, 0.3);
         break;
+      case UserInstruction.driveTime:
+        inst = DriveForwardTimeInstruction(1, prevInstResult.managedVelocity);
+        break;
     }
     setState(() => instructions.add(inst));
     rerunSimulationAndUpdate();
@@ -339,6 +361,7 @@ enum UserInstruction {
   accelerateOverDistance,
   accelerateOverTime,
   driveDistance,
+  driveTime,
 }
 
 const baseInstructions = [UserInstruction.drive, UserInstruction.turn];
