@@ -1,6 +1,10 @@
+import 'dart:math';
+import 'dart:ui';
+
 import 'package:expandable/expandable.dart';
 import 'package:flutter/material.dart';
 import 'package:robi_line_drawer/editor/editor.dart';
+import 'package:robi_line_drawer/editor/line_painter.dart';
 import 'package:robi_line_drawer/robi_api/robi_path_serializer.dart';
 import 'package:vector_math/vector_math.dart' show Vector2;
 
@@ -53,6 +57,7 @@ class RemovableWarningCard extends StatelessWidget {
 
   final InstructionResult prevResult;
   final InstructionResult instructionResult;
+  final MissionInstruction instruction;
 
   final String? warningMessage;
 
@@ -62,7 +67,8 @@ class RemovableWarningCard extends StatelessWidget {
       required this.removed,
       required this.warningMessage,
       required this.prevResult,
-      required this.instructionResult});
+      required this.instructionResult,
+      required this.instruction});
 
   @override
   Widget build(BuildContext context) {
@@ -85,34 +91,58 @@ class RemovableWarningCard extends StatelessWidget {
             collapsed: const SizedBox.shrink(),
             expanded: Padding(
               padding: const EdgeInsets.all(8.0),
-              child: Row(
+              child: Column(
                 children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                  const Divider(),
+                  Row(
                     children: [
-                      Text(
-                          "Initial Velocity: ${roundToDigits(prevResult.managedVelocity * 100, 2)}cm/s"),
-                      Text(
-                          "Initial Position: ${vecToString(prevResult.endPosition, 2)}m"),
-                      Text(
-                          "Initial Rotation: ${roundToDigits(prevResult.endRotation, 2)}°"),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                              "Initial Velocity: ${roundToDigits(prevResult.managedVelocity * 100, 2)}cm/s"),
+                          Text(
+                              "Initial Position: ${vecToString(prevResult.endPosition, 2)}m"),
+                          Text(
+                              "Initial Rotation: ${roundToDigits(prevResult.endRotation, 2)}°"),
+                        ],
+                      ),
+                      const Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 10),
+                        child: Icon(Icons.arrow_forward),
+                      ),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                              "End Velocity: ${roundToDigits(instructionResult.managedVelocity * 100, 2)}cm/s"),
+                          Text(
+                              "End Position: ${vecToString(instructionResult.endPosition, 2)}m"),
+                          Text(
+                              "End Rotation: ${roundToDigits(instructionResult.endRotation, 2)}°"),
+                        ],
+                      ),
                     ],
                   ),
-                  const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 10),
-                    child: Icon(Icons.arrow_forward),
+                  const Divider(),
+                  const SizedBox(height: 10),
+                  Container(
+                    decoration: BoxDecoration(
+                      //borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: Colors.white.withAlpha(50)),
+                    ),
+                    width: 200,
+                    height: 200,
+                    child: CustomPaint(
+                      painter: DriveInstructionGraphDrawer(
+                        prevInstResult: prevResult,
+                        instructionResult: instructionResult,
+                        instruction: instruction,
+                      ),
+                      child: Container(),
+                    ),
                   ),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                          "End Velocity: ${roundToDigits(instructionResult.managedVelocity * 100, 2)}cm/s"),
-                      Text(
-                          "End Position: ${vecToString(instructionResult.endPosition, 2)}m"),
-                      Text(
-                          "End Rotation: ${roundToDigits(instructionResult.endRotation, 2)}°"),
-                    ],
-                  ),
+                  const SizedBox(height: 20),
                 ],
               ),
             ),
@@ -143,7 +173,151 @@ class RemovableWarningCard extends StatelessWidget {
     );
   }
 
-  static String vecToString(Vector2 vec, int decimalPlaces) {
-    return "(${roundToDigits(vec.x, decimalPlaces)}, ${roundToDigits(vec.y, decimalPlaces)})";
+  static String vecToString(Vector2 vec, int decimalPlaces) =>
+      "(${vec.x.toStringAsFixed(decimalPlaces)}, ${vec.y.toStringAsFixed(decimalPlaces)})";
+}
+
+class DriveInstructionGraphDrawer extends CustomPainter {
+  final InstructionResult prevInstResult;
+  final InstructionResult instructionResult;
+  final MissionInstruction instruction;
+
+  static final graphPaint = Paint()
+    ..color = Colors.grey
+    ..strokeWidth = 3
+    ..style = PaintingStyle.stroke;
+
+  const DriveInstructionGraphDrawer({
+    required this.prevInstResult,
+    required this.instructionResult,
+    required this.instruction,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    try {
+      drawInstruction(canvas, size);
+    } on Exception {}
   }
+
+  void drawInstruction(Canvas canvas, Size size) {
+    final isDriveInst = instruction is DriveInstruction;
+
+    final highestVelocity = [
+      prevInstResult.managedVelocity,
+      if (isDriveInst) (instruction as DriveInstruction).targetVelocity,
+      instructionResult.managedVelocity
+    ].reduce(max);
+
+    final totalDistanceCovered =
+        prevInstResult.endPosition.distanceTo(instructionResult.endPosition);
+
+    final velocityStart =
+        Vector2(0, prevInstResult.managedVelocity / highestVelocity);
+    final velocityEnd = Vector2(
+        isDriveInst
+            ? ((instructionResult as DriveResult).accelerationDistance /
+                totalDistanceCovered)
+            : 1,
+        instructionResult.managedVelocity / highestVelocity);
+
+    canvas.drawLine(vecToOffset(velocityStart, size),
+        vecToOffset(velocityEnd * 1.002, size), graphPaint);
+    canvas.drawLine(vecToOffset(velocityEnd, size),
+        vecToOffset(Vector2(1, velocityEnd.y), size), graphPaint);
+
+    LinePainter.paintText("0",
+        vecToOffset(Vector2.zero(), size).translate(-10, 10), canvas, size);
+
+    if (prevInstResult.managedVelocity > 0) {
+      if (highestVelocity != prevInstResult.managedVelocity) {
+        drawDashedLine(
+          canvas: canvas,
+          p1: vecToOffset(velocityStart, size),
+          p2: vecToOffset(Vector2(1, velocityStart.y), size),
+          pattern: const [10, 10],
+          paint: Paint()
+            ..strokeWidth = 2
+            ..color = Colors.grey.withAlpha(100)
+            ..style = PaintingStyle.stroke,
+        );
+      }
+      LinePainter.paintText(
+          "${(prevInstResult.managedVelocity * 100).toStringAsFixed(2)}cm/s",
+          vecToOffset(velocityStart, size).translate(-40, 7),
+          canvas,
+          size);
+    }
+
+    if (highestVelocity != instructionResult.managedVelocity &&
+        instructionResult.managedVelocity != 0) {
+      drawDashedLine(
+        canvas: canvas,
+        p1: vecToOffset(Vector2(0, velocityEnd.y), size),
+        p2: vecToOffset(Vector2(1, velocityEnd.y), size),
+        pattern: const [10, 10],
+        paint: Paint()
+          ..strokeWidth = 2
+          ..color = Colors.grey.withAlpha(100)
+          ..style = PaintingStyle.stroke,
+      );
+    }
+    LinePainter.paintText(
+        "${(instructionResult.managedVelocity * 100).toStringAsFixed(2)}cm/s",
+        vecToOffset(Vector2(1, velocityEnd.y), size).translate(45, 7),
+        canvas,
+        size);
+
+    if (velocityEnd.x > 0) {
+      if (velocityEnd.x < 0.99999) {
+        drawDashedLine(
+          canvas: canvas,
+          p1: vecToOffset(Vector2(velocityEnd.x, 0), size),
+          p2: vecToOffset(Vector2(velocityEnd.x, 1), size),
+          pattern: const [10, 10],
+          paint: Paint()
+            ..strokeWidth = 2
+            ..color = Colors.grey.withAlpha(100)
+            ..style = PaintingStyle.stroke,
+        );
+      }
+      if (isDriveInst) {
+        LinePainter.paintText(
+            "${(instructionResult as DriveResult).accelerationDistance.toStringAsFixed(2)}m",
+            vecToOffset(Vector2(velocityEnd.x, 0), size).translate(0, 20),
+            canvas,
+            size);
+      }
+    }
+  }
+
+  void drawDashedLine({
+    required Canvas canvas,
+    required Offset p1,
+    required Offset p2,
+    required Iterable<double> pattern,
+    required Paint paint,
+  }) {
+    assert(pattern.length.isEven);
+    final distance = (p2 - p1).distance;
+    final normalizedPattern = pattern.map((width) => width / distance).toList();
+    final points = <Offset>[];
+    double t = 0;
+    int i = 0;
+    while (t < 1) {
+      points.add(Offset.lerp(p1, p2, t)!);
+      t += normalizedPattern[i++]; // dashWidth
+      points.add(Offset.lerp(p1, p2, t.clamp(0, 1))!);
+      t += normalizedPattern[i++]; // dashSpace
+      i %= normalizedPattern.length;
+    }
+    canvas.drawPoints(PointMode.lines, points, paint);
+  }
+
+  Offset vecToOffset(Vector2 vec, Size size) {
+    return Offset(vec.x * size.height, size.height - vec.y * size.height);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
 }

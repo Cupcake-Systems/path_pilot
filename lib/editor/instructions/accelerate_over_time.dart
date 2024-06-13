@@ -24,6 +24,7 @@ class AccelerateOverTimeEditor extends AbstractEditor {
   @override
   Widget build(BuildContext context) {
     return RemovableWarningCard(
+      instruction: instruction,
       instructionResult: instructionResult,
       prevResult: prevInstructionResult,
       removed: removed,

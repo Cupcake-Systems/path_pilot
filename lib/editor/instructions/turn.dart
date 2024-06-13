@@ -30,6 +30,7 @@ class TurnInstructionEditor extends AbstractEditor {
     return StatefulBuilder(
       builder: (context, setState) {
         return RemovableWarningCard(
+            instruction: instruction,
             warningMessage: warningMessage,
             removed: removed,
             prevResult: prevInstructionResult,

@@ -62,7 +62,7 @@ class LinePainter extends CustomPainter {
         Offset(size.width / 2, size.height - 22), canvas, size);
   }
 
-  void paintText(String text, Offset offset, Canvas canvas, Size size) {
+  static void paintText(String text, Offset offset, Canvas canvas, Size size) {
     final textSpan = TextSpan(text: text);
     final textPainter =
         TextPainter(text: textSpan, textDirection: TextDirection.ltr);

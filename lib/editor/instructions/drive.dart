@@ -33,6 +33,7 @@ class DriveInstructionEditor extends AbstractEditor {
   @override
   Widget build(BuildContext context) {
     return RemovableWarningCard(
+      instruction: instruction,
       warningMessage: warningMessage,
       removed: removed,
       prevResult: prevInstructionResult,
