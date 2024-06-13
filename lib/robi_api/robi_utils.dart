@@ -46,6 +46,11 @@ class DriveForwardInstruction extends DriveInstruction {
             json["distance"]!, json["target_velocity"]!, json["acceleration"]!);
 }
 
+class DriveForwardDistanceInstruction extends DriveForwardInstruction {
+  DriveForwardDistanceInstruction(double distance, double initialVelocity)
+      : super(distance, initialVelocity, 0.0);
+}
+
 class AccelerateOverDistanceInstruction extends DriveForwardInstruction {
   @protected
   final double initialVelocity;

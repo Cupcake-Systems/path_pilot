@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:robi_line_drawer/editor/instructions/accelerate_over_distance.dart';
+import 'package:robi_line_drawer/editor/instructions/drive_distance.dart';
 import 'package:robi_line_drawer/robi_api/robi_utils.dart';
 import 'package:robi_line_drawer/editor/visualizer.dart';
 
@@ -46,6 +47,7 @@ class _EditorState extends State<Editor> {
     UserInstruction.turn: Icons.turn_right,
     UserInstruction.accelerateOverDistance: Icons.speed,
     UserInstruction.accelerateOverTime: Icons.speed,
+    UserInstruction.driveDistance: Icons.arrow_upward,
   };
 
   @override
@@ -216,6 +218,23 @@ class _EditorState extends State<Editor> {
                           instructionIndex: i,
                           robiConfig: widget.robiConfig,
                         );
+                      } else if (instruction.runtimeType ==
+                          DriveForwardDistanceInstruction) {
+                        return DriveDistanceEditor(
+                          key: Key("$i"),
+                          instruction:
+                              instruction as DriveForwardDistanceInstruction,
+                          simulationResult: simulationResult,
+                          instructionIndex: i,
+                          change: (newInstruction) {
+                            instructions[i] = newInstruction;
+                            rerunSimulationAndUpdate();
+                          },
+                          removed: () {
+                            instructions.removeAt(i);
+                            rerunSimulationAndUpdate();
+                          },
+                        );
                       }
                       throw UnsupportedError("");
                     },
@@ -265,6 +284,10 @@ class _EditorState extends State<Editor> {
     MissionInstruction inst;
 
     switch (instruction) {
+      case UserInstruction.driveDistance:
+        inst = DriveForwardDistanceInstruction(
+            0.5, prevInstResult.managedVelocity);
+        break;
       case UserInstruction.accelerateOverDistance:
         inst = AccelerateOverDistanceInstruction(
             initialVelocity: prevInstResult.managedVelocity,
@@ -315,6 +338,7 @@ enum UserInstruction {
   turn,
   accelerateOverDistance,
   accelerateOverTime,
+  driveDistance,
 }
 
 const baseInstructions = [UserInstruction.drive, UserInstruction.turn];
