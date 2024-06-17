@@ -25,8 +25,6 @@ class DriveInstructionEditor extends AbstractEditor {
         0.000001) {
       warningMessage =
           "Robi will only reach ${(instructionResult.managedVelocity * 100).toStringAsFixed(2)} cm/s";
-    } else {
-      warningMessage = null;
     }
   }
 

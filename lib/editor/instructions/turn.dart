@@ -20,8 +20,6 @@ class TurnInstructionEditor extends AbstractEditor {
       : super(instruction: instruction) {
     if (prevInstructionResult.managedVelocity <= 0) {
       warningMessage = "Zero velocity";
-    } else {
-      warningMessage = null;
     }
   }
 
