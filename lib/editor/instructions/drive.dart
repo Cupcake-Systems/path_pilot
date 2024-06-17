@@ -66,8 +66,10 @@ class DriveInstructionEditor extends AbstractEditor {
               final tried = double.tryParse(value);
               if (tried == null) return;
               instruction.targetVelocity = tried / 100.0;
-              if (prevInstructionResult.managedVelocity >
+              if (prevInstructionResult.managedVelocity <=
                   instruction.targetVelocity) {
+                instruction.acceleration = instruction.acceleration.abs();
+              } else {
                 instruction.acceleration = -instruction.acceleration.abs();
               }
               change(instruction);
@@ -78,7 +80,8 @@ class DriveInstructionEditor extends AbstractEditor {
         const Text("cm/s"),
         if (prevInstructionResult.managedVelocity !=
             instruction.targetVelocity) ...[
-          Text(" ${instruction.acceleration > 0 ? "accelerating" : "decelerating"} at "),
+          Text(
+              " ${instruction.acceleration > 0 ? "accelerating" : "decelerating"} at "),
           IntrinsicWidth(
             child: TextFormField(
               style: const TextStyle(fontSize: 14),
@@ -87,7 +90,12 @@ class DriveInstructionEditor extends AbstractEditor {
                 if (value == null || value.isEmpty) return;
                 final tried = double.tryParse(value);
                 if (tried == null) return;
-                instruction.acceleration = tried / 100.0;
+                if (prevInstructionResult.managedVelocity <=
+                    instruction.targetVelocity) {
+                  instruction.acceleration = tried / 100.0;
+                } else {
+                  instruction.acceleration = -tried / 100.0;
+                }
                 change(instruction);
               },
               inputFormatters: inputFormatters,

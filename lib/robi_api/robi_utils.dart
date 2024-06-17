@@ -132,7 +132,7 @@ class AccelerateOverTimeInstruction extends DriveForwardInstruction {
       double time, double initialVelocity, double acceleration) {
     double distance =
         initialVelocity * time + 0.5 * acceleration * pow(time, 2);
-    return distance > 0 ? distance : 0;
+    return distance > 0 ? distance : initialVelocity * time;
   }
 
   AccelerateOverTimeInstruction(

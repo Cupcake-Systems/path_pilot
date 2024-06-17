@@ -393,13 +393,18 @@ class _EditorState extends State<Editor> {
         break;
       case UserInstruction.drive:
         double targetVel = 0.5;
+        double acceleration = 0.3;
 
         if (prevInstResult is TurnResult) {
           targetVel = lastDriveResult.managedVelocity;
         }
 
+        if (prevInstResult.managedVelocity > targetVel) {
+          acceleration = -acceleration;
+        }
+
         inst = DriveForwardInstruction(
-            roundToDigits(1, 2), roundToDigits(targetVel, 2), 0.3);
+            1, roundToDigits(targetVel, 2), acceleration);
         break;
       case UserInstruction.turn:
         inst = TurnInstruction(90, false, 0.1);
