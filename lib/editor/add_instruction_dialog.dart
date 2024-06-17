@@ -38,18 +38,20 @@ class _AddInstructionDialogState extends State<AddInstructionDialog> {
   Widget build(BuildContext context) {
     return AlertDialog(
       title: const Text("Add Instruction"),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          for (final groupName in groupedUserInstructions.keys) ...[
-            Text(groupName, style: const TextStyle(fontSize: 20)),
-            for (final userInstruction in groupedUserInstructions[groupName]!)...[
-              createRadioButtonForAdd(userInstruction),
-            ],
-            const Divider(height: 5),
-          ]
-        ],
+      content: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            for (final groupName in groupedUserInstructions.keys) ...[
+              Text(groupName, style: const TextStyle(fontSize: 20)),
+              for (final userInstruction in groupedUserInstructions[groupName]!)...[
+                createRadioButtonForAdd(userInstruction),
+              ],
+              const Divider(height: 5),
+            ]
+          ],
+        ),
       ),
       actions: [
         TextButton(

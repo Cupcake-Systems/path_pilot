@@ -79,8 +79,8 @@ class RemovableWarningCard extends StatelessWidget {
             header: Row(
               children: [
                 Expanded(
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
+                  child: Wrap(
+                    crossAxisAlignment: WrapCrossAlignment.center,
                     children: children,
                   ),
                 ),
@@ -94,7 +94,8 @@ class RemovableWarningCard extends StatelessWidget {
               child: Column(
                 children: [
                   const Divider(),
-                  Row(
+                  Wrap(
+                    crossAxisAlignment: WrapCrossAlignment.center,
                     children: [
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
