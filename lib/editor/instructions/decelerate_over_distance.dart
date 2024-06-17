@@ -20,6 +20,10 @@ class DecelerateOverDistanceEditor extends AbstractEditor {
       warningMessage = "Pointless";
     } else if (prevInstructionResult.managedVelocity <= 0) {
       warningMessage = "Cannot decelerate further";
+    } else if (instructionResult.endPosition
+            .distanceTo(prevInstructionResult.endPosition) <
+        instruction.distance) {
+      warningMessage = "Robi will stop before reaching ${instruction.distance.toStringAsFixed(2)}m";
     }
   }
 
