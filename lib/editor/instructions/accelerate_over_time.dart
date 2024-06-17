@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:robi_line_drawer/editor/instructions/abstract.dart';
 
 import '../../robi_api/robi_utils.dart';
+import '../add_instruction_dialog.dart';
 import '../editor.dart';
 
 class AccelerateOverTimeEditor extends AbstractEditor {
@@ -30,7 +31,7 @@ class AccelerateOverTimeEditor extends AbstractEditor {
       removed: removed,
       warningMessage: warningMessage,
       children: [
-        const Icon(Icons.speed),
+        Icon(userInstructionToIcon[UserInstruction.accelerateOverTime]),
         const SizedBox(width: 10),
         const Text("Accelerate for "),
         IntrinsicWidth(

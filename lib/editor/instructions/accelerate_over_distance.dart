@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:robi_line_drawer/editor/add_instruction_dialog.dart';
 import 'package:robi_line_drawer/editor/instructions/abstract.dart';
 
 import '../../robi_api/robi_utils.dart';
@@ -30,7 +31,7 @@ class AccelerateOverDistanceEditor extends AbstractEditor {
       prevResult: prevInstructionResult,
       instructionResult: instructionResult,
       children: [
-        const Icon(Icons.speed),
+        Icon(userInstructionToIcon[UserInstruction.accelerateOverDistance]),
         const SizedBox(width: 10),
         const Text("Accelerate over "),
         IntrinsicWidth(
