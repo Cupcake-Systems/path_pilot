@@ -56,6 +56,8 @@ class DriveForwardTimeInstruction extends DriveForwardInstruction {
   @protected
   double _time;
 
+  double get time => _time;
+
   set time(double value) {
     _time = value;
     distance = _time * _targetVelocity;

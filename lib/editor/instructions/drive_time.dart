@@ -32,7 +32,7 @@ class DriveTimeEditor extends AbstractEditor {
         IntrinsicWidth(
           child: TextFormField(
             style: const TextStyle(fontSize: 14),
-            initialValue: instruction.distance.toString(),
+            initialValue: instruction.time.toString(),
             onChanged: (String? value) {
               if (value == null || value.isEmpty) return;
               final tried = double.tryParse(value);
