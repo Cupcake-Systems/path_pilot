@@ -4,17 +4,6 @@ import '../robi_api/robi_path_serializer.dart';
 import '../robi_api/robi_utils.dart';
 import 'editor.dart';
 
-const Map<UserInstruction, IconData> userInstructionToIcon = {
-  UserInstruction.drive: Icons.arrow_upward,
-  UserInstruction.turn: Icons.turn_right,
-  UserInstruction.accelerateOverDistance: Icons.speed,
-  UserInstruction.accelerateOverTime: Icons.speed,
-  UserInstruction.driveDistance: Icons.arrow_upward,
-  UserInstruction.driveTime: Icons.arrow_upward,
-  UserInstruction.decelerateOverDistance: Icons.speed,
-  UserInstruction.decelerateOverTime: Icons.speed,
-};
-
 class AddInstructionDialog extends StatefulWidget {
   final Function(MissionInstruction instruction) instructionAdded;
   final SimulationResult simulationResult;
@@ -51,14 +40,15 @@ class _AddInstructionDialogState extends State<AddInstructionDialog> {
       title: const Text("Add Instruction"),
       content: Column(
         mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          for (final t in baseInstructions) ...[
-            createRadioButtonForAdd(t),
-          ],
-          const Divider(),
-          for (final t in withoutBaseInstructions) ...[
-            createRadioButtonForAdd(t),
-          ],
+          for (final groupName in groupedUserInstructions.keys) ...[
+            Text(groupName, style: const TextStyle(fontSize: 20)),
+            for (final userInstruction in groupedUserInstructions[groupName]!)...[
+              createRadioButtonForAdd(userInstruction),
+            ],
+            const Divider(height: 5),
+          ]
         ],
       ),
       actions: [
@@ -150,9 +140,29 @@ enum UserInstruction {
   driveTime,
 }
 
-const baseInstructions = [UserInstruction.drive, UserInstruction.turn];
-final withoutBaseInstructions =
-    UserInstruction.values.where((e) => !baseInstructions.contains(e));
+const Map<String, List<UserInstruction>> groupedUserInstructions = {
+  "Basic": [UserInstruction.drive, UserInstruction.turn],
+  "Drive": [UserInstruction.driveDistance, UserInstruction.driveTime],
+  "Accelerate": [
+    UserInstruction.accelerateOverDistance,
+    UserInstruction.accelerateOverTime
+  ],
+  "Decelerate": [
+    UserInstruction.decelerateOverDistance,
+    UserInstruction.decelerateOverTime
+  ],
+};
+
+const Map<UserInstruction, IconData> userInstructionToIcon = {
+  UserInstruction.drive: Icons.arrow_upward,
+  UserInstruction.turn: Icons.turn_right,
+  UserInstruction.accelerateOverDistance: Icons.speed,
+  UserInstruction.accelerateOverTime: Icons.speed,
+  UserInstruction.driveDistance: Icons.arrow_upward,
+  UserInstruction.driveTime: Icons.arrow_upward,
+  UserInstruction.decelerateOverDistance: Icons.speed,
+  UserInstruction.decelerateOverTime: Icons.speed,
+};
 
 String camelToSentence(String text) => text.replaceAllMapped(
     RegExp(r'^([a-z])|[A-Z]'),
