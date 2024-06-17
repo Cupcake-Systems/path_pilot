@@ -25,13 +25,14 @@ final inputFormatters = [
 class Editor extends StatefulWidget {
   final List<MissionInstruction> instructions;
   final RobiConfig robiConfig;
-  final void Function() exportPressed;
+  final void Function(List<MissionInstruction> instructions) exportPressed;
 
-  const Editor(
-      {super.key,
-      required this.instructions,
-      required this.robiConfig,
-      required this.exportPressed});
+  const Editor({
+    super.key,
+    required this.instructions,
+    required this.robiConfig,
+    required this.exportPressed,
+  });
 
   @override
   State<Editor> createState() => _EditorState();
@@ -152,7 +153,7 @@ class _EditorState extends State<Editor> {
                       iconAlignment: IconAlignment.end,
                       onPressed: simulationResult.instructionResults.isEmpty
                           ? null
-                          : widget.exportPressed,
+                          : () => widget.exportPressed(instructions),
                       label: const Text("Export"),
                       icon: const Icon(Icons.chevron_right),
                     ),

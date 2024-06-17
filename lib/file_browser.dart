@@ -219,7 +219,7 @@ class _FileBrowserState extends State<FileBrowser>
                       Editor(
                         instructions: instructions,
                         robiConfig: selectedRobiConfig,
-                        exportPressed: () async {
+                        exportPressed: (instructions) async {
                           final path = await FilePicker.platform.saveFile(
                             dialogTitle: "Please select an output file:",
                             fileName: "exported.json",
