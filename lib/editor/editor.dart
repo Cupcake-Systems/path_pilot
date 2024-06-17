@@ -34,13 +34,14 @@ class Editor extends StatefulWidget {
 
 class _EditorState extends State<Editor> {
   late SimulationResult simulationResult;
-  late final List<MissionInstruction> instructions = widget.instructions;
+  late List<MissionInstruction> instructions = widget.instructions;
   double scale = 200;
+  late Simulator simulator = Simulator(widget.robiConfig);
 
   @override
   void initState() {
     super.initState();
-    simulationResult = Simulator(widget.robiConfig).calculate(instructions);
+    simulationResult = simulator.calculate(instructions);
   }
 
   static const Map<UserInstruction, IconData> userInstructionToIcon = {
@@ -295,8 +296,53 @@ class _EditorState extends State<Editor> {
     );
   }
 
-  void rerunSimulationAndUpdate() => setState(() =>
-      simulationResult = Simulator(widget.robiConfig).calculate(instructions));
+  void rerunSimulationAndUpdate() {
+    List<MissionInstruction> newInstructions = [];
+
+    for (final instruction in instructions) {
+      final simResult = simulator.calculate(newInstructions);
+
+      InstructionResult prevInstResult =
+          simResult.instructionResults.lastOrNull ?? startResult;
+
+      if (instruction is DriveInstruction) {
+        if (instruction.runtimeType == DriveForwardInstruction) {
+          newInstructions.add(DriveForwardInstruction(instruction.distance,
+              instruction.targetVelocity, instruction.acceleration));
+        } else if (instruction is AccelerateOverDistanceInstruction) {
+          newInstructions.add(AccelerateOverDistanceInstruction(
+            initialVelocity: prevInstResult.managedVelocity,
+            distance: instruction.distance,
+            acceleration: instruction.acceleration,
+          ));
+        } else if (instruction is AccelerateOverTimeInstruction) {
+          newInstructions.add(AccelerateOverTimeInstruction(
+            prevInstResult.managedVelocity,
+            instruction.time,
+            instruction.acceleration,
+          ));
+        } else if (instruction is DriveForwardDistanceInstruction) {
+          newInstructions.add(DriveForwardDistanceInstruction(
+              instruction.distance, prevInstResult.managedVelocity));
+        } else if (instruction is DriveForwardTimeInstruction) {
+          newInstructions.add(DriveForwardTimeInstruction(
+              instruction.time, prevInstResult.managedVelocity));
+        } else {
+          throw UnsupportedError("");
+        }
+      } else if (instruction is TurnInstruction) {
+        newInstructions.add(TurnInstruction(
+            instruction.turnDegree, instruction.left, instruction.radius));
+      } else {
+        throw UnsupportedError("");
+      }
+    }
+
+    setState(() {
+      instructions = newInstructions;
+      simulationResult = simulator.calculate(instructions);
+    });
+  }
 
   void addInstruction(UserInstruction instruction,
       InstructionResult prevInstResult, DriveResult lastDriveResult) {
@@ -334,7 +380,8 @@ class _EditorState extends State<Editor> {
         inst = DriveForwardTimeInstruction(1, prevInstResult.managedVelocity);
         break;
     }
-    setState(() => instructions.add(inst));
+
+    instructions.add(inst);
     rerunSimulationAndUpdate();
   }
 }
