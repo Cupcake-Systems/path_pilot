@@ -2,6 +2,7 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:robi_line_drawer/editor/add_instruction_dialog.dart';
 import 'package:robi_line_drawer/editor/instructions/accelerate_over_distance.dart';
 import 'package:robi_line_drawer/editor/instructions/decelerate_over_distance.dart';
 import 'package:robi_line_drawer/editor/instructions/decelerate_over_time.dart';
@@ -45,17 +46,6 @@ class _EditorState extends State<Editor> {
     super.initState();
     simulationResult = simulator.calculate(instructions);
   }
-
-  static const Map<UserInstruction, IconData> userInstructionToIcon = {
-    UserInstruction.drive: Icons.arrow_upward,
-    UserInstruction.turn: Icons.turn_right,
-    UserInstruction.accelerateOverDistance: Icons.speed,
-    UserInstruction.accelerateOverTime: Icons.speed,
-    UserInstruction.driveDistance: Icons.arrow_upward,
-    UserInstruction.driveTime: Icons.arrow_upward,
-    UserInstruction.decelerateOverDistance: Icons.speed,
-    UserInstruction.decelerateOverTime: Icons.speed,
-  };
 
   @override
   Widget build(BuildContext context) {
@@ -104,68 +94,14 @@ class _EditorState extends State<Editor> {
                         icon: const Icon(Icons.add),
                         onPressed: () => showDialog<AvailableInstruction?>(
                           context: context,
-                          builder: (BuildContext context) {
-                            UserInstruction selectedInstruction =
-                                UserInstruction.drive;
-
-                            return StatefulBuilder(
-                                builder: (context, setState) {
-                              RadioListTile createRadioButtonForAdd(
-                                  UserInstruction value) {
-                                final IconData? icon =
-                                    userInstructionToIcon[value];
-                                return RadioListTile<UserInstruction>(
-                                  title: ListTile(
-                                    title: Text(camelToSentence(value.name)),
-                                    leading: Icon(icon),
-                                  ),
-                                  value: value,
-                                  groupValue: selectedInstruction,
-                                  onChanged: (v) =>
-                                      setState(() => selectedInstruction = v!),
-                                );
-                              }
-
-                              return AlertDialog(
-                                title: const Text("Add Instruction"),
-                                content: Column(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    for (final t in baseInstructions) ...[
-                                      createRadioButtonForAdd(t),
-                                    ],
-                                    const Divider(),
-                                    for (final t
-                                        in withoutBaseInstructions) ...[
-                                      createRadioButtonForAdd(t),
-                                    ],
-                                  ],
-                                ),
-                                actions: [
-                                  TextButton(
-                                    onPressed: () => Navigator.pop(context),
-                                    child: const Text("Cancel"),
-                                  ),
-                                  TextButton(
-                                    onPressed: () {
-                                      Navigator.pop(context);
-                                      addInstruction(
-                                          selectedInstruction,
-                                          simulationResult.instructionResults
-                                                  .lastOrNull ??
-                                              startResult,
-                                          simulationResult.instructionResults
-                                                  .lastWhere(
-                                                      (e) => e is DriveResult,
-                                                      orElse: () => startResult)
-                                              as DriveResult);
-                                    },
-                                    child: const Text("Ok"),
-                                  ),
-                                ],
-                              );
-                            });
-                          },
+                          builder: (BuildContext context) =>
+                              AddInstructionDialog(
+                            instructionAdded: (MissionInstruction instruction) {
+                              instructions.add(instruction);
+                              rerunSimulationAndUpdate();
+                            },
+                            simulationResult: simulationResult,
+                          ),
                         ),
                       ),
                     ),
@@ -394,69 +330,6 @@ class _EditorState extends State<Editor> {
       simulationResult = simulator.calculate(instructions);
     });
   }
-
-  void addInstruction(UserInstruction instruction,
-      InstructionResult prevInstResult, DriveResult lastDriveResult) {
-    MissionInstruction inst;
-
-    switch (instruction) {
-      case UserInstruction.driveDistance:
-        inst = DriveForwardDistanceInstruction(
-            0.5, prevInstResult.managedVelocity);
-        break;
-      case UserInstruction.accelerateOverDistance:
-        inst = AccelerateOverDistanceInstruction(
-            initialVelocity: prevInstResult.managedVelocity,
-            distance: 0.5,
-            acceleration: 0.3);
-        break;
-      case UserInstruction.drive:
-        double targetVel = 0.5;
-        double acceleration = 0.3;
-
-        if (prevInstResult is TurnResult) {
-          targetVel = lastDriveResult.managedVelocity;
-        }
-
-        if (prevInstResult.managedVelocity > targetVel) {
-          acceleration = -acceleration;
-        }
-
-        inst = DriveForwardInstruction(
-            1, roundToDigits(targetVel, 2), acceleration);
-        break;
-      case UserInstruction.turn:
-        inst = TurnInstruction(90, false, 0.1);
-        break;
-      case UserInstruction.accelerateOverTime:
-        inst = AccelerateOverTimeInstruction(
-            prevInstResult.managedVelocity, 1, 0.3);
-        break;
-      case UserInstruction.driveTime:
-        inst = DriveForwardTimeInstruction(1, prevInstResult.managedVelocity);
-        break;
-      case UserInstruction.decelerateOverDistance:
-        inst = AccelerateOverDistanceInstruction(
-            initialVelocity: prevInstResult.managedVelocity,
-            distance: 0.5,
-            acceleration: -0.3);
-        break;
-      case UserInstruction.decelerateOverTime:
-        inst = AccelerateOverTimeInstruction(
-            prevInstResult.managedVelocity, 1, -0.3);
-        break;
-    }
-
-    instructions.add(inst);
-    rerunSimulationAndUpdate();
-  }
-}
-
-double? asdf(TextEditingController controller, String? value) {
-  if (value == null) return null;
-  if (value.isEmpty) return 0;
-  final parsed = double.tryParse(value);
-  return parsed;
 }
 
 double roundToDigits(double num, int digits) {
@@ -467,18 +340,3 @@ double roundToDigits(double num, int digits) {
 String camelToSentence(String text) => text.replaceAllMapped(
     RegExp(r'^([a-z])|[A-Z]'),
     (Match m) => m[1] == null ? " ${m[0]}" : m[1]!.toUpperCase());
-
-enum UserInstruction {
-  drive,
-  turn,
-  accelerateOverDistance,
-  decelerateOverDistance,
-  accelerateOverTime,
-  decelerateOverTime,
-  driveDistance,
-  driveTime,
-}
-
-const baseInstructions = [UserInstruction.drive, UserInstruction.turn];
-final withoutBaseInstructions =
-    UserInstruction.values.where((e) => !baseInstructions.contains(e));
