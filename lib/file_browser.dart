@@ -64,14 +64,14 @@ class _FileBrowserState extends State<FileBrowser>
                         onPressed: focusedFile == null
                             ? null
                             : () {
-                                RobiPathSerializer.saveToFile(
-                                    focusedFile!,
-                                    instructionTable[
-                                        focusedFile!.absolute.path]!);
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(content: Text('Saved')),
-                                );
-                              },
+                          RobiPathSerializer.saveToFile(
+                              focusedFile!,
+                              instructionTable[
+                              focusedFile!.absolute.path]!);
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Saved')),
+                          );
+                        },
                         child: const MenuAcceleratorLabel('&Save'),
                       ),
                       MenuItemButton(
@@ -98,15 +98,18 @@ class _FileBrowserState extends State<FileBrowser>
                     menuChildren: [
                       MenuItemButton(
                         leadingIcon: const Icon(Icons.add),
-                        onPressed: () => showDialog(
-                          context: context,
-                          builder: (context) => RobiConfigurator(
-                              addedConfig: (config) => setState(() {
-                                    robiConfigs.add(config);
-                                    selectedRobiConfig = config;
-                                  }),
-                              index: robiConfigs.length),
-                        ),
+                        onPressed: () =>
+                            showDialog(
+                              context: context,
+                              builder: (context) =>
+                                  RobiConfigurator(
+                                      addedConfig: (config) =>
+                                          setState(() {
+                                            robiConfigs.add(config);
+                                            selectedRobiConfig = config;
+                                          }),
+                                      index: robiConfigs.length),
+                            ),
                         child: const MenuAcceleratorLabel('&New'),
                       ),
                       const Divider(height: 0),
@@ -117,12 +120,13 @@ class _FileBrowserState extends State<FileBrowser>
                               trailingIcon: robiConfigs.length <= 1
                                   ? null
                                   : IconButton(
-                                      icon: const Icon(Icons.delete),
-                                      onPressed: () => setState(() {
-                                        robiConfigs.remove(robiConfigs[i]);
-                                        selectedRobiConfig = robiConfigs[0];
-                                      }),
-                                    ),
+                                icon: const Icon(Icons.delete),
+                                onPressed: () =>
+                                    setState(() {
+                                      robiConfigs.remove(robiConfigs[i]);
+                                      selectedRobiConfig = robiConfigs[0];
+                                    }),
+                              ),
                               value: robiConfigs[i],
                               groupValue: selectedRobiConfig,
                               onChanged: (value) =>
@@ -157,7 +161,7 @@ class _FileBrowserState extends State<FileBrowser>
                             applicationName: "Robi Line Drawer",
                             applicationVersion: "1.0.0",
                             applicationLegalese:
-                                "© Copyright Finn Drünert 2024",
+                            "© Copyright Finn Drünert 2024",
                             children: [
                               Card(
                                 child: InkWell(
@@ -185,53 +189,54 @@ class _FileBrowserState extends State<FileBrowser>
           child: instructionTable.isEmpty
               ? const Center()
               : DefaultTabController(
-                  length: instructionTable.length,
-                  child: Scaffold(
-                    appBar: PreferredSize(
-                      preferredSize: const Size.fromHeight(32),
-                      child: AppBar(
-                        flexibleSpace: Column(
-                          mainAxisAlignment: MainAxisAlignment.end,
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            SizedBox(
-                              child: TabBar(
-                                labelPadding:
-                                    const EdgeInsets.symmetric(horizontal: 5),
-                                tabAlignment: TabAlignment.start,
-                                isScrollable: true,
-                                labelColor: Colors.white,
-                                tabs: buildTabs(),
-                              ),
-                            ),
-                          ],
+            length: instructionTable.length,
+            child: Scaffold(
+              appBar: PreferredSize(
+                preferredSize: const Size.fromHeight(32),
+                child: AppBar(
+                  flexibleSpace: Column(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      SizedBox(
+                        child: TabBar(
+                          labelPadding:
+                          const EdgeInsets.symmetric(horizontal: 5),
+                          tabAlignment: TabAlignment.start,
+                          isScrollable: true,
+                          labelColor: Colors.white,
+                          tabs: buildTabs(),
                         ),
                       ),
-                    ),
-                    body: TabBarView(
-                      children: instructionTable.values
-                          .map(
-                            (instructions) => Editor(
-                              instructions: instructions,
-                              robiConfig: selectedRobiConfig,
-                              exportPressed: () async {
-                                final path = await FilePicker.platform.saveFile(
-                                  dialogTitle: "Please select an output file:",
-                                  fileName: "exported.json",
-                                );
-                                if (path == null) return;
-                                Exporter.saveToFile(
-                                  File(path),
-                                  selectedRobiConfig,
-                                  instructions,
-                                );
-                              },
-                            ),
-                          )
-                          .toList(),
-                    ),
+                    ],
                   ),
                 ),
+              ),
+              body: TabBarView(
+                children: instructionTable.values
+                    .map(
+                      (instructions) =>
+                      Editor(
+                        instructions: instructions,
+                        robiConfig: selectedRobiConfig,
+                        exportPressed: () async {
+                          final path = await FilePicker.platform.saveFile(
+                            dialogTitle: "Please select an output file:",
+                            fileName: "exported.json",
+                          );
+                          if (path == null) return;
+                          Exporter.saveToFile(
+                            File(path),
+                            selectedRobiConfig,
+                            instructions,
+                          );
+                        },
+                      ),
+                )
+                    .toList(),
+              ),
+            ),
+          ),
         ),
       ],
     );
@@ -240,7 +245,8 @@ class _FileBrowserState extends State<FileBrowser>
   List<Widget> buildTabs() {
     return instructionTable.keys
         .map(
-          (file) => SizedBox(
+          (file) =>
+          SizedBox(
             height: 30,
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -255,10 +261,11 @@ class _FileBrowserState extends State<FileBrowser>
                   height: 20,
                   child: IconButton(
                     padding: EdgeInsets.zero,
-                    onPressed: () => setState(() {
-                      instructionTable.remove(file);
-                      if (instructionTable.isEmpty) focusedFile = null;
-                    }),
+                    onPressed: () =>
+                        setState(() {
+                          instructionTable.remove(file);
+                          if (instructionTable.isEmpty) focusedFile = null;
+                        }),
                     iconSize: 17,
                     icon: const Icon(Icons.close),
                   ),
@@ -266,7 +273,7 @@ class _FileBrowserState extends State<FileBrowser>
               ],
             ),
           ),
-        )
+    )
         .toList();
   }
 
@@ -289,7 +296,11 @@ class _FileBrowserState extends State<FileBrowser>
       }
 
       setState(() {
-        instructionTable[tab.absolute.path] = newInstructions!.toList();
+        List<MissionInstruction> insts = newInstructions!.toList();
+        if (insts.isEmpty || insts.last is! StopOverTimeInstruction) {
+          insts.add(defaultStopInstruction);
+        }
+        instructionTable[tab.absolute.path] = insts;
         focusedFile = tab;
       });
     } else {
@@ -321,10 +332,12 @@ class _FileBrowserState extends State<FileBrowser>
 
     final file = File(result);
 
-    instructionTable[file.absolute.path] = [];
+    instructionTable[file.absolute.path] = [defaultStopInstruction];
 
     RobiPathSerializer.saveToFile(file, []);
 
     setState(() => focusedFile = file);
   }
 }
+
+final defaultStopInstruction = StopOverTimeInstruction(0, 1);

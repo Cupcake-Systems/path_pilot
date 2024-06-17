@@ -103,7 +103,8 @@ class AccelerateOverDistanceInstruction extends DriveForwardInstruction {
 
 class AccelerateOverTimeInstruction extends DriveForwardInstruction {
   @protected
-  double _time, initialVelocity;
+  double _time;
+  final double initialVelocity;
 
   double get time => _time;
 
@@ -141,6 +142,17 @@ class AccelerateOverTimeInstruction extends DriveForwardInstruction {
             _calculateDistance(_time, initialVelocity, acceleration),
             _calculateFinalVelocity(initialVelocity, _time, acceleration),
             acceleration);
+}
+
+class StopOverTimeInstruction extends AccelerateOverTimeInstruction {
+  @override
+  set time(double value) {
+    _time = value;
+    _acceleration = -initialVelocity / _time;
+  }
+
+  StopOverTimeInstruction(double initialVelocity, double time)
+      : super(initialVelocity, time, -initialVelocity / time);
 }
 
 class TurnInstruction extends MissionInstruction {

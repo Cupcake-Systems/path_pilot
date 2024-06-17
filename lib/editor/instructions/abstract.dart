@@ -24,14 +24,15 @@ abstract class AbstractEditor extends StatelessWidget {
 
   String? warningMessage;
 
-  AbstractEditor(
-      {super.key,
-      required this.instruction,
-      required this.simulationResult,
-      required this.instructionIndex,
-      required this.change,
-      required this.removed,
-      this.warningMessage}) {
+  AbstractEditor({
+    super.key,
+    required this.instruction,
+    required this.simulationResult,
+    required this.instructionIndex,
+    required this.change,
+    required this.removed,
+    this.warningMessage,
+  }) {
     if (instructionIndex > 0) {
       prevInstructionResult = simulationResult.instructionResults
               .elementAtOrNull(instructionIndex - 1) ??
@@ -51,7 +52,7 @@ abstract class AbstractEditor extends StatelessWidget {
 }
 
 class RemovableWarningCard extends StatelessWidget {
-  final Function() removed;
+  final Function()? removed;
 
   final List<Widget> children;
 
@@ -59,16 +60,19 @@ class RemovableWarningCard extends StatelessWidget {
   final InstructionResult instructionResult;
   final MissionInstruction instruction;
 
+  final bool isRemovable;
   final String? warningMessage;
 
-  const RemovableWarningCard(
-      {super.key,
-      required this.children,
-      required this.removed,
-      required this.warningMessage,
-      required this.prevResult,
-      required this.instructionResult,
-      required this.instruction});
+  const RemovableWarningCard({
+    super.key,
+    required this.children,
+    required this.prevResult,
+    required this.instructionResult,
+    required this.instruction,
+    this.removed,
+    this.isRemovable = true,
+    this.warningMessage,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -84,7 +88,9 @@ class RemovableWarningCard extends StatelessWidget {
                     children: children,
                   ),
                 ),
-                IconButton(onPressed: removed, icon: const Icon(Icons.delete)),
+                if (isRemovable)
+                  IconButton(
+                      onPressed: removed, icon: const Icon(Icons.delete)),
                 const SizedBox(width: 40),
               ],
             ),

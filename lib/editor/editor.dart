@@ -9,6 +9,7 @@ import 'package:robi_line_drawer/editor/instructions/decelerate_over_distance.da
 import 'package:robi_line_drawer/editor/instructions/decelerate_over_time.dart';
 import 'package:robi_line_drawer/editor/instructions/drive_distance.dart';
 import 'package:robi_line_drawer/editor/instructions/drive_time.dart';
+import 'package:robi_line_drawer/editor/instructions/stop.dart';
 import 'package:robi_line_drawer/robi_api/robi_utils.dart';
 import 'package:robi_line_drawer/editor/visualizer.dart';
 
@@ -70,7 +71,7 @@ class _EditorState extends State<Editor> {
                 AppBar(title: const Text("Instructions Editor")),
                 Expanded(
                   child: ReorderableListView.builder(
-                    itemCount: instructions.length,
+                    itemCount: instructions.length - 1,
                     header: const Card(
                       child: Padding(
                         padding:
@@ -84,27 +85,47 @@ class _EditorState extends State<Editor> {
                         ),
                       ),
                     ),
-                    footer: Card.outlined(
-                      child: IconButton(
-                        style: IconButton.styleFrom(
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
+                    footer: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Card.outlined(
+                          child: IconButton(
+                            style: IconButton.styleFrom(
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                            ),
+                            padding: const EdgeInsets.symmetric(vertical: 20),
+                            icon: const Icon(Icons.add),
+                            onPressed: () => showDialog<AvailableInstruction?>(
+                              context: context,
+                              builder: (BuildContext context) =>
+                                  AddInstructionDialog(
+                                instructionAdded:
+                                    (MissionInstruction instruction) {
+                                  instructions.insert(
+                                      instructions.length - 1, instruction);
+                                  rerunSimulationAndUpdate();
+                                },
+                                simulationResult: simulationResult,
+                              ),
+                            ),
                           ),
                         ),
-                        padding: const EdgeInsets.symmetric(vertical: 20),
-                        icon: const Icon(Icons.add),
-                        onPressed: () => showDialog<AvailableInstruction?>(
-                          context: context,
-                          builder: (BuildContext context) =>
-                              AddInstructionDialog(
-                            instructionAdded: (MissionInstruction instruction) {
-                              instructions.add(instruction);
-                              rerunSimulationAndUpdate();
-                            },
-                            simulationResult: simulationResult,
-                          ),
-                        ),
-                      ),
+                        StopEditor(
+                          instruction:
+                              instructions.last as StopOverTimeInstruction,
+                          simulationResult: simulationResult,
+                          instructionIndex: instructions.length - 1,
+                          change: (newInstruction) {
+                            instructions[instructions.length - 1] =
+                                newInstruction;
+                            rerunSimulationAndUpdate();
+                          },
+                          removed: () {},
+                        )
+                      ],
                     ),
                     itemBuilder: (context, i) => instructionToEditor(i),
                     onReorder: (int oldIndex, int newIndex) {
@@ -147,7 +168,8 @@ class _EditorState extends State<Editor> {
 
   AbstractEditor instructionToEditor(int i) {
     final instruction = instructions[i];
-    void changeCallback(newInstruction) {
+
+    void changeCallback(MissionInstruction newInstruction) {
       instructions[i] = newInstruction;
       rerunSimulationAndUpdate();
     }
@@ -258,11 +280,16 @@ class _EditorState extends State<Editor> {
             acceleration: instruction.acceleration,
           ));
         } else if (instruction is AccelerateOverTimeInstruction) {
-          newInstructions.add(AccelerateOverTimeInstruction(
-            prevInstResult.managedVelocity,
-            instruction.time,
-            instruction.acceleration,
-          ));
+          if (instruction is StopOverTimeInstruction) {
+            newInstructions.add(StopOverTimeInstruction(
+                prevInstResult.managedVelocity, instruction.time));
+          } else {
+            newInstructions.add(AccelerateOverTimeInstruction(
+              prevInstResult.managedVelocity,
+              instruction.time,
+              instruction.acceleration,
+            ));
+          }
         } else if (instruction is DriveForwardDistanceInstruction) {
           newInstructions.add(DriveForwardDistanceInstruction(
               instruction.distance, prevInstResult.managedVelocity));
