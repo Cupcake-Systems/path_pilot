@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:robi_line_drawer/editor/add_instruction_dialog.dart';
+import 'package:robi_line_drawer/editor/instructions/abstract.dart';
 import 'package:robi_line_drawer/editor/instructions/accelerate_over_distance.dart';
 import 'package:robi_line_drawer/editor/instructions/decelerate_over_distance.dart';
 import 'package:robi_line_drawer/editor/instructions/decelerate_over_time.dart';
@@ -105,146 +106,7 @@ class _EditorState extends State<Editor> {
                         ),
                       ),
                     ),
-                    itemBuilder: (context, i) {
-                      final instruction = instructions[i];
-
-                      if (instruction.runtimeType ==
-                          AccelerateOverDistanceInstruction) {
-                        final inst =
-                            instruction as AccelerateOverDistanceInstruction;
-                        if (inst.acceleration > 0) {
-                          return AccelerateOverDistanceEditor(
-                            key: Key("$i"),
-                            instruction: inst,
-                            change: (newInstruction) {
-                              instructions[i] = newInstruction;
-                              rerunSimulationAndUpdate();
-                            },
-                            removed: () {
-                              instructions.removeAt(i);
-                              rerunSimulationAndUpdate();
-                            },
-                            simulationResult: simulationResult,
-                            instructionIndex: i,
-                          );
-                        }
-                        return DecelerateOverDistanceEditor(
-                          key: Key("$i"),
-                          instruction: inst,
-                          simulationResult: simulationResult,
-                          instructionIndex: i,
-                          change: (newInstruction) {
-                            instructions[i] = newInstruction;
-                            rerunSimulationAndUpdate();
-                          },
-                          removed: () {
-                            instructions.removeAt(i);
-                            rerunSimulationAndUpdate();
-                          },
-                        );
-                      } else if (instruction.runtimeType ==
-                          AccelerateOverTimeInstruction) {
-                        final inst =
-                            instruction as AccelerateOverTimeInstruction;
-                        if (inst.acceleration > 0) {
-                          return AccelerateOverTimeEditor(
-                            key: Key("$i"),
-                            instruction: inst,
-                            change: (newInstruction) {
-                              instructions[i] = newInstruction;
-                              rerunSimulationAndUpdate();
-                            },
-                            removed: () {
-                              instructions.removeAt(i);
-                              rerunSimulationAndUpdate();
-                            },
-                            simulationResult: simulationResult,
-                            instructionIndex: i,
-                          );
-                        }
-                        return DecelerateOverTimeEditor(
-                          key: Key("$i"),
-                          instruction: instruction,
-                          simulationResult: simulationResult,
-                          instructionIndex: i,
-                          change: (newInstruction) {
-                            instructions[i] = newInstruction;
-                            rerunSimulationAndUpdate();
-                          },
-                          removed: () {
-                            instructions.removeAt(i);
-                            rerunSimulationAndUpdate();
-                          },
-                        );
-                      } else if (instruction.runtimeType ==
-                          DriveForwardInstruction) {
-                        return DriveInstructionEditor(
-                          key: Key(i.toString()),
-                          instruction: instruction as DriveForwardInstruction,
-                          change: (newInstruction) {
-                            instructions[i] = newInstruction;
-                            rerunSimulationAndUpdate();
-                          },
-                          removed: () {
-                            instructions.removeAt(i);
-                            rerunSimulationAndUpdate();
-                          },
-                          simulationResult: simulationResult,
-                          instructionIndex: i,
-                        );
-                      } else if (instruction.runtimeType == TurnInstruction) {
-                        return TurnInstructionEditor(
-                          key: Key("$i"),
-                          instruction: instruction as TurnInstruction,
-                          change: (newInstruction) {
-                            instructions[i] = newInstruction;
-                            rerunSimulationAndUpdate();
-                          },
-                          removed: () {
-                            instructions.removeAt(i);
-                            rerunSimulationAndUpdate();
-                          },
-                          simulationResult: simulationResult,
-                          instructionIndex: i,
-                          robiConfig: widget.robiConfig,
-                        );
-                      } else if (instruction.runtimeType ==
-                          DriveForwardDistanceInstruction) {
-                        return DriveDistanceEditor(
-                          key: Key("$i"),
-                          instruction:
-                              instruction as DriveForwardDistanceInstruction,
-                          simulationResult: simulationResult,
-                          instructionIndex: i,
-                          change: (newInstruction) {
-                            instructions[i] = newInstruction;
-                            rerunSimulationAndUpdate();
-                          },
-                          removed: () {
-                            instructions.removeAt(i);
-                            rerunSimulationAndUpdate();
-                          },
-                        );
-                      } else if (instruction.runtimeType ==
-                          DriveForwardTimeInstruction) {
-                        return DriveTimeEditor(
-                          key: Key("$i"),
-                          instruction:
-                              instruction as DriveForwardTimeInstruction,
-                          simulationResult: simulationResult,
-                          instructionIndex: i,
-                          change: (newInstruction) {
-                            instructions[i] = newInstruction;
-                            rerunSimulationAndUpdate();
-                          },
-                          removed: () {
-                            instructions.removeAt(i);
-                            rerunSimulationAndUpdate();
-                          },
-                        );
-                      }
-                      throw UnsupportedError("");
-                    },
+                    itemBuilder: (context, i) => instructionToEditor(i),
                     onReorder: (int oldIndex, int newIndex) {
                       if (oldIndex < newIndex) newIndex -= 1;
                       instructions.insert(
@@ -281,6 +143,99 @@ class _EditorState extends State<Editor> {
         ),
       ],
     );
+  }
+
+  AbstractEditor instructionToEditor(int i) {
+    final instruction = instructions[i];
+    void changeCallback(newInstruction) {
+      instructions[i] = newInstruction;
+      rerunSimulationAndUpdate();
+    }
+
+    void removedCallback() {
+      instructions.removeAt(i);
+      rerunSimulationAndUpdate();
+    }
+
+    if (instruction is AccelerateOverDistanceInstruction) {
+      if (instruction.acceleration > 0) {
+        return AccelerateOverDistanceEditor(
+          key: Key("$i"),
+          instruction: instruction,
+          change: changeCallback,
+          removed: removedCallback,
+          simulationResult: simulationResult,
+          instructionIndex: i,
+        );
+      } else {
+        return DecelerateOverDistanceEditor(
+          key: Key("$i"),
+          instruction: instruction,
+          simulationResult: simulationResult,
+          instructionIndex: i,
+          change: changeCallback,
+          removed: removedCallback,
+        );
+      }
+    } else if (instruction is AccelerateOverTimeInstruction) {
+      if (instruction.acceleration > 0) {
+        return AccelerateOverTimeEditor(
+          key: Key("$i"),
+          instruction: instruction,
+          change: changeCallback,
+          removed: removedCallback,
+          simulationResult: simulationResult,
+          instructionIndex: i,
+        );
+      } else {
+        return DecelerateOverTimeEditor(
+          key: Key("$i"),
+          instruction: instruction,
+          simulationResult: simulationResult,
+          instructionIndex: i,
+          change: changeCallback,
+          removed: removedCallback,
+        );
+      }
+    } else if (instruction is DriveForwardInstruction) {
+      return DriveInstructionEditor(
+        key: Key("$i"),
+        instruction: instruction,
+        change: changeCallback,
+        removed: removedCallback,
+        simulationResult: simulationResult,
+        instructionIndex: i,
+      );
+    } else if (instruction is TurnInstruction) {
+      return TurnInstructionEditor(
+        key: Key("$i"),
+        instruction: instruction,
+        change: changeCallback,
+        removed: removedCallback,
+        simulationResult: simulationResult,
+        instructionIndex: i,
+        robiConfig: widget.robiConfig,
+      );
+    } else if (instruction is DriveForwardDistanceInstruction) {
+      return DriveDistanceEditor(
+        key: Key("$i"),
+        instruction: instruction,
+        simulationResult: simulationResult,
+        instructionIndex: i,
+        change: changeCallback,
+        removed: removedCallback,
+      );
+    } else if (instruction is DriveForwardTimeInstruction) {
+      return DriveTimeEditor(
+        key: Key("$i"),
+        instruction: instruction,
+        simulationResult: simulationResult,
+        instructionIndex: i,
+        change: changeCallback,
+        removed: removedCallback,
+      );
+    }
+    throw UnsupportedError("");
   }
 
   void rerunSimulationAndUpdate() {
@@ -336,7 +291,3 @@ double roundToDigits(double num, int digits) {
   final e = pow(10, digits);
   return (num * e).roundToDouble() / e;
 }
-
-String camelToSentence(String text) => text.replaceAllMapped(
-    RegExp(r'^([a-z])|[A-Z]'),
-    (Match m) => m[1] == null ? " ${m[0]}" : m[1]!.toUpperCase());

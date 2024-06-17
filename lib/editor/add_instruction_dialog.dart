@@ -153,3 +153,7 @@ enum UserInstruction {
 const baseInstructions = [UserInstruction.drive, UserInstruction.turn];
 final withoutBaseInstructions =
     UserInstruction.values.where((e) => !baseInstructions.contains(e));
+
+String camelToSentence(String text) => text.replaceAllMapped(
+    RegExp(r'^([a-z])|[A-Z]'),
+    (Match m) => m[1] == null ? " ${m[0]}" : m[1]!.toUpperCase());
