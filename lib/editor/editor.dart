@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:robi_line_drawer/editor/instructions/accelerate_over_distance.dart';
 import 'package:robi_line_drawer/editor/instructions/decelerate_over_distance.dart';
+import 'package:robi_line_drawer/editor/instructions/decelerate_over_time.dart';
 import 'package:robi_line_drawer/editor/instructions/drive_distance.dart';
 import 'package:robi_line_drawer/editor/instructions/drive_time.dart';
 import 'package:robi_line_drawer/robi_api/robi_utils.dart';
@@ -53,6 +54,7 @@ class _EditorState extends State<Editor> {
     UserInstruction.driveDistance: Icons.arrow_upward,
     UserInstruction.driveTime: Icons.arrow_upward,
     UserInstruction.decelerateOverDistance: Icons.speed,
+    UserInstruction.decelerateOverTime: Icons.speed,
   };
 
   @override
@@ -206,10 +208,29 @@ class _EditorState extends State<Editor> {
                         );
                       } else if (instruction.runtimeType ==
                           AccelerateOverTimeInstruction) {
-                        return AccelerateOverTimeEditor(
+                        final inst =
+                            instruction as AccelerateOverTimeInstruction;
+                        if (inst.acceleration > 0) {
+                          return AccelerateOverTimeEditor(
+                            key: Key("$i"),
+                            instruction: inst,
+                            change: (newInstruction) {
+                              instructions[i] = newInstruction;
+                              rerunSimulationAndUpdate();
+                            },
+                            removed: () {
+                              instructions.removeAt(i);
+                              rerunSimulationAndUpdate();
+                            },
+                            simulationResult: simulationResult,
+                            instructionIndex: i,
+                          );
+                        }
+                        return DecelerateOverTimeEditor(
                           key: Key("$i"),
-                          instruction:
-                              instruction as AccelerateOverTimeInstruction,
+                          instruction: instruction,
+                          simulationResult: simulationResult,
+                          instructionIndex: i,
                           change: (newInstruction) {
                             instructions[i] = newInstruction;
                             rerunSimulationAndUpdate();
@@ -218,8 +239,6 @@ class _EditorState extends State<Editor> {
                             instructions.removeAt(i);
                             rerunSimulationAndUpdate();
                           },
-                          simulationResult: simulationResult,
-                          instructionIndex: i,
                         );
                       } else if (instruction.runtimeType ==
                           DriveForwardInstruction) {
@@ -422,6 +441,10 @@ class _EditorState extends State<Editor> {
             distance: 0.5,
             acceleration: -0.3);
         break;
+      case UserInstruction.decelerateOverTime:
+        inst = AccelerateOverTimeInstruction(
+            prevInstResult.managedVelocity, 1, -0.3);
+        break;
     }
 
     instructions.add(inst);
@@ -451,6 +474,7 @@ enum UserInstruction {
   accelerateOverDistance,
   decelerateOverDistance,
   accelerateOverTime,
+  decelerateOverTime,
   driveDistance,
   driveTime,
 }
