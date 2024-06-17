@@ -76,6 +76,18 @@ class _EditorState extends State<Editor> {
                 Expanded(
                   child: ReorderableListView.builder(
                     itemCount: instructions.length,
+                    header: const Card(
+                      child: Padding(
+                        padding: EdgeInsets.symmetric(vertical: 12, horizontal: 40),
+                        child: Row(
+                          children: [
+                            Icon(Icons.start),
+                            SizedBox(width: 10),
+                            Text("Start"),
+                          ],
+                        ),
+                      ),
+                    ),
                     footer: Card.outlined(
                       child: IconButton(
                         style: IconButton.styleFrom(
