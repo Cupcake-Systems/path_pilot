@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:robi_line_drawer/editor/instructions/accelerate_over_distance.dart';
+import 'package:robi_line_drawer/editor/instructions/decelerate_over_distance.dart';
 import 'package:robi_line_drawer/editor/instructions/drive_distance.dart';
 import 'package:robi_line_drawer/editor/instructions/drive_time.dart';
 import 'package:robi_line_drawer/robi_api/robi_utils.dart';
@@ -51,6 +52,7 @@ class _EditorState extends State<Editor> {
     UserInstruction.accelerateOverTime: Icons.speed,
     UserInstruction.driveDistance: Icons.arrow_upward,
     UserInstruction.driveTime: Icons.arrow_upward,
+    UserInstruction.decelerateOverDistance: Icons.speed,
   };
 
   @override
@@ -78,7 +80,8 @@ class _EditorState extends State<Editor> {
                     itemCount: instructions.length,
                     header: const Card(
                       child: Padding(
-                        padding: EdgeInsets.symmetric(vertical: 12, horizontal: 40),
+                        padding:
+                            EdgeInsets.symmetric(vertical: 12, horizontal: 40),
                         child: Row(
                           children: [
                             Icon(Icons.start),
@@ -169,10 +172,29 @@ class _EditorState extends State<Editor> {
 
                       if (instruction.runtimeType ==
                           AccelerateOverDistanceInstruction) {
-                        return AccelerateOverDistanceEditor(
+                        final inst =
+                            instruction as AccelerateOverDistanceInstruction;
+                        if (inst.acceleration > 0) {
+                          return AccelerateOverDistanceEditor(
+                            key: Key("$i"),
+                            instruction: inst,
+                            change: (newInstruction) {
+                              instructions[i] = newInstruction;
+                              rerunSimulationAndUpdate();
+                            },
+                            removed: () {
+                              instructions.removeAt(i);
+                              rerunSimulationAndUpdate();
+                            },
+                            simulationResult: simulationResult,
+                            instructionIndex: i,
+                          );
+                        }
+                        return DecelerateOverDistanceEditor(
                           key: Key("$i"),
-                          instruction:
-                              instruction as AccelerateOverDistanceInstruction,
+                          instruction: inst,
+                          simulationResult: simulationResult,
+                          instructionIndex: i,
                           change: (newInstruction) {
                             instructions[i] = newInstruction;
                             rerunSimulationAndUpdate();
@@ -181,8 +203,6 @@ class _EditorState extends State<Editor> {
                             instructions.removeAt(i);
                             rerunSimulationAndUpdate();
                           },
-                          simulationResult: simulationResult,
-                          instructionIndex: i,
                         );
                       } else if (instruction.runtimeType ==
                           AccelerateOverTimeInstruction) {
@@ -391,6 +411,12 @@ class _EditorState extends State<Editor> {
       case UserInstruction.driveTime:
         inst = DriveForwardTimeInstruction(1, prevInstResult.managedVelocity);
         break;
+      case UserInstruction.decelerateOverDistance:
+        inst = AccelerateOverDistanceInstruction(
+            initialVelocity: prevInstResult.managedVelocity,
+            distance: 0.5,
+            acceleration: -0.3);
+        break;
     }
 
     instructions.add(inst);
@@ -418,6 +444,7 @@ enum UserInstruction {
   drive,
   turn,
   accelerateOverDistance,
+  decelerateOverDistance,
   accelerateOverTime,
   driveDistance,
   driveTime,

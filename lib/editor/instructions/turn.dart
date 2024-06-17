@@ -27,65 +27,62 @@ class TurnInstructionEditor extends AbstractEditor {
 
   @override
   Widget build(BuildContext context) {
-    return StatefulBuilder(
-      builder: (context, setState) {
-        return RemovableWarningCard(
-            instruction: instruction,
-            warningMessage: warningMessage,
-            removed: removed,
-            prevResult: prevInstructionResult,
-            instructionResult: instructionResult,
-            children: [
-              Icon(instruction.left ? Icons.turn_left : Icons.turn_right),
-              const SizedBox(width: 10),
-              const Text("Turn "),
-              IntrinsicWidth(
-                child: TextFormField(
-                  style: const TextStyle(fontSize: 14),
-                  initialValue: instruction.turnDegree.toString(),
-                  onChanged: (String? value) {
-                    if (value == null || value.isEmpty) return;
-                    final tried = double.tryParse(value);
-                    if (tried == null) return;
-                    instruction.turnDegree = tried;
-                    change(instruction);
-                  },
-                  inputFormatters: inputFormatters,
-                ),
-              ),
-              const Text("° to the "),
-              DropdownMenu(
-                textStyle: const TextStyle(fontSize: 14),
-                width: 100,
-                inputDecorationTheme: const InputDecorationTheme(),
-                initialSelection: instruction.left,
-                onSelected: (bool? value) {
-                  instruction.left = value!;
-                  change(instruction);
-                },
-                dropdownMenuEntries: const [
-                  DropdownMenuEntry(value: true, label: "left"),
-                  DropdownMenuEntry(value: false, label: "right"),
-                ],
-              ),
-              const Text("with a "),
-              IntrinsicWidth(
-                child: TextFormField(
-                  style: const TextStyle(fontSize: 14),
-                  initialValue: "${instruction.radius * 100}",
-                  onChanged: (String? value) {
-                    if (value == null || value.isEmpty) return;
-                    final tried = double.tryParse(value);
-                    if (tried == null) return;
-                    instruction.radius = tried / 100;
-                    change(instruction);
-                  },
-                  inputFormatters: inputFormatters,
-                ),
-              ),
-              const Text("cm inner radius")
-            ]);
-      },
+    return RemovableWarningCard(
+      instruction: instruction,
+      warningMessage: warningMessage,
+      removed: removed,
+      prevResult: prevInstructionResult,
+      instructionResult: instructionResult,
+      children: [
+        Icon(instruction.left ? Icons.turn_left : Icons.turn_right),
+        const SizedBox(width: 10),
+        const Text("Turn "),
+        IntrinsicWidth(
+          child: TextFormField(
+            style: const TextStyle(fontSize: 14),
+            initialValue: instruction.turnDegree.toString(),
+            onChanged: (String? value) {
+              if (value == null || value.isEmpty) return;
+              final tried = double.tryParse(value);
+              if (tried == null) return;
+              instruction.turnDegree = tried;
+              change(instruction);
+            },
+            inputFormatters: inputFormatters,
+          ),
+        ),
+        const Text("° to the "),
+        DropdownMenu(
+          textStyle: const TextStyle(fontSize: 14),
+          width: 100,
+          inputDecorationTheme: const InputDecorationTheme(),
+          initialSelection: instruction.left,
+          onSelected: (bool? value) {
+            instruction.left = value!;
+            change(instruction);
+          },
+          dropdownMenuEntries: const [
+            DropdownMenuEntry(value: true, label: "left"),
+            DropdownMenuEntry(value: false, label: "right"),
+          ],
+        ),
+        const Text("with a "),
+        IntrinsicWidth(
+          child: TextFormField(
+            style: const TextStyle(fontSize: 14),
+            initialValue: "${instruction.radius * 100}",
+            onChanged: (String? value) {
+              if (value == null || value.isEmpty) return;
+              final tried = double.tryParse(value);
+              if (tried == null) return;
+              instruction.radius = tried / 100;
+              change(instruction);
+            },
+            inputFormatters: inputFormatters,
+          ),
+        ),
+        const Text("cm inner radius")
+      ],
     );
   }
 }

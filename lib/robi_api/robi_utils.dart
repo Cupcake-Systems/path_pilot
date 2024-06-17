@@ -52,7 +52,6 @@ class DriveForwardDistanceInstruction extends DriveForwardInstruction {
 }
 
 class DriveForwardTimeInstruction extends DriveForwardInstruction {
-
   @protected
   double _time;
 
@@ -75,23 +74,30 @@ class AccelerateOverDistanceInstruction extends DriveForwardInstruction {
   set acceleration(double newAcceleration) {
     _acceleration = newAcceleration;
     _targetVelocity =
-        sqrt(pow(initialVelocity, 2) + 2 * acceleration * distance);
+        _calculateFinalVelocity(initialVelocity, distance, acceleration);
   }
 
   @override
   set distance(double newDistance) {
     _distance = newDistance;
     _targetVelocity =
-        sqrt(pow(initialVelocity, 2) + 2 * acceleration * distance);
+        _calculateFinalVelocity(initialVelocity, distance, acceleration);
   }
 
-  AccelerateOverDistanceInstruction(
-      {required this.initialVelocity,
-      required double distance,
-      required double acceleration})
-      : super(
+  static double _calculateFinalVelocity(
+      double initialVelocity, double distance, double acceleration) {
+    double finalVelocitySquared =
+        pow(initialVelocity, 2) + 2 * acceleration * distance;
+    return sqrt(finalVelocitySquared < 0 ? 0 : finalVelocitySquared);
+  }
+
+  AccelerateOverDistanceInstruction({
+    required this.initialVelocity,
+    required double distance,
+    required double acceleration,
+  }) : super(
             distance,
-            sqrt(pow(initialVelocity, 2) + 2 * acceleration * distance),
+            _calculateFinalVelocity(initialVelocity, distance, acceleration),
             acceleration);
 }
 
@@ -103,21 +109,38 @@ class AccelerateOverTimeInstruction extends DriveForwardInstruction {
 
   set time(double newTime) {
     _time = newTime;
-    _targetVelocity = initialVelocity + acceleration * _time;
-    _distance = initialVelocity * _time + 0.5 * acceleration * pow(_time, 2);
+    _targetVelocity =
+        _calculateFinalVelocity(initialVelocity, time, _acceleration);
+    _distance = _calculateDistance(time, initialVelocity, acceleration);
   }
 
   @override
   set acceleration(double newAcceleration) {
     _acceleration = newAcceleration;
-    _targetVelocity = initialVelocity + acceleration * _time;
-    _distance = initialVelocity * _time + 0.5 * acceleration * pow(_time, 2);
+    _targetVelocity =
+        _calculateFinalVelocity(initialVelocity, time, _acceleration);
+    _distance = _calculateDistance(time, initialVelocity, acceleration);
+  }
+
+  static double _calculateFinalVelocity(
+      double initialVelocity, double time, double acceleration) {
+    double finalVelocity = initialVelocity + acceleration * time;
+    return finalVelocity > 0 ? finalVelocity : 0;
+  }
+
+  static double _calculateDistance(
+      double time, double initialVelocity, double acceleration) {
+    double distance =
+        initialVelocity * time + 0.5 * acceleration * pow(time, 2);
+    return distance > 0 ? distance : 0;
   }
 
   AccelerateOverTimeInstruction(
       this.initialVelocity, this._time, double acceleration)
-      : super(initialVelocity * _time + 0.5 * acceleration * pow(_time, 2),
-            initialVelocity + acceleration * _time, acceleration);
+      : super(
+            _calculateDistance(_time, initialVelocity, acceleration),
+            _calculateFinalVelocity(initialVelocity, _time, acceleration),
+            acceleration);
 }
 
 class TurnInstruction extends MissionInstruction {
@@ -214,16 +237,10 @@ class Simulator {
 
   DriveResult simulateDrive(
       InstructionResult prevInstruction, DriveInstruction instruction) {
-    double distanceCoveredByAcceleration;
-
-    if (instruction.acceleration > 0) {
-      distanceCoveredByAcceleration = (pow(instruction.targetVelocity, 2) -
-                  pow(prevInstruction.managedVelocity, 2))
-              .abs() /
-          (2 * instruction.acceleration);
-    } else {
-      distanceCoveredByAcceleration = 0;
-    }
+    double distanceCoveredByAcceleration = (pow(instruction.targetVelocity, 2) -
+            pow(prevInstruction.managedVelocity, 2)) /
+        (2 * instruction.acceleration);
+    distanceCoveredByAcceleration = distanceCoveredByAcceleration.abs();
 
     if (distanceCoveredByAcceleration > instruction.distance) {
       distanceCoveredByAcceleration = instruction.distance;
@@ -232,14 +249,8 @@ class Simulator {
     double managedVelocity = pow(prevInstruction.managedVelocity, 2).toDouble();
     double thing = 2 * instruction.acceleration * distanceCoveredByAcceleration;
 
-    // If decelerating (target velocity < previous managed velocity), flip the sign of 'thing'
-    if (instruction.targetVelocity < prevInstruction.managedVelocity) {
-      thing = -thing;
-    }
-
     double finalVelocitySquared = managedVelocity + thing;
 
-    // Ensure the result is non-negative before taking the square root
     if (finalVelocitySquared < 0) {
       finalVelocitySquared = 0;
     }
@@ -249,7 +260,7 @@ class Simulator {
     double drivenDistance = distanceCoveredByAcceleration;
 
     if (managedVelocity > 0) {
-      double timeForRemainingDistance =
+      final timeForRemainingDistance =
           (instruction.distance - distanceCoveredByAcceleration) /
               managedVelocity;
 

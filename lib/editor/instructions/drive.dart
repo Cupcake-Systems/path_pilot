@@ -66,27 +66,35 @@ class DriveInstructionEditor extends AbstractEditor {
               final tried = double.tryParse(value);
               if (tried == null) return;
               instruction.targetVelocity = tried / 100.0;
+              if (prevInstructionResult.managedVelocity >
+                  instruction.targetVelocity) {
+                instruction.acceleration = -instruction.acceleration.abs();
+              }
               change(instruction);
             },
             inputFormatters: inputFormatters,
           ),
         ),
-        const Text("cm/s accelerating at "),
-        IntrinsicWidth(
-          child: TextFormField(
-            style: const TextStyle(fontSize: 14),
-            initialValue: "${instruction.acceleration * 100}",
-            onChanged: (String? value) {
-              if (value == null || value.isEmpty) return;
-              final tried = double.tryParse(value);
-              if (tried == null) return;
-              instruction.acceleration = tried / 100.0;
-              change(instruction);
-            },
-            inputFormatters: inputFormatters,
+        const Text("cm/s"),
+        if (prevInstructionResult.managedVelocity !=
+            instruction.targetVelocity) ...[
+          Text(" ${instruction.acceleration > 0 ? "accelerating" : "decelerating"} at "),
+          IntrinsicWidth(
+            child: TextFormField(
+              style: const TextStyle(fontSize: 14),
+              initialValue: "${instruction.acceleration.abs() * 100}",
+              onChanged: (String? value) {
+                if (value == null || value.isEmpty) return;
+                final tried = double.tryParse(value);
+                if (tried == null) return;
+                instruction.acceleration = tried / 100.0;
+                change(instruction);
+              },
+              inputFormatters: inputFormatters,
+            ),
           ),
-        ),
-        const Text("cm/s²"),
+          const Text("cm/s²"),
+        ],
       ],
     );
   }

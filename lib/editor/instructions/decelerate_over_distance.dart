@@ -4,11 +4,11 @@ import 'package:robi_line_drawer/editor/instructions/abstract.dart';
 import '../../robi_api/robi_utils.dart';
 import '../editor.dart';
 
-class AccelerateOverTimeEditor extends AbstractEditor {
+class DecelerateOverDistanceEditor extends AbstractEditor {
   @override
-  final AccelerateOverTimeInstruction instruction;
+  final AccelerateOverDistanceInstruction instruction;
 
-  AccelerateOverTimeEditor({
+  DecelerateOverDistanceEditor({
     super.key,
     required this.instruction,
     required super.simulationResult,
@@ -16,8 +16,10 @@ class AccelerateOverTimeEditor extends AbstractEditor {
     required super.change,
     required super.removed,
   }) : super(instruction: instruction) {
-    if (instruction.acceleration <= 0 || instruction.time <= 0) {
+    if (instruction.acceleration >= 0 || instruction.distance <= 0) {
       warningMessage = "Pointless";
+    } else if (prevInstructionResult.managedVelocity <= 0) {
+      warningMessage = "Cannot decelerate further";
     }
   }
 
@@ -25,38 +27,38 @@ class AccelerateOverTimeEditor extends AbstractEditor {
   Widget build(BuildContext context) {
     return RemovableWarningCard(
       instruction: instruction,
-      instructionResult: instructionResult,
-      prevResult: prevInstructionResult,
-      removed: removed,
       warningMessage: warningMessage,
+      removed: removed,
+      prevResult: prevInstructionResult,
+      instructionResult: instructionResult,
       children: [
         const Icon(Icons.speed),
         const SizedBox(width: 10),
-        const Text("Accelerate for "),
+        const Text("Decelerate over "),
         IntrinsicWidth(
           child: TextFormField(
             style: const TextStyle(fontSize: 14),
-            initialValue: instruction.time.toString(),
+            initialValue: instruction.distance.toString(),
             onChanged: (String? value) {
               if (value == null || value.isEmpty) return;
               final tried = double.tryParse(value);
               if (tried == null) return;
-              instruction.time = tried;
+              instruction.distance = tried;
               change(instruction);
             },
             inputFormatters: inputFormatters,
           ),
         ),
-        const Text("s, at "),
+        const Text("m, at "),
         IntrinsicWidth(
           child: TextFormField(
             style: const TextStyle(fontSize: 14),
-            initialValue: "${instruction.acceleration * 100}",
+            initialValue: "${instruction.acceleration.abs() * 100}",
             onChanged: (String? value) {
               if (value == null || value.isEmpty) return;
               final tried = double.tryParse(value);
               if (tried == null) return;
-              instruction.acceleration = tried / 100;
+              instruction.acceleration = -tried / 100;
               change(instruction);
             },
             inputFormatters: inputFormatters,
