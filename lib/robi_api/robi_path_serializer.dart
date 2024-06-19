@@ -1,27 +1,55 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:robi_line_drawer/editor/add_instruction_dialog.dart';
 import 'package:robi_line_drawer/robi_api/robi_utils.dart';
 import 'package:vector_math/vector_math.dart';
 
 final startResult = DriveResult(0, 0, Vector2.zero(), 0);
 
 class InstructionContainer {
-  late final AvailableInstruction type;
+  late final UserInstruction type;
   late final MissionInstruction instruction;
 
-  static AvailableInstruction getInstructionTypeFromString(String s) {
-    for (AvailableInstruction element in AvailableInstruction.values) {
+  static UserInstruction getInstructionTypeFromString(String s) {
+    for (final element in UserInstruction.values) {
       if (element.name == s) return element;
     }
     throw UnsupportedError("");
   }
 
-  InstructionContainer(this.instruction) {
+  InstructionContainer(this.instruction)
+      : type = instructionToType(instruction);
+
+  static UserInstruction instructionToType(MissionInstruction instruction) {
     if (instruction is DriveInstruction) {
-      type = AvailableInstruction.driveInstruction;
+      if (instruction.runtimeType == DriveForwardInstruction) {
+        return UserInstruction.drive;
+      } else if (instruction is AccelerateOverDistanceInstruction) {
+        if (instruction.acceleration > 0) {
+          return UserInstruction.accelerateOverDistance;
+        } else {
+          return UserInstruction.decelerateOverDistance;
+        }
+      } else if (instruction is AccelerateOverTimeInstruction) {
+        if (instruction is StopOverTimeInstruction) {
+          return UserInstruction.stop;
+        } else {
+          if (instruction.acceleration > 0) {
+            return UserInstruction.accelerateOverTime;
+          } else {
+            return UserInstruction.decelerateOverTime;
+          }
+        }
+      } else if (instruction is DriveForwardDistanceInstruction) {
+        return UserInstruction.driveDistance;
+      } else if (instruction is DriveForwardTimeInstruction) {
+        return UserInstruction.driveTime;
+      } else {
+        throw UnsupportedError("");
+      }
     } else if (instruction is TurnInstruction) {
-      type = AvailableInstruction.turnInstruction;
+      return UserInstruction.turn;
     } else {
       throw UnsupportedError("");
     }
@@ -29,12 +57,32 @@ class InstructionContainer {
 
   InstructionContainer.fromJson(Map<String, dynamic> json) {
     type = getInstructionTypeFromString(json["type"]);
-    if (type == AvailableInstruction.driveInstruction) {
-      instruction = DriveForwardInstruction.fromJson(json["instruction"]);
-    } else if (type == AvailableInstruction.turnInstruction) {
-      instruction = TurnInstruction.fromJson(json["instruction"]);
-    } else {
-      throw UnsupportedError("");
+    final instJson = json["instruction"];
+
+    switch (type) {
+      case UserInstruction.drive:
+        instruction = DriveForwardInstruction.fromJson(instJson);
+        break;
+      case UserInstruction.turn:
+        instruction = TurnInstruction.fromJson(instJson);
+        break;
+      case UserInstruction.accelerateOverDistance:
+      case UserInstruction.decelerateOverDistance:
+        instruction = AccelerateOverDistanceInstruction.fromJson(instJson);
+        break;
+      case UserInstruction.accelerateOverTime:
+      case UserInstruction.decelerateOverTime:
+        instruction = AccelerateOverTimeInstruction.fromJson(instJson);
+        break;
+      case UserInstruction.driveDistance:
+        instruction = DriveForwardDistanceInstruction.fromJson(instJson);
+        break;
+      case UserInstruction.driveTime:
+        instruction = DriveForwardTimeInstruction.fromJson(instJson);
+        break;
+      case UserInstruction.stop:
+        instruction = StopOverTimeInstruction.fromJson(instJson);
+        break;
     }
   }
 

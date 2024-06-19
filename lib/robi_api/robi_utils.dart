@@ -4,11 +4,13 @@ import 'package:vector_math/vector_math.dart';
 
 import 'robi_path_serializer.dart';
 
-abstract class MissionInstruction {
-  const MissionInstruction();
-
+abstract class Serializable {
   Map<String, dynamic> toJson();
+
+  Map<String, dynamic> export();
 }
+
+abstract class MissionInstruction extends Serializable {}
 
 abstract class DriveInstruction extends MissionInstruction {
   @protected
@@ -23,7 +25,7 @@ abstract class DriveInstruction extends MissionInstruction {
   DriveInstruction(this._distance, this._targetVelocity, this._acceleration);
 
   @override
-  Map<String, double> toJson() => {
+  Map<String, dynamic> export() => {
         "distance": distance,
         "target_velocity": targetVelocity,
         "acceleration": acceleration
@@ -40,44 +42,62 @@ class DriveForwardInstruction extends DriveInstruction {
   DriveForwardInstruction(
       super.distance, super.targetVelocity, super.acceleration);
 
-  @override
   DriveForwardInstruction.fromJson(Map<String, dynamic> json)
-      : super(
-            json["distance"]!, json["target_velocity"]!, json["acceleration"]!);
+      : this(json["distance"], json["target_velocity"], json["acceleration"]);
+
+  @override
+  Map<String, dynamic> toJson() => export();
 }
 
-class DriveForwardDistanceInstruction extends DriveForwardInstruction {
+class DriveForwardDistanceInstruction extends DriveInstruction {
+  set distance(double value) => _distance = value;
+
   DriveForwardDistanceInstruction(double distance, double initialVelocity)
       : super(distance, initialVelocity, 0.0);
+
+  DriveForwardDistanceInstruction.fromJson(Map<String, dynamic> json)
+      : this(json["distance"], json["target_velocity"]);
+
+  @override
+  Map<String, double> toJson() =>
+      {"distance": _distance, "target_velocity": _targetVelocity};
 }
 
-class DriveForwardTimeInstruction extends DriveForwardInstruction {
+class DriveForwardTimeInstruction extends DriveInstruction
+    implements Serializable {
   @protected
   double _time;
+  final double initialVelocity;
 
   double get time => _time;
 
   set time(double value) {
     _time = value;
-    distance = _time * _targetVelocity;
+    _distance = _time * _targetVelocity;
   }
 
-  DriveForwardTimeInstruction(this._time, double initialVelocity)
+  DriveForwardTimeInstruction(this._time, this.initialVelocity)
       : super(initialVelocity * _time, initialVelocity, 0.0);
+
+  DriveForwardTimeInstruction.fromJson(Map<String, dynamic> json)
+      : this(json["time"], json["initial_velocity"]);
+
+  @override
+  Map<String, double> toJson() =>
+      {"time": _time, "initial_velocity": initialVelocity};
 }
 
-class AccelerateOverDistanceInstruction extends DriveForwardInstruction {
+class AccelerateOverDistanceInstruction extends DriveInstruction
+    implements Serializable {
   @protected
   final double initialVelocity;
 
-  @override
   set acceleration(double newAcceleration) {
     _acceleration = newAcceleration;
     _targetVelocity =
         _calculateFinalVelocity(initialVelocity, distance, acceleration);
   }
 
-  @override
   set distance(double newDistance) {
     _distance = newDistance;
     _targetVelocity =
@@ -99,9 +119,23 @@ class AccelerateOverDistanceInstruction extends DriveForwardInstruction {
             distance,
             _calculateFinalVelocity(initialVelocity, distance, acceleration),
             acceleration);
+
+  AccelerateOverDistanceInstruction.fromJson(Map<String, dynamic> json)
+      : this(
+          initialVelocity: json["initial_velocity"],
+          distance: json["distance"],
+          acceleration: json["acceleration"],
+        );
+
+  @override
+  Map<String, dynamic> toJson() => {
+        "initial_velocity": initialVelocity,
+        "distance": _distance,
+        "acceleration": _acceleration,
+      };
 }
 
-class AccelerateOverTimeInstruction extends DriveForwardInstruction {
+class AccelerateOverTimeInstruction extends DriveInstruction {
   @protected
   double _time;
   final double initialVelocity;
@@ -115,7 +149,6 @@ class AccelerateOverTimeInstruction extends DriveForwardInstruction {
     _distance = _calculateDistance(time, initialVelocity, acceleration);
   }
 
-  @override
   set acceleration(double newAcceleration) {
     _acceleration = newAcceleration;
     _targetVelocity =
@@ -142,6 +175,16 @@ class AccelerateOverTimeInstruction extends DriveForwardInstruction {
             _calculateDistance(_time, initialVelocity, acceleration),
             _calculateFinalVelocity(initialVelocity, _time, acceleration),
             acceleration);
+
+  AccelerateOverTimeInstruction.fromJson(Map<String, dynamic> json)
+      : this(json["initial_velocity"], json["time"], json["acceleration"]);
+
+  @override
+  Map<String, dynamic> toJson() => {
+        "initial_velocity": initialVelocity,
+        "time": time,
+        "acceleration": _acceleration
+      };
 }
 
 class StopOverTimeInstruction extends AccelerateOverTimeInstruction {
@@ -153,6 +196,9 @@ class StopOverTimeInstruction extends AccelerateOverTimeInstruction {
 
   StopOverTimeInstruction(double initialVelocity, double time)
       : super(initialVelocity, time, -initialVelocity / time);
+
+  StopOverTimeInstruction.fromJson(Map<String, dynamic> json)
+      : this(json["initial_velocity"], json["time"]);
 }
 
 class TurnInstruction extends MissionInstruction {
@@ -171,6 +217,9 @@ class TurnInstruction extends MissionInstruction {
   @override
   Map<String, dynamic> toJson() =>
       {"turn_degree": turnDegree, "left": left, "radius": radius};
+
+  @override
+  Map<String, dynamic> export() => toJson();
 }
 
 enum AvailableInstruction { driveInstruction, turnInstruction }
@@ -249,9 +298,16 @@ class Simulator {
 
   DriveResult simulateDrive(
       InstructionResult prevInstruction, DriveInstruction instruction) {
-    double distanceCoveredByAcceleration = (pow(instruction.targetVelocity, 2) -
-            pow(prevInstruction.managedVelocity, 2)) /
-        (2 * instruction.acceleration);
+    double distanceCoveredByAcceleration;
+
+    if (instruction.acceleration != 0) {
+      distanceCoveredByAcceleration = (pow(instruction.targetVelocity, 2) -
+              pow(prevInstruction.managedVelocity, 2)) /
+          (2 * instruction.acceleration);
+    } else {
+      distanceCoveredByAcceleration = 0;
+    }
+
     distanceCoveredByAcceleration = distanceCoveredByAcceleration.abs();
 
     if (distanceCoveredByAcceleration > instruction.distance) {

@@ -1,33 +1,27 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:robi_line_drawer/robi_api/robi_path_serializer.dart';
 import 'package:robi_line_drawer/robi_api/robi_utils.dart';
 
 class Exported {
   final RobiConfig config;
-  final List<InstructionContainer> instructions;
+  final List<MissionInstruction> instructions;
 
   Exported(this.config, this.instructions);
 
-  Exported.fromJson(Map<String, dynamic> json)
-      : config = RobiConfig.fromJson(json["config"]),
-        instructions = (json["instructions"] as List)
-            .map((e) => InstructionContainer.fromJson(e))
-            .toList();
-
   Map<String, dynamic> toJson() => {
         "config": config.toJson(),
-        "instructions": instructions.map((e) => e.toJson()).toList(),
+        "instructions": instructions
+            .map((e) => e.export()
+              ..addAll({"type": (e is DriveInstruction ? "drive" : "turn")}))
+            .toList(),
       };
 }
 
 class Exporter {
   static String encode(
       RobiConfig config, List<MissionInstruction> instructions) {
-    final exported = Exported(
-            config, instructions.map((e) => InstructionContainer(e)).toList())
-        .toJson();
+    final exported = Exported(config, instructions).toJson();
 
     return jsonEncode(exported);
   }
