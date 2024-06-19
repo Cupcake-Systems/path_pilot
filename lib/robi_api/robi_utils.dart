@@ -222,8 +222,6 @@ class TurnInstruction extends MissionInstruction {
   Map<String, dynamic> export() => toJson();
 }
 
-enum AvailableInstruction { driveInstruction, turnInstruction }
-
 abstract class InstructionResult {
   final double managedVelocity, endRotation;
   final Vector2 endPosition;

@@ -102,7 +102,7 @@ class _EditorState extends State<Editor> {
                             ),
                             padding: const EdgeInsets.symmetric(vertical: 20),
                             icon: const Icon(Icons.add),
-                            onPressed: () => showDialog<AvailableInstruction?>(
+                            onPressed: () => showDialog(
                               context: context,
                               builder: (BuildContext context) =>
                                   AddInstructionDialog(
