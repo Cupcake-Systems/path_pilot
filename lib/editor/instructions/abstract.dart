@@ -202,7 +202,9 @@ class DriveInstructionGraphDrawer extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     try {
       drawInstruction(canvas, size);
-    } on Exception {}
+    } catch (e) {
+      return;
+    }
   }
 
   void drawInstruction(Canvas canvas, Size size) {
