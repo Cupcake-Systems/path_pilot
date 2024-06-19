@@ -158,7 +158,9 @@ class LinePainter extends CustomPainter {
 
   void drawTurn(InstructionResult prevInstructionResult, TurnResult instruction,
       Canvas canvas, Size size) {
-    if (prevInstructionResult.endPosition == instruction.endPosition) {
+    if (prevInstructionResult.endPosition == instruction.endPosition &&
+        (instruction.endRotation - prevInstructionResult.endRotation) % 360 >
+            0.0001) {
       return;
     }
 
