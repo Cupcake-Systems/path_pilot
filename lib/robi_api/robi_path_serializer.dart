@@ -23,31 +23,25 @@ class InstructionContainer {
 
   static UserInstruction instructionToType(MissionInstruction instruction) {
     if (instruction is DriveInstruction) {
-      if (instruction.runtimeType == DriveForwardInstruction) {
-        return UserInstruction.drive;
-      } else if (instruction is AccelerateOverDistanceInstruction) {
-        if (instruction.acceleration > 0) {
-          return UserInstruction.accelerateOverDistance;
-        } else {
-          return UserInstruction.decelerateOverDistance;
-        }
-      } else if (instruction is AccelerateOverTimeInstruction) {
-        if (instruction is StopOverTimeInstruction) {
-          return UserInstruction.stop;
-        } else {
-          if (instruction.acceleration > 0) {
-            return UserInstruction.accelerateOverTime;
-          } else {
-            return UserInstruction.decelerateOverTime;
-          }
-        }
-      } else if (instruction is DriveForwardDistanceInstruction) {
-        return UserInstruction.driveDistance;
-      } else if (instruction is DriveForwardTimeInstruction) {
-        return UserInstruction.driveTime;
+      return UserInstruction.drive;
+    } else if (instruction is AccelerateOverDistanceInstruction) {
+      if (instruction.acceleration > 0) {
+        return UserInstruction.accelerateOverDistance;
       } else {
-        throw UnsupportedError("");
+        return UserInstruction.decelerateOverDistance;
       }
+    } else if (instruction is StopOverTimeInstruction) {
+      return UserInstruction.stop;
+    } else if (instruction is AccelerateOverTimeInstruction) {
+      if (instruction.acceleration > 0) {
+        return UserInstruction.accelerateOverTime;
+      } else {
+        return UserInstruction.decelerateOverTime;
+      }
+    } else if (instruction is DriveForwardDistanceInstruction) {
+      return UserInstruction.driveDistance;
+    } else if (instruction is DriveForwardTimeInstruction) {
+      return UserInstruction.driveTime;
     } else if (instruction is TurnInstruction) {
       return UserInstruction.turn;
     } else {
@@ -61,7 +55,7 @@ class InstructionContainer {
 
     switch (type) {
       case UserInstruction.drive:
-        instruction = DriveForwardInstruction.fromJson(instJson);
+        instruction = DriveInstruction.fromJson(instJson);
         break;
       case UserInstruction.turn:
         instruction = TurnInstruction.fromJson(instJson);

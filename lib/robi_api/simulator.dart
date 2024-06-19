@@ -18,15 +18,16 @@ class Simulator {
     double maxTargetVel = 0;
 
     for (final instruction in instructions) {
+      BasicInstruction baseInstruction = instruction.basic;
       InstructionResult result;
-      if (instruction is DriveInstruction) {
-        if (instruction.targetVelocity > maxTargetVel) {
-          maxTargetVel = instruction.targetVelocity;
+      if (baseInstruction is BaseDriveInstruction) {
+        if (baseInstruction.targetVelocity > maxTargetVel) {
+          maxTargetVel = baseInstruction.targetVelocity;
         }
 
-        result = simulateDrive(prevInstruction, instruction);
-      } else if (instruction is TurnInstruction) {
-        result = simulateTurn(prevInstruction, instruction);
+        result = simulateDrive(prevInstruction, baseInstruction);
+      } else if (baseInstruction is BaseTurnInstruction) {
+        result = simulateTurn(prevInstruction, baseInstruction);
       } else {
         throw UnsupportedError("");
       }
@@ -43,7 +44,7 @@ class Simulator {
   }
 
   DriveResult simulateDrive(
-      InstructionResult prevInstruction, DriveInstruction instruction) {
+      InstructionResult prevInstruction, BaseDriveInstruction instruction) {
     double distanceCoveredByAcceleration;
 
     if (instruction.acceleration != 0) {
@@ -92,7 +93,7 @@ class Simulator {
   }
 
   TurnResult simulateTurn(
-      InstructionResult prevInstructionResult, TurnInstruction instruction) {
+      InstructionResult prevInstructionResult, BaseTurnInstruction instruction) {
     if (prevInstructionResult.managedVelocity <= 0 ||
         instruction.turnDegree <= 0) {
       return TurnResult(0, prevInstructionResult.endRotation,

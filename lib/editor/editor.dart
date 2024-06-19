@@ -245,7 +245,7 @@ class _EditorState extends State<Editor> {
           removed: removedCallback,
         );
       }
-    } else if (instruction is DriveForwardInstruction) {
+    } else if (instruction is DriveInstruction) {
       return DriveInstructionEditor(
         key: ObjectKey(instruction),
         instruction: instruction,
@@ -293,27 +293,25 @@ class _EditorState extends State<Editor> {
       InstructionResult prevInstResult =
           simResult.instructionResults.lastOrNull ?? startResult;
 
-      if (instructions[i] is DriveInstruction) {
-        if (instructions[i].runtimeType == DriveForwardInstruction) {
-        } else if (instructions[i] is AccelerateOverDistanceInstruction) {
-          (instructions[i] as AccelerateOverDistanceInstruction)
-              .initialVelocity = prevInstResult.managedVelocity;
-        } else if (instructions[i] is AccelerateOverTimeInstruction) {
-          if (instructions[i] is StopOverTimeInstruction) {
-            (instructions[i] as StopOverTimeInstruction).initialVelocity = prevInstResult.managedVelocity;
-          } else {
-            (instructions[i] as AccelerateOverTimeInstruction).initialVelocity = prevInstResult.managedVelocity;
-          }
-        } else if (instructions[i] is DriveForwardDistanceInstruction) {
-          (instructions[i] as DriveForwardDistanceInstruction).initialVelocity = prevInstResult.managedVelocity;
-        } else if (instructions[i] is DriveForwardTimeInstruction) {
-          (instructions[i] as DriveForwardTimeInstruction).initialVelocity = prevInstResult.managedVelocity;
-        } else {
-          throw UnsupportedError("");
-        }
-      } else if (instructions[i] is TurnInstruction) {
+      final instruction = instructions[i];
+
+      if (instruction is DriveInstruction) {
+        // Handle DriveForwardInstruction if needed
+      } else if (instruction is AccelerateOverDistanceInstruction) {
+        instruction.initialVelocity = prevInstResult.managedVelocity;
+      } else if (instruction is AccelerateOverTimeInstruction) {
+        instruction.initialVelocity = prevInstResult.managedVelocity;
+      } else if (instruction is StopOverTimeInstruction) {
+        instruction.initialVelocity = prevInstResult.managedVelocity;
+      } else if (instruction is DriveForwardDistanceInstruction) {
+        instruction.initialVelocity = prevInstResult.managedVelocity;
+      } else if (instruction is DriveForwardTimeInstruction) {
+        instruction.initialVelocity = prevInstResult.managedVelocity;
+      } else if (instruction is TurnInstruction) {
+        // Handle TurnInstruction if needed
       } else {
-        throw UnsupportedError("");
+        throw UnsupportedError(
+            "Unsupported Instruction: ${instruction.runtimeType}");
       }
     }
 

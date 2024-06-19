@@ -95,10 +95,12 @@ MissionInstruction addInstruction(UserInstruction instruction,
   switch (instruction) {
     case UserInstruction.driveDistance:
       return DriveForwardDistanceInstruction(
-          0.5, prevInstResult.managedVelocity);
+          distance: 0.5, initialVelocity: prevInstResult.managedVelocity);
     case UserInstruction.accelerateOverDistance:
       return AccelerateOverDistanceInstruction(
-          prevInstResult.managedVelocity, 0.5, 0.3);
+          initialVelocity: prevInstResult.managedVelocity,
+          distance: 0.5,
+          acceleration: 0.3);
     case UserInstruction.drive:
       double targetVel = 0.5;
       double acceleration = 0.3;
@@ -111,25 +113,36 @@ MissionInstruction addInstruction(UserInstruction instruction,
         acceleration = -acceleration;
       }
 
-      return DriveForwardInstruction(
-          1, roundToDigits(targetVel, 2), acceleration);
+      return DriveInstruction(
+          distance: 1,
+          targetVelocity: roundToDigits(targetVel, 2),
+          acceleration: acceleration);
     case UserInstruction.turn:
       return TurnInstruction(90, false, 0.1);
     case UserInstruction.accelerateOverTime:
       return AccelerateOverTimeInstruction(
-          prevInstResult.managedVelocity, 1, 0.3);
+          initialVelocity: prevInstResult.managedVelocity,
+          time: 1,
+          acceleration: 0.3);
     case UserInstruction.driveTime:
-      return DriveForwardTimeInstruction(1, prevInstResult.managedVelocity);
+      return DriveForwardTimeInstruction(
+          time: 1, initialVelocity: prevInstResult.managedVelocity);
     case UserInstruction.decelerateOverDistance:
       return AccelerateOverDistanceInstruction(
-          prevInstResult.managedVelocity, 0.5, -0.3);
+          initialVelocity: prevInstResult.managedVelocity,
+          distance: 0.5,
+          acceleration: -0.3);
     case UserInstruction.decelerateOverTime:
       return AccelerateOverTimeInstruction(
-          prevInstResult.managedVelocity, 1, -0.3);
+          initialVelocity: prevInstResult.managedVelocity,
+          time: 1,
+          acceleration: -0.3);
     case UserInstruction.stop:
       const double time = 1;
-      return AccelerateOverTimeInstruction(prevInstResult.managedVelocity, time,
-          prevInstResult.managedVelocity / time);
+      return AccelerateOverTimeInstruction(
+          initialVelocity: prevInstResult.managedVelocity,
+          time: time,
+          acceleration: prevInstResult.managedVelocity / time);
   }
 }
 

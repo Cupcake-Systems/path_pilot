@@ -7,7 +7,7 @@ import '../editor.dart';
 
 class DriveInstructionEditor extends AbstractEditor {
   @override
-  final DriveForwardInstruction instruction;
+  final DriveInstruction instruction;
 
   DriveInstructionEditor({
     super.key,

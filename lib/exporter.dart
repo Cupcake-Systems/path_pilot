@@ -12,8 +12,8 @@ class Exported {
   Map<String, dynamic> toJson() => {
         "config": config.toJson(),
         "instructions": instructions
-            .map((e) => e.export()
-              ..addAll({"type": (e is DriveInstruction ? "drive" : "turn")}))
+            .map((e) => e.basic.toJson()
+              ..addAll({"type": (e is BaseDriveInstruction ? "drive" : "turn")}))
             .toList(),
       };
 }
