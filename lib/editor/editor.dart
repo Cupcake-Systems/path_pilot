@@ -95,29 +95,54 @@ class _EditorState extends State<Editor> {
                       mainAxisSize: MainAxisSize.min,
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        Card.outlined(
-                          child: IconButton(
-                            style: IconButton.styleFrom(
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Card.outlined(
+                                child: IconButton(
+                                  style: IconButton.styleFrom(
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                  ),
+                                  padding:
+                                      const EdgeInsets.symmetric(vertical: 20),
+                                  icon: const Icon(Icons.add),
+                                  onPressed: () => showDialog(
+                                    context: context,
+                                    builder: (BuildContext context) =>
+                                        AddInstructionDialog(
+                                      instructionAdded:
+                                          (MissionInstruction instruction) {
+                                        instructions.insert(
+                                            instructions.length - 1,
+                                            instruction);
+                                        rerunSimulationAndUpdate();
+                                      },
+                                      simulationResult: simulationResult,
+                                    ),
+                                  ),
+                                ),
                               ),
                             ),
-                            padding: const EdgeInsets.symmetric(vertical: 20),
-                            icon: const Icon(Icons.add),
-                            onPressed: () => showDialog(
-                              context: context,
-                              builder: (BuildContext context) =>
-                                  AddInstructionDialog(
-                                instructionAdded:
-                                    (MissionInstruction instruction) {
-                                  instructions.insert(
-                                      instructions.length - 1, instruction);
+                            Card.outlined(
+                              child: IconButton(
+                                style: IconButton.styleFrom(
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                ),
+                                padding: const EdgeInsets.symmetric(
+                                    vertical: 20, horizontal: 30),
+                                onPressed: () {
+                                  instructions.clear();
+                                  instructions.add(defaultStopInstruction());
                                   rerunSimulationAndUpdate();
                                 },
-                                simulationResult: simulationResult,
+                                icon: const Icon(Icons.close),
                               ),
                             ),
-                          ),
+                          ],
                         ),
                         StopEditor(
                           instruction:
@@ -144,16 +169,6 @@ class _EditorState extends State<Editor> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
-                    OutlinedButton.icon(
-                      onPressed: () {
-                        instructions.clear();
-                        instructions.add(defaultStopInstruction());
-                        rerunSimulationAndUpdate();
-                      },
-                      label: const Text("Clear"),
-                      icon: const Icon(Icons.delete),
-                    ),
-                    const SizedBox(width: 10),
                     OutlinedButton.icon(
                       iconAlignment: IconAlignment.end,
                       onPressed: simulationResult.instructionResults.isEmpty
