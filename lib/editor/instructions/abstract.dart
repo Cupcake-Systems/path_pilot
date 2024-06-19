@@ -20,7 +20,7 @@ abstract class AbstractEditor extends StatelessWidget {
   late final bool isLastInstruction;
 
   final Function(MissionInstruction newInstruction) change;
-  final Function() removed;
+  final Function()? removed;
 
   String? warningMessage;
 
@@ -30,7 +30,7 @@ abstract class AbstractEditor extends StatelessWidget {
     required this.simulationResult,
     required this.instructionIndex,
     required this.change,
-    required this.removed,
+    this.removed,
     this.warningMessage,
   }) {
     if (instructionIndex > 0) {
@@ -60,7 +60,6 @@ class RemovableWarningCard extends StatelessWidget {
   final InstructionResult instructionResult;
   final MissionInstruction instruction;
 
-  final bool isRemovable;
   final String? warningMessage;
 
   const RemovableWarningCard({
@@ -70,7 +69,6 @@ class RemovableWarningCard extends StatelessWidget {
     required this.instructionResult,
     required this.instruction,
     this.removed,
-    this.isRemovable = true,
     this.warningMessage,
   });
 
@@ -88,7 +86,7 @@ class RemovableWarningCard extends StatelessWidget {
                     children: children,
                   ),
                 ),
-                if (isRemovable)
+                if (removed != null)
                   IconButton(
                       onPressed: removed, icon: const Icon(Icons.delete)),
                 const SizedBox(width: 40),

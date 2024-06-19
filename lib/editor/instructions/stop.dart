@@ -15,7 +15,6 @@ class StopEditor extends AbstractEditor {
     required super.simulationResult,
     required super.instructionIndex,
     required super.change,
-    required super.removed,
   }) : super(instruction: instruction);
 
   @override
@@ -24,7 +23,6 @@ class StopEditor extends AbstractEditor {
       instruction: instruction,
       prevResult: prevInstructionResult,
       instructionResult: instructionResult,
-      isRemovable: false,
       children: [
         Icon(userInstructionToIcon[UserInstruction.stop]),
         const SizedBox(width: 10),
