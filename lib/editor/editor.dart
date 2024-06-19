@@ -75,6 +75,7 @@ class _EditorState extends State<Editor> {
             child: Column(
               children: [
                 AppBar(title: const Text("Instructions Editor")),
+                const Divider(),
                 Expanded(
                   child: ReorderableListView.builder(
                     itemCount: instructions.length - 1,
@@ -166,16 +167,20 @@ class _EditorState extends State<Editor> {
                     },
                   ),
                 ),
+                const Divider(),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
-                    OutlinedButton.icon(
-                      iconAlignment: IconAlignment.end,
+                    IconButton.filledTonal(
                       onPressed: simulationResult.instructionResults.isEmpty
                           ? null
                           : widget.exportPressed,
-                      label: const Text("Export"),
-                      icon: const Icon(Icons.chevron_right),
+                      icon: const Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 8),
+                        child: Row(
+                          children: [Text("Export"), Icon(Icons.chevron_right)],
+                        ),
+                      ),
                     ),
                   ],
                 ),
