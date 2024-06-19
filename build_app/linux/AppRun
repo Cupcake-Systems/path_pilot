@@ -1,0 +1,3 @@
+#!/bin/sh 
+cd "$(dirname "$0")/usr/bin"
+exec ./robi_line_drawer

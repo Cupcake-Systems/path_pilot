@@ -1,0 +1,7 @@
+[Desktop Entry]
+Name=Robi Line Drawer
+Terminal=false
+Exec=AppRun
+Icon=icon
+Type=Application
+Categories=Utility;
