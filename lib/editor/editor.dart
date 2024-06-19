@@ -10,6 +10,7 @@ import 'package:robi_line_drawer/editor/instructions/decelerate_over_time.dart';
 import 'package:robi_line_drawer/editor/instructions/drive_distance.dart';
 import 'package:robi_line_drawer/editor/instructions/drive_time.dart';
 import 'package:robi_line_drawer/editor/instructions/stop.dart';
+import 'package:robi_line_drawer/file_browser.dart';
 import 'package:robi_line_drawer/robi_api/robi_utils.dart';
 import 'package:robi_line_drawer/editor/visualizer.dart';
 
@@ -146,6 +147,7 @@ class _EditorState extends State<Editor> {
                     OutlinedButton.icon(
                       onPressed: () {
                         instructions.clear();
+                        instructions.add(defaultStopInstruction);
                         rerunSimulationAndUpdate();
                       },
                       label: const Text("Clear"),
