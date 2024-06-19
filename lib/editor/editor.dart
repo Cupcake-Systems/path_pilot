@@ -14,6 +14,7 @@ import 'package:robi_line_drawer/robi_api/robi_utils.dart';
 import 'package:robi_line_drawer/editor/visualizer.dart';
 
 import '../robi_api/robi_path_serializer.dart';
+import '../robi_api/simulator.dart';
 import 'instructions/accelerate_over_time.dart';
 import 'instructions/drive.dart';
 import 'instructions/turn.dart';

@@ -5,6 +5,8 @@ import 'package:robi_line_drawer/robi_api/robi_path_serializer.dart';
 import 'package:robi_line_drawer/robi_api/robi_utils.dart';
 import 'package:vector_math/vector_math.dart' show Vector2;
 
+import '../robi_api/simulator.dart';
+
 class LinePainter extends CustomPainter {
   final SimulationResult simulationResult;
   final double scale;
