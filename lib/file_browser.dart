@@ -3,9 +3,10 @@ import 'dart:io';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:path/path.dart';
+import 'package:robi_line_drawer/app_storage.dart';
 import 'package:robi_line_drawer/constants.dart';
 import 'package:robi_line_drawer/editor/editor.dart';
-import 'package:robi_line_drawer/robi_api/robi_config.dart';
+import 'package:robi_line_drawer/editor/robi_config.dart';
 import 'package:robi_line_drawer/robi_api/robi_path_serializer.dart';
 import 'package:robi_line_drawer/robi_api/robi_utils.dart';
 import 'package:robi_line_drawer/settings/settings.dart';
@@ -24,9 +25,6 @@ class _FileBrowserState extends State<FileBrowser>
     with TickerProviderStateMixin {
   File? focusedFile;
   final Map<String, List<MissionInstruction>> instructionTable = {};
-
-  RobiConfig selectedRobiConfig = RobiConfig(0.035, 0.147, name: "Default");
-  late final List<RobiConfig> robiConfigs = [selectedRobiConfig];
 
   @override
   Widget build(BuildContext context) {
@@ -102,33 +100,38 @@ class _FileBrowserState extends State<FileBrowser>
                           context: context,
                           builder: (context) => RobiConfigurator(
                               addedConfig: (config) => setState(() {
-                                    robiConfigs.add(config);
-                                    selectedRobiConfig = config;
+                                    RobiConfigStorage.add(config);
+                                    RobiConfigStorage.lastUsedConfigIndex =
+                                        RobiConfigStorage.length - 1;
                                   }),
-                              index: robiConfigs.length),
+                              index: RobiConfigStorage.length),
                         ),
                         child: const MenuAcceleratorLabel('&New'),
                       ),
                       const Divider(height: 0),
                       SubmenuButton(
                         menuChildren: [
-                          for (int i = 0; i < robiConfigs.length; ++i)
+                          for (int i = 0; i < RobiConfigStorage.length; ++i)
                             RadioMenuButton(
-                              trailingIcon: robiConfigs.length <= 1
+                              trailingIcon: RobiConfigStorage.length <= 1
                                   ? null
                                   : IconButton(
                                       icon: const Icon(Icons.delete),
                                       onPressed: () => setState(() {
-                                        robiConfigs.remove(robiConfigs[i]);
-                                        selectedRobiConfig = robiConfigs[0];
+                                        RobiConfigStorage.remove(
+                                            RobiConfigStorage.get(i));
+                                        RobiConfigStorage.lastUsedConfigIndex =
+                                            0;
                                       }),
                                     ),
-                              value: robiConfigs[i],
-                              groupValue: selectedRobiConfig,
-                              onChanged: (value) =>
-                                  setState(() => selectedRobiConfig = value!),
+                              value: RobiConfigStorage.get(i),
+                              groupValue: RobiConfigStorage.lastUsedConfig,
+                              onChanged: (value) => setState(() =>
+                                  RobiConfigStorage.lastUsedConfigIndex =
+                                      RobiConfigStorage.indexOf(value!)),
                               child: MenuAcceleratorLabel(
-                                  robiConfigs[i].name ?? '&Config ${i + 1}'),
+                                  RobiConfigStorage.get(i).name ??
+                                      '&Config ${i + 1}'),
                             )
                         ],
                         child: const MenuAcceleratorLabel('&Select'),
@@ -212,7 +215,7 @@ class _FileBrowserState extends State<FileBrowser>
                       for (final filePath in instructionTable.keys) ...[
                         Editor(
                           instructions: instructionTable[filePath]!,
-                          robiConfig: selectedRobiConfig,
+                          robiConfig: RobiConfigStorage.lastUsedConfig,
                           exportPressed: () async {
                             final path = await FilePicker.platform.saveFile(
                               dialogTitle: "Please select an output file:",
@@ -221,7 +224,7 @@ class _FileBrowserState extends State<FileBrowser>
                             if (path == null) return;
                             Exporter.saveToFile(
                               File(path),
-                              selectedRobiConfig,
+                              RobiConfigStorage.lastUsedConfig,
                               instructionTable[filePath]!,
                             );
                           },
@@ -337,3 +340,5 @@ class _FileBrowserState extends State<FileBrowser>
 
 StopOverTimeInstruction defaultStopInstruction() =>
     StopOverTimeInstruction(0, 1);
+
+RobiConfig defaultRobiConfig() => RobiConfig(0.035, 0.147, name: "Default");

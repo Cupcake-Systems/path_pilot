@@ -2,7 +2,6 @@ import 'dart:math';
 import 'package:flutter/cupertino.dart';
 import 'package:vector_math/vector_math.dart';
 
-import 'robi_path_serializer.dart';
 
 abstract class Serializable {
   Map<String, dynamic> toJson();
