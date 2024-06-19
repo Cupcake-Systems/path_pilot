@@ -44,10 +44,10 @@ class Editor extends StatefulWidget {
 }
 
 class _EditorState extends State<Editor> {
-  late SimulationResult simulationResult;
   late List<MissionInstruction> instructions = widget.instructions;
   double scale = 200;
   late Simulator simulator = Simulator(widget.robiConfig);
+  late SimulationResult simulationResult;
 
   @override
   void initState() {
@@ -57,6 +57,7 @@ class _EditorState extends State<Editor> {
 
   @override
   Widget build(BuildContext context) {
+    print("Rebuild");
     return Row(
       children: [
         Flexible(
@@ -160,7 +161,7 @@ class _EditorState extends State<Editor> {
                     ),
                     itemBuilder: (context, i) => instructionToEditor(i),
                     onReorder: (int oldIndex, int newIndex) {
-                      if (oldIndex < newIndex) newIndex -= 1;
+                      if (oldIndex < newIndex) --newIndex;
                       instructions.insert(
                           newIndex, instructions.removeAt(oldIndex));
                       rerunSimulationAndUpdate();
@@ -208,7 +209,7 @@ class _EditorState extends State<Editor> {
     if (instruction is AccelerateOverDistanceInstruction) {
       if (instruction.acceleration > 0) {
         return AccelerateOverDistanceEditor(
-          key: Key("$i"),
+          key: ObjectKey(instruction),
           instruction: instruction,
           change: changeCallback,
           removed: removedCallback,
@@ -217,7 +218,7 @@ class _EditorState extends State<Editor> {
         );
       } else {
         return DecelerateOverDistanceEditor(
-          key: Key("$i"),
+          key: ObjectKey(instruction),
           instruction: instruction,
           simulationResult: simulationResult,
           instructionIndex: i,
@@ -228,7 +229,7 @@ class _EditorState extends State<Editor> {
     } else if (instruction is AccelerateOverTimeInstruction) {
       if (instruction.acceleration > 0) {
         return AccelerateOverTimeEditor(
-          key: Key("$i"),
+          key: ObjectKey(instruction),
           instruction: instruction,
           change: changeCallback,
           removed: removedCallback,
@@ -237,7 +238,7 @@ class _EditorState extends State<Editor> {
         );
       } else {
         return DecelerateOverTimeEditor(
-          key: Key("$i"),
+          key: ObjectKey(instruction),
           instruction: instruction,
           simulationResult: simulationResult,
           instructionIndex: i,
@@ -247,7 +248,7 @@ class _EditorState extends State<Editor> {
       }
     } else if (instruction is DriveForwardInstruction) {
       return DriveInstructionEditor(
-        key: Key("$i"),
+        key: ObjectKey(instruction),
         instruction: instruction,
         change: changeCallback,
         removed: removedCallback,
@@ -256,7 +257,7 @@ class _EditorState extends State<Editor> {
       );
     } else if (instruction is TurnInstruction) {
       return TurnInstructionEditor(
-        key: Key("$i"),
+        key: ObjectKey(instruction),
         instruction: instruction,
         change: changeCallback,
         removed: removedCallback,
@@ -266,7 +267,7 @@ class _EditorState extends State<Editor> {
       );
     } else if (instruction is DriveForwardDistanceInstruction) {
       return DriveDistanceEditor(
-        key: Key("$i"),
+        key: ObjectKey(instruction),
         instruction: instruction,
         simulationResult: simulationResult,
         instructionIndex: i,
@@ -275,7 +276,7 @@ class _EditorState extends State<Editor> {
       );
     } else if (instruction is DriveForwardTimeInstruction) {
       return DriveTimeEditor(
-        key: Key("$i"),
+        key: ObjectKey(instruction),
         instruction: instruction,
         simulationResult: simulationResult,
         instructionIndex: i,
@@ -287,54 +288,37 @@ class _EditorState extends State<Editor> {
   }
 
   void rerunSimulationAndUpdate() {
-    List<MissionInstruction> newInstructions = [];
-
-    for (final instruction in instructions) {
-      final simResult = simulator.calculate(newInstructions);
+    for (int i = 0; i < instructions.length; ++i) {
+      final simResult = simulator.calculate(instructions.sublist(0, i));
 
       InstructionResult prevInstResult =
           simResult.instructionResults.lastOrNull ?? startResult;
 
-      if (instruction is DriveInstruction) {
-        if (instruction.runtimeType == DriveForwardInstruction) {
-          newInstructions.add(DriveForwardInstruction(instruction.distance,
-              instruction.targetVelocity, instruction.acceleration));
-        } else if (instruction is AccelerateOverDistanceInstruction) {
-          newInstructions.add(AccelerateOverDistanceInstruction(
-            initialVelocity: prevInstResult.managedVelocity,
-            distance: instruction.distance,
-            acceleration: instruction.acceleration,
-          ));
-        } else if (instruction is AccelerateOverTimeInstruction) {
-          if (instruction is StopOverTimeInstruction) {
-            newInstructions.add(StopOverTimeInstruction(
-                prevInstResult.managedVelocity, instruction.time));
+      if (instructions[i] is DriveInstruction) {
+        if (instructions[i].runtimeType == DriveForwardInstruction) {
+        } else if (instructions[i] is AccelerateOverDistanceInstruction) {
+          (instructions[i] as AccelerateOverDistanceInstruction)
+              .initialVelocity = prevInstResult.managedVelocity;
+        } else if (instructions[i] is AccelerateOverTimeInstruction) {
+          if (instructions[i] is StopOverTimeInstruction) {
+            (instructions[i] as StopOverTimeInstruction).initialVelocity = prevInstResult.managedVelocity;
           } else {
-            newInstructions.add(AccelerateOverTimeInstruction(
-              prevInstResult.managedVelocity,
-              instruction.time,
-              instruction.acceleration,
-            ));
+            (instructions[i] as AccelerateOverTimeInstruction).initialVelocity = prevInstResult.managedVelocity;
           }
-        } else if (instruction is DriveForwardDistanceInstruction) {
-          newInstructions.add(DriveForwardDistanceInstruction(
-              instruction.distance, prevInstResult.managedVelocity));
-        } else if (instruction is DriveForwardTimeInstruction) {
-          newInstructions.add(DriveForwardTimeInstruction(
-              instruction.time, prevInstResult.managedVelocity));
+        } else if (instructions[i] is DriveForwardDistanceInstruction) {
+          (instructions[i] as DriveForwardDistanceInstruction).initialVelocity = prevInstResult.managedVelocity;
+        } else if (instructions[i] is DriveForwardTimeInstruction) {
+          (instructions[i] as DriveForwardTimeInstruction).initialVelocity = prevInstResult.managedVelocity;
         } else {
           throw UnsupportedError("");
         }
-      } else if (instruction is TurnInstruction) {
-        newInstructions.add(TurnInstruction(
-            instruction.turnDegree, instruction.left, instruction.radius));
+      } else if (instructions[i] is TurnInstruction) {
       } else {
         throw UnsupportedError("");
       }
     }
 
     setState(() {
-      instructions = newInstructions;
       simulationResult = simulator.calculate(instructions);
     });
 

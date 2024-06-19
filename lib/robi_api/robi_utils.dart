@@ -2,7 +2,6 @@ import 'dart:math';
 import 'package:flutter/cupertino.dart';
 import 'package:vector_math/vector_math.dart';
 
-
 abstract class Serializable {
   Map<String, dynamic> toJson();
 
@@ -51,6 +50,8 @@ class DriveForwardInstruction extends DriveInstruction {
 class DriveForwardDistanceInstruction extends DriveInstruction {
   set distance(double value) => _distance = value;
 
+  set initialVelocity(double value) => _targetVelocity = value;
+
   DriveForwardDistanceInstruction(double distance, double initialVelocity)
       : super(distance, initialVelocity, 0.0);
 
@@ -66,41 +67,58 @@ class DriveForwardTimeInstruction extends DriveInstruction
     implements Serializable {
   @protected
   double _time;
-  final double initialVelocity;
+  double _initialVelocity;
 
   double get time => _time;
 
   set time(double value) {
     _time = value;
+    _recalculate();
+  }
+
+  set initialVelocity(double value) {
+    _initialVelocity = value;
+    _recalculate();
+  }
+
+  void _recalculate() {
     _distance = _time * _targetVelocity;
   }
 
-  DriveForwardTimeInstruction(this._time, this.initialVelocity)
-      : super(initialVelocity * _time, initialVelocity, 0.0);
+  DriveForwardTimeInstruction(this._time, this._initialVelocity)
+      : super(_initialVelocity * _time, _initialVelocity, 0.0);
 
   DriveForwardTimeInstruction.fromJson(Map<String, dynamic> json)
       : this(json["time"], json["initial_velocity"]);
 
   @override
   Map<String, double> toJson() =>
-      {"time": _time, "initial_velocity": initialVelocity};
+      {"time": _time, "initial_velocity": _initialVelocity};
 }
 
 class AccelerateOverDistanceInstruction extends DriveInstruction
     implements Serializable {
   @protected
-  final double initialVelocity;
+  double _initialVelocity;
 
   set acceleration(double newAcceleration) {
     _acceleration = newAcceleration;
-    _targetVelocity =
-        _calculateFinalVelocity(initialVelocity, distance, acceleration);
+    _recalculate();
+  }
+
+  set initialVelocity(double value) {
+    _initialVelocity = value;
+    _recalculate();
   }
 
   set distance(double newDistance) {
     _distance = newDistance;
+    _recalculate();
+  }
+
+  void _recalculate() {
     _targetVelocity =
-        _calculateFinalVelocity(initialVelocity, distance, acceleration);
+        _calculateFinalVelocity(_initialVelocity, distance, acceleration);
   }
 
   static double _calculateFinalVelocity(
@@ -111,10 +129,11 @@ class AccelerateOverDistanceInstruction extends DriveInstruction
   }
 
   AccelerateOverDistanceInstruction({
-    required this.initialVelocity,
+    required double initialVelocity,
     required double distance,
     required double acceleration,
-  }) : super(
+  })  : _initialVelocity = initialVelocity,
+        super(
             distance,
             _calculateFinalVelocity(initialVelocity, distance, acceleration),
             acceleration);
@@ -128,7 +147,7 @@ class AccelerateOverDistanceInstruction extends DriveInstruction
 
   @override
   Map<String, dynamic> toJson() => {
-        "initial_velocity": initialVelocity,
+        "initial_velocity": _initialVelocity,
         "distance": _distance,
         "acceleration": _acceleration,
       };
@@ -136,23 +155,29 @@ class AccelerateOverDistanceInstruction extends DriveInstruction
 
 class AccelerateOverTimeInstruction extends DriveInstruction {
   @protected
-  double _time;
-  final double initialVelocity;
+  double _time, _initialVelocity;
 
   double get time => _time;
 
   set time(double newTime) {
     _time = newTime;
-    _targetVelocity =
-        _calculateFinalVelocity(initialVelocity, time, _acceleration);
-    _distance = _calculateDistance(time, initialVelocity, acceleration);
+    _recalculate();
+  }
+
+  set initialVelocity(double value) {
+    _initialVelocity = value;
+    _recalculate();
   }
 
   set acceleration(double newAcceleration) {
     _acceleration = newAcceleration;
+    _recalculate();
+  }
+
+  void _recalculate() {
     _targetVelocity =
-        _calculateFinalVelocity(initialVelocity, time, _acceleration);
-    _distance = _calculateDistance(time, initialVelocity, acceleration);
+        _calculateFinalVelocity(_initialVelocity, time, _acceleration);
+    _distance = _calculateDistance(time, _initialVelocity, acceleration);
   }
 
   static double _calculateFinalVelocity(
@@ -169,10 +194,10 @@ class AccelerateOverTimeInstruction extends DriveInstruction {
   }
 
   AccelerateOverTimeInstruction(
-      this.initialVelocity, this._time, double acceleration)
+      this._initialVelocity, this._time, double acceleration)
       : super(
-            _calculateDistance(_time, initialVelocity, acceleration),
-            _calculateFinalVelocity(initialVelocity, _time, acceleration),
+            _calculateDistance(_time, _initialVelocity, acceleration),
+            _calculateFinalVelocity(_initialVelocity, _time, acceleration),
             acceleration);
 
   AccelerateOverTimeInstruction.fromJson(Map<String, dynamic> json)
@@ -180,7 +205,7 @@ class AccelerateOverTimeInstruction extends DriveInstruction {
 
   @override
   Map<String, dynamic> toJson() => {
-        "initial_velocity": initialVelocity,
+        "initial_velocity": _initialVelocity,
         "time": time,
         "acceleration": _acceleration
       };
@@ -190,7 +215,18 @@ class StopOverTimeInstruction extends AccelerateOverTimeInstruction {
   @override
   set time(double value) {
     _time = value;
-    _acceleration = -initialVelocity / _time;
+    _recalculate();
+  }
+
+  @override
+  set initialVelocity(double value) {
+    _initialVelocity = value;
+    _recalculate();
+  }
+
+  @override
+  void _recalculate() {
+    _acceleration = -_initialVelocity / _time;
   }
 
   StopOverTimeInstruction(double initialVelocity, double time)
@@ -201,9 +237,8 @@ class StopOverTimeInstruction extends AccelerateOverTimeInstruction {
 }
 
 class TurnInstruction extends MissionInstruction {
-  double turnDegree;
+  double turnDegree, radius;
   bool left;
-  double radius;
 
   TurnInstruction(this.turnDegree, this.left, this.radius);
 
