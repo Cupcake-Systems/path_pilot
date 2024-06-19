@@ -7,6 +7,7 @@ import 'package:robi_line_drawer/app_storage.dart';
 import 'package:robi_line_drawer/constants.dart';
 import 'package:robi_line_drawer/editor/editor.dart';
 import 'package:robi_line_drawer/editor/robi_config.dart';
+import 'package:robi_line_drawer/main.dart';
 import 'package:robi_line_drawer/robi_api/robi_path_serializer.dart';
 import 'package:robi_line_drawer/robi_api/robi_utils.dart';
 import 'package:robi_line_drawer/settings/settings.dart';
@@ -158,7 +159,7 @@ class _FileBrowserState extends State<FileBrowser>
                           showAboutDialog(
                             context: context,
                             applicationName: "Robi Line Drawer",
-                            applicationVersion: "1.0.0",
+                            applicationVersion: packageInfo.version,
                             applicationLegalese:
                                 "© Copyright Finn Drünert 2024",
                             children: [

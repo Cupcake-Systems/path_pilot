@@ -1,5 +1,7 @@
 name: robi_line_drawer
 description: "An app to draw lines for the robi to follow."
+repository: https://github.com/Finnomator/robi_line_drawer
+issue_tracker: https://github.com/Finnomator/robi_line_drawer/issues
 
 publish_to: 'none'
 
@@ -18,6 +20,7 @@ dependencies:
   expandable: ^5.0.1
   fl_chart: ^0.68.0
   shared_preferences: ^2.2.3
+  package_info_plus: ^8.0.0
 
 dev_dependencies:
   flutter_test:
