@@ -147,7 +147,7 @@ class _EditorState extends State<Editor> {
                     OutlinedButton.icon(
                       onPressed: () {
                         instructions.clear();
-                        instructions.add(defaultStopInstruction);
+                        instructions.add(defaultStopInstruction());
                         rerunSimulationAndUpdate();
                       },
                       label: const Text("Clear"),
