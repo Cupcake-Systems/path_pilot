@@ -46,7 +46,7 @@ class _AddInstructionDialogState extends State<AddInstructionDialog> {
             for (final groupName in groupedUserInstructions.keys) ...[
               Text(groupName, style: const TextStyle(fontSize: 20)),
               for (final userInstruction
-              in groupedUserInstructions[groupName]!) ...[
+                  in groupedUserInstructions[groupName]!) ...[
                 createRadioButtonForAdd(userInstruction),
               ],
               const Divider(height: 5),
@@ -67,7 +67,7 @@ class _AddInstructionDialogState extends State<AddInstructionDialog> {
                 widget.simulationResult.instructionResults.lastOrNull ??
                     startResult,
                 widget.simulationResult.instructionResults.lastWhere(
-                        (e) => e is DriveResult,
+                    (e) => e is DriveResult,
                     orElse: () => startResult) as DriveResult);
             widget.instructionAdded(inst);
           },
@@ -92,19 +92,13 @@ enum UserInstruction {
 
 MissionInstruction addInstruction(UserInstruction instruction,
     InstructionResult prevInstResult, DriveResult lastDriveResult) {
-  MissionInstruction inst;
-
   switch (instruction) {
     case UserInstruction.driveDistance:
-      inst = DriveForwardDistanceInstruction(
+      return DriveForwardDistanceInstruction(
           0.5, prevInstResult.managedVelocity);
-      break;
     case UserInstruction.accelerateOverDistance:
-      inst = AccelerateOverDistanceInstruction(
-          initialVelocity: prevInstResult.managedVelocity,
-          distance: 0.5,
-          acceleration: 0.3);
-      break;
+      return AccelerateOverDistanceInstruction(
+          prevInstResult.managedVelocity, 0.5, 0.3);
     case UserInstruction.drive:
       double targetVel = 0.5;
       double acceleration = 0.3;
@@ -117,37 +111,26 @@ MissionInstruction addInstruction(UserInstruction instruction,
         acceleration = -acceleration;
       }
 
-      inst = DriveForwardInstruction(
+      return DriveForwardInstruction(
           1, roundToDigits(targetVel, 2), acceleration);
-      break;
     case UserInstruction.turn:
-      inst = TurnInstruction(90, false, 0.1);
-      break;
+      return TurnInstruction(90, false, 0.1);
     case UserInstruction.accelerateOverTime:
-      inst = AccelerateOverTimeInstruction(
+      return AccelerateOverTimeInstruction(
           prevInstResult.managedVelocity, 1, 0.3);
-      break;
     case UserInstruction.driveTime:
-      inst = DriveForwardTimeInstruction(1, prevInstResult.managedVelocity);
-      break;
+      return DriveForwardTimeInstruction(1, prevInstResult.managedVelocity);
     case UserInstruction.decelerateOverDistance:
-      inst = AccelerateOverDistanceInstruction(
-          initialVelocity: prevInstResult.managedVelocity,
-          distance: 0.5,
-          acceleration: -0.3);
-      break;
+      return AccelerateOverDistanceInstruction(
+          prevInstResult.managedVelocity, 0.5, -0.3);
     case UserInstruction.decelerateOverTime:
-      inst = AccelerateOverTimeInstruction(
+      return AccelerateOverTimeInstruction(
           prevInstResult.managedVelocity, 1, -0.3);
-      break;
     case UserInstruction.stop:
       const double time = 1;
-      inst = AccelerateOverTimeInstruction(prevInstResult.managedVelocity,
-          time, prevInstResult.managedVelocity / time);
-      break;
+      return AccelerateOverTimeInstruction(prevInstResult.managedVelocity, time,
+          prevInstResult.managedVelocity / time);
   }
-
-  return inst;
 }
 
 const Map<String, List<UserInstruction>> groupedUserInstructions = {
@@ -175,7 +158,6 @@ const Map<UserInstruction, IconData> userInstructionToIcon = {
   UserInstruction.stop: Icons.stop,
 };
 
-String camelToSentence(String text) =>
-    text.replaceAllMapped(
-        RegExp(r'^([a-z])|[A-Z]'),
-            (Match m) => m[1] == null ? " ${m[0]}" : m[1]!.toUpperCase());
+String camelToSentence(String text) => text.replaceAllMapped(
+    RegExp(r'^([a-z])|[A-Z]'),
+    (Match m) => m[1] == null ? " ${m[0]}" : m[1]!.toUpperCase());

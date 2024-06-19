@@ -57,7 +57,6 @@ class _EditorState extends State<Editor> {
 
   @override
   Widget build(BuildContext context) {
-    print("Rebuild");
     return Row(
       children: [
         Flexible(

@@ -66,8 +66,7 @@ class DriveForwardDistanceInstruction extends DriveInstruction {
 class DriveForwardTimeInstruction extends DriveInstruction
     implements Serializable {
   @protected
-  double _time;
-  double _initialVelocity;
+  double _time, _initialVelocity;
 
   double get time => _time;
 
@@ -81,9 +80,7 @@ class DriveForwardTimeInstruction extends DriveInstruction
     _recalculate();
   }
 
-  void _recalculate() {
-    _distance = _time * _targetVelocity;
-  }
+  void _recalculate() => _distance = _time * _targetVelocity;
 
   DriveForwardTimeInstruction(this._time, this._initialVelocity)
       : super(_initialVelocity * _time, _initialVelocity, 0.0);
@@ -116,10 +113,8 @@ class AccelerateOverDistanceInstruction extends DriveInstruction
     _recalculate();
   }
 
-  void _recalculate() {
-    _targetVelocity =
-        _calculateFinalVelocity(_initialVelocity, distance, acceleration);
-  }
+  void _recalculate() => _targetVelocity =
+      _calculateFinalVelocity(_initialVelocity, distance, acceleration);
 
   static double _calculateFinalVelocity(
       double initialVelocity, double distance, double acceleration) {
@@ -128,22 +123,17 @@ class AccelerateOverDistanceInstruction extends DriveInstruction
     return sqrt(finalVelocitySquared < 0 ? 0 : finalVelocitySquared);
   }
 
-  AccelerateOverDistanceInstruction({
-    required double initialVelocity,
-    required double distance,
-    required double acceleration,
-  })  : _initialVelocity = initialVelocity,
-        super(
+  AccelerateOverDistanceInstruction(
+    this._initialVelocity,
+    double distance,
+    double acceleration,
+  ) : super(
             distance,
-            _calculateFinalVelocity(initialVelocity, distance, acceleration),
+            _calculateFinalVelocity(_initialVelocity, distance, acceleration),
             acceleration);
 
   AccelerateOverDistanceInstruction.fromJson(Map<String, dynamic> json)
-      : this(
-          initialVelocity: json["initial_velocity"],
-          distance: json["distance"],
-          acceleration: json["acceleration"],
-        );
+      : this(json["initial_velocity"], json["distance"], json["acceleration"]);
 
   @override
   Map<String, dynamic> toJson() => {
@@ -177,7 +167,7 @@ class AccelerateOverTimeInstruction extends DriveInstruction {
   void _recalculate() {
     _targetVelocity =
         _calculateFinalVelocity(_initialVelocity, time, _acceleration);
-    _distance = _calculateDistance(time, _initialVelocity, acceleration);
+    _distance = _calculateDistance(time, _initialVelocity, _acceleration);
   }
 
   static double _calculateFinalVelocity(
@@ -206,7 +196,7 @@ class AccelerateOverTimeInstruction extends DriveInstruction {
   @override
   Map<String, dynamic> toJson() => {
         "initial_velocity": _initialVelocity,
-        "time": time,
+        "time": _time,
         "acceleration": _acceleration
       };
 }
@@ -244,9 +234,7 @@ class TurnInstruction extends MissionInstruction {
 
   @override
   TurnInstruction.fromJson(Map<String, dynamic> json)
-      : turnDegree = json["turn_degree"],
-        left = json["left"],
-        radius = json["radius"];
+      : this(json["turn_degree"], json["left"], json["radius"]);
 
   @override
   Map<String, dynamic> toJson() =>
