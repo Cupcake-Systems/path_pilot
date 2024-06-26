@@ -13,7 +13,7 @@ class Exported {
         "config": config.toJson(),
         "instructions": instructions
             .map((e) => e.basic.toJson()
-              ..addAll({"type": (e is BaseDriveInstruction ? "drive" : "turn")}))
+              ..addAll({"type": (e.basic is BaseDriveInstruction ? "drive" : "turn")}))
             .toList(),
       };
 }
