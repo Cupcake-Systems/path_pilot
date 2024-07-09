@@ -208,11 +208,11 @@ class DriveInstructionGraphDrawer extends CustomPainter {
   }
 
   void drawInstruction(Canvas canvas, Size size) {
-    final isDriveInst = instruction is BaseDriveInstruction;
+    final isDriveInst = instruction is DriveInstruction;
 
     final highestVelocity = [
       prevInstResult.managedVelocity,
-      if (isDriveInst) (instruction as BaseDriveInstruction).targetVelocity,
+      if (isDriveInst) (instruction as DriveInstruction).targetVelocity,
       instructionResult.managedVelocity
     ].reduce(max);
 
