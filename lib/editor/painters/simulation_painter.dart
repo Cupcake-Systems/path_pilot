@@ -1,54 +1,48 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
-import 'package:robi_line_drawer/robi_api/robi_path_serializer.dart';
-import 'package:robi_line_drawer/robi_api/robi_utils.dart';
-import 'package:vector_math/vector_math.dart' show Vector2;
+import 'package:robi_line_drawer/editor/painters/abstract_painter.dart';
+import 'package:vector_math/vector_math.dart';
 
-import '../robi_api/simulator.dart';
+import '../../robi_api/robi_path_serializer.dart';
+import '../../robi_api/robi_utils.dart';
+import '../../robi_api/simulator.dart';
+import 'line_painter.dart';
 
-class LinePainter extends CustomPainter {
+class SimulationPainter extends MyPainter {
   final SimulationResult simulationResult;
   final double scale;
-  late final double strokeWidth;
+  final Canvas canvas;
+  final Size size;
+  final double strokeWidth;
 
-  static const Color white = Color(0xFFFFFFFF);
+  SimulationPainter({
+    required this.simulationResult,
+    required this.scale,
+    required this.canvas,
+    required this.size,
+    this.strokeWidth = 0.02,
+  });
 
-  LinePainter(this.scale, this.simulationResult) {
-    strokeWidth = 5 * (scale.toDouble() / 100);
+  @override
+  void paint() {
+    InstructionResult prevResult = startResult;
+
+    for (InstructionResult result in simulationResult.instructionResults) {
+      if (result is DriveResult) {
+        drawDrive(prevResult, result);
+      } else if (result is TurnResult) {
+        drawTurn(prevResult, result);
+      }
+
+      prevResult = result;
+    }
+
+    paintScale();
+    paintVelocityScale();
   }
 
-  void paintGrid(Canvas canvas, Size size) {
-    final Paint paint = Paint()
-      ..strokeWidth = 1
-      ..color = white.withAlpha(100);
-
-    for (double x = size.width / 2 % scale; x <= size.width; x += scale) {
-      canvas.drawLine(Offset(x, 0), Offset(x, size.height), paint);
-    }
-
-    for (double y = size.height / 2 % scale; y <= size.height; y += scale) {
-      canvas.drawLine(Offset(0, y), Offset(size.width, y), paint);
-    }
-
-    paint
-      ..strokeWidth = 0.5
-      ..color = white.withAlpha(50);
-
-    for (double x = scale / 2 + size.width / 2 % scale;
-        x <= size.width;
-        x += scale) {
-      canvas.drawLine(Offset(x, 0), Offset(x, size.height), paint);
-    }
-
-    for (double y = scale / 2 + size.height / 2 % scale;
-        y <= size.height;
-        y += scale) {
-      canvas.drawLine(Offset(0, y), Offset(size.width, y), paint);
-    }
-  }
-
-  void paintScale(Canvas canvas, Size size) {
+  void paintScale() {
     final Paint paint = Paint()
       ..strokeWidth = 1
       ..color = white;
@@ -60,22 +54,11 @@ class LinePainter extends CustomPainter {
     canvas.drawLine(Offset(size.width / 2 + 50, size.height - 25),
         Offset(size.width / 2 + 50, size.height - 15), paint);
 
-    paintText("${(100.0 / scale).toStringAsFixed(2)}m",
+    LinePainter.paintText("${(100.0 / scale).toStringAsFixed(2)}m",
         Offset(size.width / 2, size.height - 22), canvas, size);
   }
 
-  static void paintText(String text, Offset offset, Canvas canvas, Size size) {
-    final textSpan = TextSpan(text: text);
-    final textPainter =
-        TextPainter(text: textSpan, textDirection: TextDirection.ltr);
-    textPainter.layout(minWidth: 0, maxWidth: size.width);
-    textPainter.paint(
-        canvas,
-        Offset(
-            offset.dx - textPainter.width / 2, offset.dy - textPainter.height));
-  }
-
-  void paintVelocityScale(Canvas canvas, Size size) {
+  void paintVelocityScale() {
     if (simulationResult.maxTargetedVelocity <= 0) return;
 
     List<Color> colors = [
@@ -107,33 +90,16 @@ class LinePainter extends CustomPainter {
         Paint()
           ..color = white
           ..strokeWidth = 1);
-    paintText("0m/s", lineStart.translate(0, -7), canvas, size);
-    paintText("${simulationResult.maxTargetedVelocity.toStringAsFixed(2)}m/s",
-        lineEnd.translate(0, -7), canvas, size);
+    LinePainter.paintText("0m/s", lineStart.translate(0, -7), canvas, size);
+    LinePainter.paintText(
+        "${simulationResult.maxTargetedVelocity.toStringAsFixed(2)}m/s",
+        lineEnd.translate(0, -7),
+        canvas,
+        size);
   }
 
-  @override
-  void paint(Canvas canvas, Size size) {
-    paintGrid(canvas, size);
-
-    InstructionResult prevResult = startResult;
-
-    for (InstructionResult result in simulationResult.instructionResults) {
-      if (result is DriveResult) {
-        drawDrive(prevResult, result, canvas, size);
-      } else if (result is TurnResult) {
-        drawTurn(prevResult, result, canvas, size);
-      }
-
-      prevResult = result;
-    }
-
-    paintScale(canvas, size);
-    paintVelocityScale(canvas, size);
-  }
-
-  void drawDrive(InstructionResult prevInstructionResult,
-      DriveResult instructionResult, Canvas canvas, Size size) {
+  void drawDrive(
+      InstructionResult prevInstructionResult, DriveResult instructionResult) {
     if (prevInstructionResult.endPosition == instructionResult.endPosition) {
       return;
     }
@@ -150,14 +116,14 @@ class LinePainter extends CustomPainter {
       ).createShader(Rect.fromCircle(
           center: vecToOffset(prevInstructionResult.endPosition, size),
           radius: instructionResult.accelerationDistance * scale))
-      ..strokeWidth = strokeWidth;
+      ..strokeWidth = strokeWidth * scale;
 
     canvas.drawLine(vecToOffset(prevInstructionResult.endPosition, size),
         vecToOffset(instructionResult.endPosition, size), accelerationPaint);
   }
 
-  void drawTurn(InstructionResult prevInstructionResult, TurnResult instruction,
-      Canvas canvas, Size size) {
+  void drawTurn(
+      InstructionResult prevInstructionResult, TurnResult instruction) {
     if (prevInstructionResult.endPosition == instruction.endPosition &&
         (instruction.endRotation - prevInstructionResult.endRotation) % 360 >
             0.0001) {
@@ -211,7 +177,7 @@ class LinePainter extends CustomPainter {
 
     final paint = Paint()
       ..style = PaintingStyle.stroke
-      ..strokeWidth = strokeWidth
+      ..strokeWidth = strokeWidth * scale
       ..shader = SweepGradient(
         colors: colors,
         stops: [0, degree / 360],
@@ -229,8 +195,6 @@ class LinePainter extends CustomPainter {
       false,
       paint,
     );
-
-    //canvas.drawCircle(vecToOffset(center, size), scale * radius, paint);
   }
 
   Color velocityToColor(double velocity) {
@@ -243,7 +207,4 @@ class LinePainter extends CustomPainter {
   Offset vecToOffset(Vector2 vec, Size size) =>
       Offset(vec.x * scale, vec.y * scale)
           .translate(size.width / 2, size.height / 2);
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
 }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:robi_line_drawer/file_browser.dart';
 import 'package:robi_line_drawer/robi_api/robi_utils.dart';
 
 class RobiConfigurator extends StatelessWidget {
@@ -13,8 +14,14 @@ class RobiConfigurator extends StatelessWidget {
   Widget build(BuildContext context) {
     return StatefulBuilder(builder: (context, setState) {
       final formKey = GlobalKey<FormState>();
-      final radiusController = TextEditingController(text: "3.5");
-      final trackController = TextEditingController(text: "14.7");
+      final radiusController = TextEditingController(
+          text: "${defaultRobiConfig().wheelRadius * 100}");
+      final trackController = TextEditingController(
+          text: "${defaultRobiConfig().trackWidth * 100}");
+      final distanceWheelIRController = TextEditingController(
+          text: "${defaultRobiConfig().distanceWheelIr * 100}");
+      final wheelWidthController = TextEditingController(
+          text: "${defaultRobiConfig().wheelWidth * 100}");
       final nameController = TextEditingController(text: "Config ${index + 1}");
 
       return AlertDialog(
@@ -44,7 +51,7 @@ class RobiConfigurator extends StatelessWidget {
                             decimal: true),
                         inputFormatters: <TextInputFormatter>[
                           FilteringTextInputFormatter.allow(
-                              RegExp(r'^(\d+)?\.?\d{0,2}'))
+                              RegExp(r'^(\d+)?\.?\d{0,4}'))
                         ],
                         validator: (value) {
                           if (value == null || value.isEmpty) {
@@ -71,7 +78,61 @@ class RobiConfigurator extends StatelessWidget {
                             decimal: true),
                         inputFormatters: <TextInputFormatter>[
                           FilteringTextInputFormatter.allow(
-                              RegExp(r'^(\d+)?\.?\d{0,2}'))
+                              RegExp(r'^(\d+)?\.?\d{0,4}'))
+                        ],
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return "Enter a value";
+                          } else if (double.tryParse(value) == null) {
+                            return "Enter a number";
+                          }
+                          return null;
+                        },
+                      ),
+                    ),
+                    const Text("cm")
+                  ],
+                ),
+              ),
+              Flexible(
+                child: Row(
+                  children: [
+                    const Text("Vertical Distance Wheel to IR: "),
+                    Expanded(
+                      child: TextFormField(
+                        controller: distanceWheelIRController,
+                        keyboardType: const TextInputType.numberWithOptions(
+                            decimal: true),
+                        inputFormatters: <TextInputFormatter>[
+                          FilteringTextInputFormatter.allow(
+                              RegExp(r'^(\d+)?\.?\d{0,4}'))
+                        ],
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return "Enter a value";
+                          } else if (double.tryParse(value) == null) {
+                            return "Enter a number";
+                          }
+                          return null;
+                        },
+                      ),
+                    ),
+                    const Text("cm")
+                  ],
+                ),
+              ),
+              Flexible(
+                child: Row(
+                  children: [
+                    const Text("Wheel width: "),
+                    Expanded(
+                      child: TextFormField(
+                        controller: wheelWidthController,
+                        keyboardType: const TextInputType.numberWithOptions(
+                            decimal: true),
+                        inputFormatters: <TextInputFormatter>[
+                          FilteringTextInputFormatter.allow(
+                              RegExp(r'^(\d+)?\.?\d{0,4}'))
                         ],
                         validator: (value) {
                           if (value == null || value.isEmpty) {
@@ -101,6 +162,8 @@ class RobiConfigurator extends StatelessWidget {
               addedConfig(RobiConfig(
                 double.parse(radiusController.text) / 100.0,
                 double.parse(trackController.text) / 100.0,
+                double.parse(distanceWheelIRController.text) / 100.0,
+                double.parse(wheelWidthController.text) / 100.0,
                 name: nameController.text,
               ));
               Navigator.pop(context);

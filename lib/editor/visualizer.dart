@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:robi_line_drawer/editor/line_painter.dart';
+import 'package:robi_line_drawer/editor/painters/ir_read_painter.dart';
+import 'package:robi_line_drawer/editor/painters/line_painter.dart';
+import 'package:robi_line_drawer/robi_api/ir_read_api.dart';
 import 'package:robi_line_drawer/robi_api/robi_utils.dart';
 
 class Visualizer extends StatefulWidget {
@@ -7,6 +9,8 @@ class Visualizer extends StatefulWidget {
   final double scale;
   final void Function(double scale) scaleChanged;
   final RobiConfig robiConfig;
+  final IrReadResult? irReadResult;
+  final IrReadPainterSettings irReadPainterSettings;
 
   const Visualizer({
     super.key,
@@ -14,6 +18,8 @@ class Visualizer extends StatefulWidget {
     required this.scale,
     required this.scaleChanged,
     required this.robiConfig,
+    this.irReadResult,
+    required this.irReadPainterSettings,
   });
 
   @override
@@ -41,9 +47,11 @@ class _VisualizerState extends State<Visualizer> {
                 borderRadius: BorderRadius.circular(10),
                 child: CustomPaint(
                   painter: LinePainter(
-                    scale,
-                    simulationResult,
-                  ),
+                      scale: scale,
+                      robiConfig: widget.robiConfig,
+                      irReadResult: widget.irReadResult,
+                      simulationResult: widget.simulationResult,
+                      irReadPainterSettings: widget.irReadPainterSettings),
                   child: Container(),
                 ),
               ),
@@ -56,7 +64,7 @@ class _VisualizerState extends State<Visualizer> {
                 child: Slider(
                   value: scale,
                   min: 25,
-                  max: 200,
+                  max: 400,
                   onChanged: (double value) {
                     setState(() => scale = value);
                     widget.scaleChanged(scale);

@@ -261,16 +261,28 @@ class SimulationResult {
 }
 
 class RobiConfig {
-  final double wheelRadius, trackWidth;
+  final double wheelRadius, trackWidth, distanceWheelIr, wheelWidth;
   final String? name;
 
-  RobiConfig(this.wheelRadius, this.trackWidth, {this.name});
+  RobiConfig(
+      this.wheelRadius, this.trackWidth, this.distanceWheelIr, this.wheelWidth,
+      {this.name});
 
   RobiConfig.fromJson(Map<String, dynamic> json)
       : wheelRadius = json["wheel_radius"],
         trackWidth = json["track_width"],
+        distanceWheelIr = json["distance_wheel_ir"],
+        wheelWidth = json["wheel_width"],
         name = json["name"];
 
-  Map<String, dynamic> toJson() =>
-      {"wheel_radius": wheelRadius, "track_width": trackWidth, "name": name};
+  Map<String, dynamic> toJson() => {
+        "wheel_radius": wheelRadius,
+        "track_width": trackWidth,
+        "distance_wheel_ir": distanceWheelIr,
+        "wheel_width": wheelWidth,
+        "name": name
+      };
 }
+
+double freqToVel(int freq, double wheelRadius) =>
+    freq * 0.00098174 * wheelRadius;

@@ -4,7 +4,7 @@ import 'dart:ui';
 import 'package:expandable/expandable.dart';
 import 'package:flutter/material.dart';
 import 'package:robi_line_drawer/editor/editor.dart';
-import 'package:robi_line_drawer/editor/line_painter.dart';
+import 'package:robi_line_drawer/editor/painters/line_painter.dart';
 import 'package:robi_line_drawer/robi_api/robi_path_serializer.dart';
 import 'package:vector_math/vector_math.dart' show Vector2;
 

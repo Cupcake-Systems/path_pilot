@@ -1,5 +1,7 @@
+import 'dart:io';
 import 'dart:math';
 
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:robi_line_drawer/editor/add_instruction_dialog.dart';
@@ -10,7 +12,9 @@ import 'package:robi_line_drawer/editor/instructions/decelerate_over_time.dart';
 import 'package:robi_line_drawer/editor/instructions/drive_distance.dart';
 import 'package:robi_line_drawer/editor/instructions/drive_time.dart';
 import 'package:robi_line_drawer/editor/instructions/stop.dart';
+import 'package:robi_line_drawer/editor/painters/ir_read_painter.dart';
 import 'package:robi_line_drawer/file_browser.dart';
+import 'package:robi_line_drawer/robi_api/ir_read_api.dart';
 import 'package:robi_line_drawer/robi_api/robi_utils.dart';
 import 'package:robi_line_drawer/editor/visualizer.dart';
 
@@ -49,6 +53,13 @@ class _EditorState extends State<Editor> {
   late Simulator simulator = Simulator(widget.robiConfig);
   late SimulationResult simulationResult;
 
+  IrReadResult? importedIrReadResult;
+  IrReadPainterSettings irReadPainterSettings = IrReadPainterSettings(
+    irReadingsThreshold: 1024,
+    showCalculatedPath: true,
+    showTracks: false,
+  );
+
   @override
   void initState() {
     super.initState();
@@ -66,6 +77,8 @@ class _EditorState extends State<Editor> {
             scale: scale,
             scaleChanged: (newScale) => scale = newScale,
             robiConfig: widget.robiConfig,
+            irReadResult: importedIrReadResult,
+            irReadPainterSettings: irReadPainterSettings,
           ),
         ),
         const VerticalDivider(width: 0),
@@ -76,7 +89,8 @@ class _EditorState extends State<Editor> {
               children: [
                 AppBar(title: const Text("Instructions Editor")),
                 const Divider(),
-                Expanded(
+                Flexible(
+                  flex: 5,
                   child: ReorderableListView.builder(
                     itemCount: instructions.length - 1,
                     header: const Card(
@@ -167,10 +181,83 @@ class _EditorState extends State<Editor> {
                     },
                   ),
                 ),
+                if (importedIrReadResult != null) ...[
+                  const Divider(),
+                  AppBar(
+                    title: const Text("IR Readings Settings"),
+                    actions: [
+                      IconButton(
+                        onPressed: () =>
+                            setState(() => importedIrReadResult = null),
+                        icon: const Icon(Icons.delete),
+                      )
+                    ],
+                  ),
+                  const Divider(),
+                  Flexible(
+                      child: ListView(
+                    children: [
+                      CheckboxListTile(
+                        value: irReadPainterSettings.showTracks,
+                        onChanged: (value) => setState(
+                            () => irReadPainterSettings.showTracks = value!),
+                        title: const Text("Show Wheel Track"),
+                      ),
+                      ListTile(
+                        title: Row(
+                          children: [
+                            Text(
+                                "Show only IR Readings < ${irReadPainterSettings.irReadingsThreshold}"),
+                            Slider(
+                              value: irReadPainterSettings.irReadingsThreshold
+                                  .toDouble(),
+                              onChanged: (value) {
+                                setState(() {
+                                  irReadPainterSettings.irReadingsThreshold =
+                                      value.round();
+                                });
+                              },
+                              min: 0,
+                              max: 1024,
+                            )
+                          ],
+                        ),
+                      ),
+                      CheckboxListTile(
+                        value: irReadPainterSettings.showCalculatedPath,
+                        onChanged: (value) => setState(() =>
+                            irReadPainterSettings.showCalculatedPath = value!),
+                        title: const Text("Show Calculated Path"),
+                      ),
+                    ],
+                  )),
+                ],
                 const Divider(),
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
+                    IconButton.filledTonal(
+                      onPressed: () async {
+                        final result = await FilePicker.platform.pickFiles(
+                          type: FileType.custom,
+                          allowedExtensions: ["txt"],
+                        );
+                        if (result == null) return;
+                        final file = File(result.files.single.path!);
+                        setState(() {
+                          importedIrReadResult = IrReadResult.fromFile(file);
+                        });
+                      },
+                      icon: const Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 8),
+                        child: Row(
+                          children: [
+                            Text("Import Ir Reading"),
+                            Icon(Icons.chevron_right)
+                          ],
+                        ),
+                      ),
+                    ),
                     IconButton.filledTonal(
                       onPressed: simulationResult.instructionResults.isEmpty
                           ? null

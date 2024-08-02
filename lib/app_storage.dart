@@ -32,6 +32,7 @@ class RobiConfigStorage {
   static void init() {
     _storedConfigs = _loadConfigs();
     _lastUsedConfigIndex = _loadLastUsedConfig();
+    if (_lastUsedConfigIndex >= _storedConfigs.length) _lastUsedConfigIndex = 0;
   }
 
   static List<RobiConfig> _loadConfigs() {

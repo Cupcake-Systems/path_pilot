@@ -342,4 +342,5 @@ class _FileBrowserState extends State<FileBrowser>
 StopOverTimeInstruction defaultStopInstruction() =>
     StopOverTimeInstruction(initialVelocity: 0, time: 1);
 
-RobiConfig defaultRobiConfig() => RobiConfig(0.032, 0.147, name: "Default");
+RobiConfig defaultRobiConfig() =>
+    RobiConfig(0.032, 0.147, 0.06, 0.025, name: "Default");
