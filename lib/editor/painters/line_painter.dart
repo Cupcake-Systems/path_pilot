@@ -3,6 +3,7 @@ import 'package:robi_line_drawer/editor/painters/ir_read_painter.dart';
 import 'package:robi_line_drawer/editor/painters/simulation_painter.dart';
 import 'package:robi_line_drawer/robi_api/ir_read_api.dart';
 import 'package:robi_line_drawer/robi_api/robi_utils.dart';
+import 'package:vector_math/vector_math.dart';
 
 import 'abstract_painter.dart';
 
@@ -11,19 +12,21 @@ const Color white = Color(0xFFFFFFFF);
 class LinePainter extends CustomPainter {
   final double scale;
   final RobiConfig robiConfig;
-  final IrReadResult? irReadResult;
   final SimulationResult simulationResult;
   final IrReadPainterSettings irReadPainterSettings;
   final InstructionResult? highlightedInstruction;
+  final IrCalculatorResult? irCalculatorResult;
+  final List<Vector2>? irPathApproximation;
 
   LinePainter({
     super.repaint,
     required this.scale,
     required this.robiConfig,
-    this.irReadResult,
     required this.irReadPainterSettings,
     required this.simulationResult,
     required this.highlightedInstruction,
+    this.irCalculatorResult,
+    this.irPathApproximation,
   });
 
   static void paintText(String text, Offset offset, Canvas canvas, Size size) {
@@ -72,22 +75,23 @@ class LinePainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
+    if (irCalculatorResult != null) assert(irPathApproximation != null);
     final List<MyPainter> painters = [
       SimulationPainter(
-        simulationResult: simulationResult,
-        scale: scale,
-        canvas: canvas,
-        size: size,
-        highlightedInstruction: highlightedInstruction
-      ),
-      if (irReadResult != null)
+          simulationResult: simulationResult,
+          scale: scale,
+          canvas: canvas,
+          size: size,
+          highlightedInstruction: highlightedInstruction),
+      if (irCalculatorResult != null)
         IrReadPainter(
           robiConfig: robiConfig,
           scale: scale,
-          irReadResult: irReadResult!,
           settings: irReadPainterSettings,
           canvas: canvas,
           size: size,
+          irCalculatorResult: irCalculatorResult!,
+          pathApproximation: irPathApproximation!,
         )
     ];
 

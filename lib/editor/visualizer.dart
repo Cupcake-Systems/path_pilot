@@ -3,15 +3,17 @@ import 'package:robi_line_drawer/editor/painters/ir_read_painter.dart';
 import 'package:robi_line_drawer/editor/painters/line_painter.dart';
 import 'package:robi_line_drawer/robi_api/ir_read_api.dart';
 import 'package:robi_line_drawer/robi_api/robi_utils.dart';
+import 'package:vector_math/vector_math.dart' show Vector2;
 
 class Visualizer extends StatefulWidget {
   final SimulationResult simulationResult;
   final double scale;
   final void Function(double scale) scaleChanged;
   final RobiConfig robiConfig;
-  final IrReadResult? irReadResult;
   final IrReadPainterSettings irReadPainterSettings;
   final InstructionResult? highlightedInstruction;
+  final IrCalculatorResult? irCalculatorResult;
+  final List<Vector2>? irPathApproximation;
 
   const Visualizer({
     super.key,
@@ -19,9 +21,10 @@ class Visualizer extends StatefulWidget {
     required this.scale,
     required this.scaleChanged,
     required this.robiConfig,
-    this.irReadResult,
     required this.irReadPainterSettings,
     required this.highlightedInstruction,
+    this.irCalculatorResult,
+    this.irPathApproximation,
   });
 
   @override
@@ -51,10 +54,11 @@ class _VisualizerState extends State<Visualizer> {
                   painter: LinePainter(
                     scale: scale,
                     robiConfig: widget.robiConfig,
-                    irReadResult: widget.irReadResult,
                     simulationResult: widget.simulationResult,
                     irReadPainterSettings: widget.irReadPainterSettings,
                     highlightedInstruction: widget.highlightedInstruction,
+                    irCalculatorResult: widget.irCalculatorResult,
+                    irPathApproximation: widget.irPathApproximation,
                   ),
                   child: Container(),
                 ),

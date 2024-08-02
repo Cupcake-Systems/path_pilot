@@ -17,6 +17,7 @@ import 'package:robi_line_drawer/file_browser.dart';
 import 'package:robi_line_drawer/robi_api/ir_read_api.dart';
 import 'package:robi_line_drawer/robi_api/robi_utils.dart';
 import 'package:robi_line_drawer/editor/visualizer.dart';
+import 'package:vector_math/vector_math.dart';
 
 import '../robi_api/robi_path_serializer.dart';
 import '../robi_api/simulator.dart';
@@ -50,16 +51,19 @@ class Editor extends StatefulWidget {
 class _EditorState extends State<Editor> {
   late List<MissionInstruction> instructions = widget.instructions;
   double scale = 200;
+  double ramerDouglasPeuckerTolerance = 0.5;
   late Simulator simulator = Simulator(widget.robiConfig);
   late SimulationResult simulationResult;
 
-  IrReadResult? importedIrReadResult;
   IrReadPainterSettings irReadPainterSettings = IrReadPainterSettings(
     irReadingsThreshold: 1024,
     showCalculatedPath: true,
     showTracks: false,
   );
   InstructionResult? highlightedInstruction;
+  IrCalculatorResult? irCalculatorResult;
+  List<Vector2>? irPathApproximation;
+  IrCalculator? irCalculator;
 
   @override
   void initState() {
@@ -78,9 +82,10 @@ class _EditorState extends State<Editor> {
             scale: scale,
             scaleChanged: (newScale) => scale = newScale,
             robiConfig: widget.robiConfig,
-            irReadResult: importedIrReadResult,
             irReadPainterSettings: irReadPainterSettings,
             highlightedInstruction: highlightedInstruction,
+            irCalculatorResult: irCalculatorResult,
+            irPathApproximation: irPathApproximation,
           ),
         ),
         const VerticalDivider(width: 0),
@@ -185,14 +190,14 @@ class _EditorState extends State<Editor> {
                     },
                   ),
                 ),
-                if (importedIrReadResult != null) ...[
+                if (irCalculatorResult != null) ...[
                   const Divider(),
                   AppBar(
                     title: const Text("IR Readings Settings"),
                     actions: [
                       IconButton(
                         onPressed: () =>
-                            setState(() => importedIrReadResult = null),
+                            setState(() => irCalculatorResult = null),
                         icon: const Icon(Icons.delete),
                       )
                     ],
@@ -233,6 +238,36 @@ class _EditorState extends State<Editor> {
                             irReadPainterSettings.showCalculatedPath = value!),
                         title: const Text("Show Calculated Path"),
                       ),
+                      ListTile(
+                        title: Row(
+                          children: [
+                            const Text("Ramer Douglas Peucker Tolerance"),
+                            Slider(
+                              value: ramerDouglasPeuckerTolerance,
+                              onChanged: (value) => setState(() {
+                                ramerDouglasPeuckerTolerance = value;
+                                irPathApproximation =
+                                    irCalculator!.pathApproximation(
+                                  irCalculatorResult!,
+                                  100,
+                                  ramerDouglasPeuckerTolerance,
+                                );
+                              }),
+                              max: 5,
+                            ),
+                          ],
+                        ),
+                      ),
+                      ElevatedButton(
+                        onPressed: () {
+                          setState(() {
+                            instructions.clear();
+                            instructions.add(defaultStopInstruction());
+                            rerunSimulationAndUpdate();
+                          });
+                        },
+                        child: const Text("To Path"),
+                      )
                     ],
                   )),
                 ],
@@ -248,8 +283,18 @@ class _EditorState extends State<Editor> {
                         );
                         if (result == null) return;
                         final file = File(result.files.single.path!);
+                        final importedIrReadResult =
+                            IrReadResult.fromFile(file);
+                        irCalculator = IrCalculator(
+                            irReadResult: importedIrReadResult,
+                            robiConfig: widget.robiConfig);
                         setState(() {
-                          importedIrReadResult = IrReadResult.fromFile(file);
+                          irCalculatorResult = irCalculator!.calculate();
+                          irPathApproximation = irCalculator!.pathApproximation(
+                            irCalculatorResult!,
+                            100,
+                            ramerDouglasPeuckerTolerance,
+                          );
                         });
                       },
                       icon: const Padding(
