@@ -14,6 +14,7 @@ class LinePainter extends CustomPainter {
   final IrReadResult? irReadResult;
   final SimulationResult simulationResult;
   final IrReadPainterSettings irReadPainterSettings;
+  final InstructionResult? highlightedInstruction;
 
   LinePainter({
     super.repaint,
@@ -22,6 +23,7 @@ class LinePainter extends CustomPainter {
     this.irReadResult,
     required this.irReadPainterSettings,
     required this.simulationResult,
+    required this.highlightedInstruction,
   });
 
   static void paintText(String text, Offset offset, Canvas canvas, Size size) {
@@ -76,6 +78,7 @@ class LinePainter extends CustomPainter {
         scale: scale,
         canvas: canvas,
         size: size,
+        highlightedInstruction: highlightedInstruction
       ),
       if (irReadResult != null)
         IrReadPainter(

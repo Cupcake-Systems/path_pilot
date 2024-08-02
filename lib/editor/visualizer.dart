@@ -11,6 +11,7 @@ class Visualizer extends StatefulWidget {
   final RobiConfig robiConfig;
   final IrReadResult? irReadResult;
   final IrReadPainterSettings irReadPainterSettings;
+  final InstructionResult? highlightedInstruction;
 
   const Visualizer({
     super.key,
@@ -20,6 +21,7 @@ class Visualizer extends StatefulWidget {
     required this.robiConfig,
     this.irReadResult,
     required this.irReadPainterSettings,
+    required this.highlightedInstruction,
   });
 
   @override
@@ -47,11 +49,13 @@ class _VisualizerState extends State<Visualizer> {
                 borderRadius: BorderRadius.circular(10),
                 child: CustomPaint(
                   painter: LinePainter(
-                      scale: scale,
-                      robiConfig: widget.robiConfig,
-                      irReadResult: widget.irReadResult,
-                      simulationResult: widget.simulationResult,
-                      irReadPainterSettings: widget.irReadPainterSettings),
+                    scale: scale,
+                    robiConfig: widget.robiConfig,
+                    irReadResult: widget.irReadResult,
+                    simulationResult: widget.simulationResult,
+                    irReadPainterSettings: widget.irReadPainterSettings,
+                    highlightedInstruction: widget.highlightedInstruction,
+                  ),
                   child: Container(),
                 ),
               ),

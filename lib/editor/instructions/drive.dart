@@ -16,6 +16,8 @@ class DriveInstructionEditor extends AbstractEditor {
     required super.instructionIndex,
     required super.change,
     required super.removed,
+    required super.entered,
+    required super.exited,
   }) : super(instruction: instruction) {
     if (!isLastInstruction &&
         prevInstructionResult.managedVelocity <= 0 &&
@@ -35,6 +37,8 @@ class DriveInstructionEditor extends AbstractEditor {
       instruction: instruction,
       warningMessage: warningMessage,
       removed: removed,
+      entered: entered,
+      exited: exited,
       prevResult: prevInstructionResult,
       instructionResult: instructionResult,
       children: [

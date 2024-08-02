@@ -16,6 +16,8 @@ class AccelerateOverTimeEditor extends AbstractEditor {
     required super.instructionIndex,
     required super.change,
     required super.removed,
+    required super.entered,
+    required super.exited,
   }) : super(instruction: instruction) {
     if (instruction.acceleration <= 0 || instruction.time <= 0) {
       warningMessage = "Pointless";
@@ -29,6 +31,8 @@ class AccelerateOverTimeEditor extends AbstractEditor {
       instructionResult: instructionResult,
       prevResult: prevInstructionResult,
       removed: removed,
+      entered: entered,
+      exited: exited,
       warningMessage: warningMessage,
       children: [
         Icon(userInstructionToIcon[UserInstruction.accelerateOverTime]),

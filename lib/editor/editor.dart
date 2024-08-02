@@ -59,6 +59,7 @@ class _EditorState extends State<Editor> {
     showCalculatedPath: true,
     showTracks: false,
   );
+  InstructionResult? highlightedInstruction;
 
   @override
   void initState() {
@@ -79,6 +80,7 @@ class _EditorState extends State<Editor> {
             robiConfig: widget.robiConfig,
             irReadResult: importedIrReadResult,
             irReadPainterSettings: irReadPainterSettings,
+            highlightedInstruction: highlightedInstruction,
           ),
         ),
         const VerticalDivider(width: 0),
@@ -169,6 +171,8 @@ class _EditorState extends State<Editor> {
                                 newInstruction;
                             rerunSimulationAndUpdate();
                           },
+                          exited: exitedCallback,
+                          entered: enteredCallback,
                         )
                       ],
                     ),
@@ -279,6 +283,18 @@ class _EditorState extends State<Editor> {
     );
   }
 
+  void enteredCallback(InstructionResult instructionResult) {
+    setState(() {
+      highlightedInstruction = instructionResult;
+    });
+  }
+
+  void exitedCallback() {
+    setState(() {
+      highlightedInstruction = null;
+    });
+  }
+
   AbstractEditor instructionToEditor(int i) {
     final instruction = instructions[i];
 
@@ -298,6 +314,8 @@ class _EditorState extends State<Editor> {
           key: ObjectKey(instruction),
           instruction: instruction,
           change: changeCallback,
+          exited: exitedCallback,
+          entered: enteredCallback,
           removed: removedCallback,
           simulationResult: simulationResult,
           instructionIndex: i,
@@ -310,6 +328,8 @@ class _EditorState extends State<Editor> {
           instructionIndex: i,
           change: changeCallback,
           removed: removedCallback,
+          exited: exitedCallback,
+          entered: enteredCallback,
         );
       }
     } else if (instruction is AccelerateOverTimeInstruction) {
@@ -321,6 +341,8 @@ class _EditorState extends State<Editor> {
           removed: removedCallback,
           simulationResult: simulationResult,
           instructionIndex: i,
+          exited: exitedCallback,
+          entered: enteredCallback,
         );
       } else {
         return DecelerateOverTimeEditor(
@@ -330,6 +352,8 @@ class _EditorState extends State<Editor> {
           instructionIndex: i,
           change: changeCallback,
           removed: removedCallback,
+          exited: exitedCallback,
+          entered: enteredCallback,
         );
       }
     } else if (instruction is DriveInstruction) {
@@ -340,6 +364,8 @@ class _EditorState extends State<Editor> {
         removed: removedCallback,
         simulationResult: simulationResult,
         instructionIndex: i,
+        exited: exitedCallback,
+        entered: enteredCallback,
       );
     } else if (instruction is TurnInstruction) {
       return TurnInstructionEditor(
@@ -350,6 +376,8 @@ class _EditorState extends State<Editor> {
         simulationResult: simulationResult,
         instructionIndex: i,
         robiConfig: widget.robiConfig,
+        exited: exitedCallback,
+        entered: enteredCallback,
       );
     } else if (instruction is DriveForwardDistanceInstruction) {
       return DriveDistanceEditor(
@@ -359,6 +387,8 @@ class _EditorState extends State<Editor> {
         instructionIndex: i,
         change: changeCallback,
         removed: removedCallback,
+        exited: exitedCallback,
+        entered: enteredCallback,
       );
     } else if (instruction is DriveForwardTimeInstruction) {
       return DriveTimeEditor(
@@ -368,6 +398,8 @@ class _EditorState extends State<Editor> {
         instructionIndex: i,
         change: changeCallback,
         removed: removedCallback,
+        exited: exitedCallback,
+        entered: enteredCallback,
       );
     }
     throw UnsupportedError("");

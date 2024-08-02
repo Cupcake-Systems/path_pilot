@@ -15,12 +15,16 @@ class StopEditor extends AbstractEditor {
     required super.simulationResult,
     required super.instructionIndex,
     required super.change,
+    required super.entered,
+    required super.exited,
   }) : super(instruction: instruction);
 
   @override
   Widget build(BuildContext context) {
     return RemovableWarningCard(
       instruction: instruction,
+      entered: entered,
+      exited: exited,
       prevResult: prevInstructionResult,
       instructionResult: instructionResult,
       children: [

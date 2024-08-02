@@ -16,6 +16,8 @@ class DriveDistanceEditor extends AbstractEditor {
     required super.instructionIndex,
     required super.change,
     required super.removed,
+    required super.entered,
+    required super.exited,
   }) : super(instruction: instruction) {
     if (instruction.distance <= 0) {
       warningMessage = "Pointless";
@@ -26,6 +28,8 @@ class DriveDistanceEditor extends AbstractEditor {
   Widget build(BuildContext context) {
     return RemovableWarningCard(
       removed: removed,
+      entered: entered,
+      exited: exited,
       warningMessage: warningMessage,
       prevResult: prevInstructionResult,
       instructionResult: instructionResult,

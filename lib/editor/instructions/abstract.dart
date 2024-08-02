@@ -21,6 +21,8 @@ abstract class AbstractEditor extends StatelessWidget {
 
   final Function(MissionInstruction newInstruction) change;
   final Function()? removed;
+  final Function(InstructionResult instructionResult)? entered;
+  final Function()? exited;
 
   String? warningMessage;
 
@@ -32,6 +34,8 @@ abstract class AbstractEditor extends StatelessWidget {
     required this.change,
     this.removed,
     this.warningMessage,
+    this.entered,
+    this.exited,
   }) {
     if (instructionIndex > 0) {
       prevInstructionResult = simulationResult.instructionResults
@@ -53,6 +57,8 @@ abstract class AbstractEditor extends StatelessWidget {
 
 class RemovableWarningCard extends StatelessWidget {
   final Function()? removed;
+  final Function(InstructionResult instructionResult)? entered;
+  final Function()? exited;
 
   final List<Widget> children;
 
@@ -69,111 +75,121 @@ class RemovableWarningCard extends StatelessWidget {
     required this.instructionResult,
     required this.instruction,
     this.removed,
+    this.entered,
+    this.exited,
     this.warningMessage,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      child: Column(
-        children: [
-          ExpandablePanel(
-            header: Row(
-              children: [
-                Expanded(
-                  child: Wrap(
-                    crossAxisAlignment: WrapCrossAlignment.center,
-                    children: children,
+    return MouseRegion(
+      onEnter: (event) {
+        if (entered != null) entered!(instructionResult);
+      },
+      onExit: (event) {
+        if (exited != null) exited!();
+      },
+      child: Card(
+        child: Column(
+          children: [
+            ExpandablePanel(
+              header: Row(
+                children: [
+                  Expanded(
+                    child: Wrap(
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      children: children,
+                    ),
                   ),
+                  if (removed != null)
+                    IconButton(
+                        onPressed: removed, icon: const Icon(Icons.delete)),
+                  const SizedBox(width: 40),
+                ],
+              ),
+              collapsed: const SizedBox.shrink(),
+              expanded: Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Column(
+                  children: [
+                    const Divider(),
+                    Wrap(
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      children: [
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                                "Initial Velocity: ${roundToDigits(prevResult.managedVelocity * 100, 2)}cm/s"),
+                            Text(
+                                "Initial Position: ${vecToString(prevResult.endPosition, 2)}m"),
+                            Text(
+                                "Initial Rotation: ${roundToDigits(prevResult.endRotation, 2)}°"),
+                          ],
+                        ),
+                        const Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 10),
+                          child: Icon(Icons.arrow_forward),
+                        ),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                                "End Velocity: ${roundToDigits(instructionResult.managedVelocity * 100, 2)}cm/s"),
+                            Text(
+                                "End Position: ${vecToString(instructionResult.endPosition, 2)}m"),
+                            Text(
+                                "End Rotation: ${roundToDigits(instructionResult.endRotation, 2)}°"),
+                          ],
+                        ),
+                      ],
+                    ),
+                    const Divider(),
+                    const SizedBox(height: 10),
+                    Container(
+                      decoration: BoxDecoration(
+                        //borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: Colors.white.withAlpha(50)),
+                      ),
+                      width: 200,
+                      height: 200,
+                      child: CustomPaint(
+                        painter: DriveInstructionGraphDrawer(
+                          prevInstResult: prevResult,
+                          instructionResult: instructionResult,
+                          instruction: instruction,
+                        ),
+                        child: Container(),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                  ],
                 ),
-                if (removed != null)
-                  IconButton(
-                      onPressed: removed, icon: const Icon(Icons.delete)),
-                const SizedBox(width: 40),
-              ],
-            ),
-            collapsed: const SizedBox.shrink(),
-            expanded: Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Column(
-                children: [
-                  const Divider(),
-                  Wrap(
-                    crossAxisAlignment: WrapCrossAlignment.center,
-                    children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                              "Initial Velocity: ${roundToDigits(prevResult.managedVelocity * 100, 2)}cm/s"),
-                          Text(
-                              "Initial Position: ${vecToString(prevResult.endPosition, 2)}m"),
-                          Text(
-                              "Initial Rotation: ${roundToDigits(prevResult.endRotation, 2)}°"),
-                        ],
-                      ),
-                      const Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 10),
-                        child: Icon(Icons.arrow_forward),
-                      ),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                              "End Velocity: ${roundToDigits(instructionResult.managedVelocity * 100, 2)}cm/s"),
-                          Text(
-                              "End Position: ${vecToString(instructionResult.endPosition, 2)}m"),
-                          Text(
-                              "End Rotation: ${roundToDigits(instructionResult.endRotation, 2)}°"),
-                        ],
-                      ),
-                    ],
-                  ),
-                  const Divider(),
-                  const SizedBox(height: 10),
-                  Container(
-                    decoration: BoxDecoration(
-                      //borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: Colors.white.withAlpha(50)),
-                    ),
-                    width: 200,
-                    height: 200,
-                    child: CustomPaint(
-                      painter: DriveInstructionGraphDrawer(
-                        prevInstResult: prevResult,
-                        instructionResult: instructionResult,
-                        instruction: instruction,
-                      ),
-                      child: Container(),
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                ],
               ),
+              theme: const ExpandableThemeData(
+                  iconPlacement: ExpandablePanelIconPlacement.left,
+                  inkWellBorderRadius: BorderRadius.all(Radius.circular(10)),
+                  iconColor: Colors.white),
             ),
-            theme: const ExpandableThemeData(
-                iconPlacement: ExpandablePanelIconPlacement.left,
-                inkWellBorderRadius: BorderRadius.all(Radius.circular(10)),
-                iconColor: Colors.white),
-          ),
-          if (warningMessage != null) ...[
-            const Divider(height: 0),
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                  borderRadius:
-                      const BorderRadius.vertical(bottom: Radius.circular(10)),
-                  color: Colors.yellow.withAlpha(50)),
-              child: Row(
-                children: [
-                  const Icon(Icons.warning),
-                  const SizedBox(width: 10),
-                  Text(warningMessage!),
-                ],
+            if (warningMessage != null) ...[
+              const Divider(height: 0),
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                    borderRadius: const BorderRadius.vertical(
+                        bottom: Radius.circular(10)),
+                    color: Colors.yellow.withAlpha(50)),
+                child: Row(
+                  children: [
+                    const Icon(Icons.warning),
+                    const SizedBox(width: 10),
+                    Text(warningMessage!),
+                  ],
+                ),
               ),
-            ),
+            ],
           ],
-        ],
+        ),
       ),
     );
   }

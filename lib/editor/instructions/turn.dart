@@ -9,15 +9,17 @@ class TurnInstructionEditor extends AbstractEditor {
   final TurnInstruction instruction;
   final RobiConfig robiConfig;
 
-  TurnInstructionEditor(
-      {super.key,
-      required this.instruction,
-      required this.robiConfig,
-      required super.simulationResult,
-      required super.instructionIndex,
-      required super.change,
-      required super.removed})
-      : super(instruction: instruction) {
+  TurnInstructionEditor({
+    super.key,
+    required this.instruction,
+    required this.robiConfig,
+    required super.simulationResult,
+    required super.instructionIndex,
+    required super.change,
+    required super.removed,
+    required super.entered,
+    required super.exited,
+  }) : super(instruction: instruction) {
     if (prevInstructionResult.managedVelocity <= 0) {
       warningMessage = "Zero velocity";
     }
@@ -26,6 +28,8 @@ class TurnInstructionEditor extends AbstractEditor {
   @override
   Widget build(BuildContext context) {
     return RemovableWarningCard(
+      entered: entered,
+      exited: exited,
       instruction: instruction,
       warningMessage: warningMessage,
       removed: removed,

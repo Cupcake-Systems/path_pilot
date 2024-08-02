@@ -18,6 +18,8 @@ class DecelerateOverTimeEditor extends AbstractEditor {
     required super.instructionIndex,
     required super.change,
     required super.removed,
+    required super.entered,
+    required super.exited,
   }) : super(instruction: instruction) {
     double decelerationTime = sqrt(2 *
         (instructionResult as DriveResult).accelerationDistance /
@@ -39,6 +41,8 @@ class DecelerateOverTimeEditor extends AbstractEditor {
       instruction: instruction,
       warningMessage: warningMessage,
       removed: removed,
+      entered: entered,
+      exited: exited,
       prevResult: prevInstructionResult,
       instructionResult: instructionResult,
       children: [

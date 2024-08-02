@@ -16,6 +16,8 @@ class AccelerateOverDistanceEditor extends AbstractEditor {
     required super.instructionIndex,
     required super.change,
     required super.removed,
+    required super.entered,
+    required super.exited,
   }) : super(instruction: instruction) {
     if (instruction.acceleration <= 0 || instruction.distance <= 0) {
       warningMessage = "Pointless";
@@ -28,6 +30,8 @@ class AccelerateOverDistanceEditor extends AbstractEditor {
       instruction: instruction,
       warningMessage: warningMessage,
       removed: removed,
+      entered: entered,
+      exited: exited,
       prevResult: prevInstructionResult,
       instructionResult: instructionResult,
       children: [

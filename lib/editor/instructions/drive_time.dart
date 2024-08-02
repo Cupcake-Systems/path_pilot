@@ -16,12 +16,16 @@ class DriveTimeEditor extends AbstractEditor {
     required super.instructionIndex,
     required super.change,
     required super.removed,
+    required super.entered,
+    required super.exited,
   }) : super(instruction: instruction);
 
   @override
   Widget build(BuildContext context) {
     return RemovableWarningCard(
       removed: removed,
+      entered: entered,
+      exited: exited,
       warningMessage: warningMessage,
       prevResult: prevInstructionResult,
       instructionResult: instructionResult,

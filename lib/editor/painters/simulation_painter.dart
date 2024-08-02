@@ -2,7 +2,7 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:robi_line_drawer/editor/painters/abstract_painter.dart';
-import 'package:vector_math/vector_math.dart';
+import 'package:vector_math/vector_math.dart' show Vector2;
 
 import '../../robi_api/robi_path_serializer.dart';
 import '../../robi_api/robi_utils.dart';
@@ -15,6 +15,12 @@ class SimulationPainter extends MyPainter {
   final Canvas canvas;
   final Size size;
   final double strokeWidth;
+  final InstructionResult? highlightedInstruction;
+
+  late final yellowOutlinePaint = Paint()
+    ..color = Colors.yellow
+    ..strokeWidth = (strokeWidth + 0.01) * scale
+    ..style = PaintingStyle.stroke;
 
   SimulationPainter({
     required this.simulationResult,
@@ -22,6 +28,7 @@ class SimulationPainter extends MyPainter {
     required this.canvas,
     required this.size,
     this.strokeWidth = 0.02,
+    required this.highlightedInstruction,
   });
 
   @override
@@ -118,12 +125,17 @@ class SimulationPainter extends MyPainter {
           radius: instructionResult.accelerationDistance * scale))
       ..strokeWidth = strokeWidth * scale;
 
+    if (instructionResult == highlightedInstruction) {
+      canvas.drawLine(vecToOffset(prevInstructionResult.endPosition, size),
+          vecToOffset(instructionResult.endPosition, size), yellowOutlinePaint);
+    }
+
+    // Draw the original line
     canvas.drawLine(vecToOffset(prevInstructionResult.endPosition, size),
         vecToOffset(instructionResult.endPosition, size), accelerationPaint);
   }
 
-  void drawTurn(
-      InstructionResult prevInstructionResult, TurnResult instruction) {
+  void drawTurn(InstructionResult prevInstructionResult, TurnResult instruction) {
     if (prevInstructionResult.endPosition == instruction.endPosition &&
         (instruction.endRotation - prevInstructionResult.endRotation) % 360 >
             0.0001) {
@@ -147,11 +159,20 @@ class SimulationPainter extends MyPainter {
         left,
         canvas,
         size,
-        colors);
+        colors,
+        instruction == highlightedInstruction);
   }
 
-  void drawCirclePart(double radius, double degree, double rotation,
-      Vector2 offset, bool left, Canvas canvas, Size size, List<Color> colors) {
+  void drawCirclePart(
+      double radius,
+      double degree,
+      double rotation,
+      Vector2 offset,
+      bool left,
+      Canvas canvas,
+      Size size,
+      List<Color> colors,
+      bool highlight) {
     double startAngle = 270 - rotation;
     double sweepAngle = degree % 360;
 
@@ -185,9 +206,22 @@ class SimulationPainter extends MyPainter {
       ).createShader(rect);
 
     if (degree >= 360) {
+      if (highlight) {
+        canvas.drawCircle(
+            vecToOffset(center, size), radius * scale, yellowOutlinePaint);
+      }
       canvas.drawCircle(vecToOffset(center, size), radius * scale, paint);
     }
 
+    if (highlight) {
+      canvas.drawArc(
+        rect,
+        startAngle * (pi / 180),
+        sweepAngle * (pi / 180),
+        false,
+        yellowOutlinePaint,
+      );
+    }
     canvas.drawArc(
       rect,
       startAngle * (pi / 180),
