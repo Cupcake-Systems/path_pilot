@@ -7,6 +7,7 @@ import 'package:flutter/services.dart';
 import 'package:robi_line_drawer/editor/add_instruction_dialog.dart';
 import 'package:robi_line_drawer/editor/instructions/abstract.dart';
 import 'package:robi_line_drawer/editor/instructions/rapid_turn.dart';
+import 'package:robi_line_drawer/editor/ir_line_approximation/path_to_instructions.dart';
 import 'package:robi_line_drawer/editor/painters/ir_read_painter.dart';
 import 'package:robi_line_drawer/robi_api/ir_read_api.dart';
 import 'package:robi_line_drawer/robi_api/robi_utils.dart';
@@ -57,6 +58,7 @@ class _EditorState extends State<Editor> {
   IrCalculatorResult? irCalculatorResult;
   List<Vector2>? irPathApproximation;
   IrCalculator? irCalculator;
+  int irInclusionThreshold = 100;
 
   @override
   void initState() {
@@ -94,7 +96,7 @@ class _EditorState extends State<Editor> {
                 AppBar(title: const Text("Instructions Editor")),
                 const Divider(),
                 Flexible(
-                  flex: 5,
+                  flex: 2,
                   child: ReorderableListView.builder(
                     itemCount: instructions.length,
                     header: const Card(
@@ -228,24 +230,36 @@ class _EditorState extends State<Editor> {
                               value: ramerDouglasPeuckerTolerance,
                               onChanged: (value) => setState(() {
                                 ramerDouglasPeuckerTolerance = value;
-                                irPathApproximation =
-                                    irCalculator!.pathApproximation(
-                                  irCalculatorResult!,
-                                  100,
-                                  ramerDouglasPeuckerTolerance,
-                                );
+                                approximateIrPath();
                               }),
                               max: 5,
                             ),
                           ],
                         ),
                       ),
+                      ListTile(
+                        title: Row(
+                          children: [
+                            Text(
+                                "IR Inclusion Threshold: < $irInclusionThreshold"),
+                            Slider(
+                              value: irInclusionThreshold.toDouble(),
+                              onChanged: (value) => setState(() {
+                                irInclusionThreshold = value.round();
+                                approximateIrPath();
+                              }),
+                              min: 0,
+                              max: 1024,
+                            )
+                          ],
+                        ),
+                      ),
                       ElevatedButton(
                         onPressed: () {
-                          setState(() {
-                            instructions.clear();
-                            rerunSimulationAndUpdate();
-                          });
+                          PathToInstructions c = PathToInstructions(
+                              irPathApproximation: irPathApproximation!);
+                          setState(() => instructions = c.calculate());
+                          rerunSimulationAndUpdate();
                         },
                         child: const Text("To Path"),
                       )
@@ -271,11 +285,7 @@ class _EditorState extends State<Editor> {
                             robiConfig: widget.robiConfig);
                         setState(() {
                           irCalculatorResult = irCalculator!.calculate();
-                          irPathApproximation = irCalculator!.pathApproximation(
-                            irCalculatorResult!,
-                            100,
-                            ramerDouglasPeuckerTolerance,
-                          );
+                          approximateIrPath();
                         });
                       },
                       icon: const Padding(
@@ -374,7 +384,6 @@ class _EditorState extends State<Editor> {
   }
 
   void rerunSimulationAndUpdate() {
-
     for (int i = 0; i < instructions.length - 1; ++i) {
       if (instructions[i + 1] is RapidTurnInstruction) {
         instructions[i].endVelocity = 0;
@@ -383,13 +392,21 @@ class _EditorState extends State<Editor> {
       }
     }
 
-    instructions.last.endVelocity = 0;
+    instructions.lastOrNull?.endVelocity = 0;
 
     setState(() {
       simulationResult = simulator.calculate(instructions);
     });
 
     widget.instructionsChanged(instructions);
+  }
+
+  void approximateIrPath() {
+    irPathApproximation = irCalculator!.pathApproximation(
+      irCalculatorResult!,
+      irInclusionThreshold,
+      ramerDouglasPeuckerTolerance,
+    );
   }
 }
 

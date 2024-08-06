@@ -84,8 +84,8 @@ class IrCalculator {
   IrCalculator({required this.irReadResult, required this.robiConfig});
 
   IrCalculatorResult calculate() {
-    Vector2 lastRightOffset = Vector2(0, robiConfig.trackWidth / 2);
-    Vector2 lastLeftOffset = Vector2(0, -robiConfig.trackWidth / 2);
+    Vector2 lastRightOffset = Vector2(0, -robiConfig.trackWidth / 2);
+    Vector2 lastLeftOffset = Vector2(0, robiConfig.trackWidth / 2);
 
     double rotationRad = 0;
     List<(IrReading, IrReading, IrReading)> irData = [];
@@ -107,10 +107,10 @@ class IrCalculator {
 
       final newRightOffset = lastRightOffset +
           Vector2(cos(rotationRad) * rightDistance,
-              -sin(rotationRad) * rightDistance);
+              sin(rotationRad) * rightDistance);
       final newLeftOffset = lastLeftOffset +
-          Vector2(cos(rotationRad) * leftDistance,
-              -sin(rotationRad) * leftDistance);
+          Vector2(
+              cos(rotationRad) * leftDistance, sin(rotationRad) * leftDistance);
 
       wheelPositions.add((newLeftOffset, newRightOffset));
 
@@ -127,11 +127,11 @@ class IrCalculator {
           atan(robiConfig.distanceWheelIr / (robiConfig.trackWidth / 2 + 0.01));
 
       Vector2 mIrPosition =
-          newRightOffset + Vector2(cos(mAlpha) * mc, -sin(mAlpha) * mc);
+          newRightOffset + Vector2(cos(mAlpha) * mc, sin(mAlpha) * mc);
       Vector2 rIrPosition =
-          newRightOffset + Vector2(cos(rAlpha) * rc, -sin(rAlpha) * rc);
+          newRightOffset + Vector2(cos(rAlpha) * rc, sin(rAlpha) * rc);
       Vector2 lIrPosition =
-          newRightOffset + Vector2(cos(lAlpha) * lc, -sin(lAlpha) * lc);
+          newRightOffset + Vector2(cos(lAlpha) * lc, sin(lAlpha) * lc);
 
       irData.add((
         IrReading(measurement.leftIr, lIrPosition),

@@ -44,11 +44,11 @@ class IrReadPainter extends MyPainter {
   });
 
   void addLine(Vector2 a, Path path) {
-    path.lineTo(a.x, a.y);
+    path.lineTo(a.x, -a.y);
   }
 
   void drawCircle(Vector2 a, Paint paint, {double radius = 0.005}) {
-    final o = Offset(a.x, a.y);
+    final o = Offset(a.x, -a.y);
     canvas.drawCircle(o, radius, paint);
   }
 
