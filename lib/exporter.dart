@@ -12,10 +12,17 @@ class Exported {
   Map<String, dynamic> toJson() => {
         "config": config.toJson(),
         "instructions": instructions
-            .map((e) => e.basic.toJson()
-              ..addAll({"type": (e.basic is BaseDriveInstruction ? "drive" : "turn")}))
+            .map((e) =>
+                e.basic.toJson()..addAll({"type": basicObjectMapper(e.basic)}))
             .toList(),
       };
+
+  static String basicObjectMapper(BasicInstruction instruction) {
+    if (instruction is BaseDriveInstruction) return "drive";
+    if (instruction is BaseTurnInstruction) return "turn";
+    if (instruction is BaseRapidTurnInstruction) return "rapid_turn";
+    throw UnsupportedError("");
+  }
 }
 
 class Exporter {
