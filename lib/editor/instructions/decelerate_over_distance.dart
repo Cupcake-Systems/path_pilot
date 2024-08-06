@@ -21,12 +21,13 @@ class DecelerateOverDistanceEditor extends AbstractEditor {
   }) : super(instruction: instruction) {
     if (instruction.acceleration >= 0 || instruction.distance <= 0) {
       warningMessage = "Pointless";
-    } else if (prevInstructionResult.managedVelocity <= 0) {
+    } else if (prevInstructionResult.maxVelocity <= 0) {
       warningMessage = "Cannot decelerate further";
     } else if (instructionResult.endPosition
             .distanceTo(prevInstructionResult.endPosition) <
         instruction.distance) {
-      warningMessage = "Robi will stop before reaching ${instruction.distance.toStringAsFixed(2)}m";
+      warningMessage =
+          "Robi will stop before reaching ${instruction.distance.toStringAsFixed(2)}m";
     }
   }
 

@@ -4,12 +4,12 @@ import 'package:robi_line_drawer/editor/instructions/abstract.dart';
 import '../../robi_api/robi_utils.dart';
 import '../editor.dart';
 
-class TurnInstructionEditor extends AbstractEditor {
+class RapidTurnInstructionEditor extends AbstractEditor {
   @override
-  final TurnInstruction instruction;
+  final RapidTurnInstruction instruction;
   final RobiConfig robiConfig;
 
-  TurnInstructionEditor({
+  RapidTurnInstructionEditor({
     super.key,
     required this.instruction,
     required this.robiConfig,
@@ -64,26 +64,12 @@ class TurnInstructionEditor extends AbstractEditor {
             change(instruction);
           },
           dropdownMenuEntries: [
-            DropdownMenuEntry(value: instruction.turnDegree.abs(), label: "left"),
-            DropdownMenuEntry(value: -instruction.turnDegree.abs(), label: "right"),
+            DropdownMenuEntry(
+                value: instruction.turnDegree.abs(), label: "left"),
+            DropdownMenuEntry(
+                value: -instruction.turnDegree.abs(), label: "right"),
           ],
         ),
-        const Text("with a "),
-        IntrinsicWidth(
-          child: TextFormField(
-            style: const TextStyle(fontSize: 14),
-            initialValue: "${instruction.innerRadius * 100}",
-            onChanged: (String? value) {
-              if (value == null || value.isEmpty) return;
-              final tried = double.tryParse(value);
-              if (tried == null) return;
-              instruction.innerRadius = tried / 100;
-              change(instruction);
-            },
-            inputFormatters: inputFormatters,
-          ),
-        ),
-        const Text("cm inner radius")
       ],
     );
   }

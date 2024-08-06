@@ -296,9 +296,6 @@ class _FileBrowserState extends State<FileBrowser>
 
       setState(() {
         List<MissionInstruction> insts = newInstructions!.toList();
-        if (insts.isEmpty || insts.last is! StopOverTimeInstruction) {
-          insts.add(defaultStopInstruction());
-        }
         instructionTable[tab.absolute.path] = insts;
         focusedFile = tab;
       });
@@ -331,16 +328,13 @@ class _FileBrowserState extends State<FileBrowser>
 
     final file = File(result);
 
-    instructionTable[file.absolute.path] = [defaultStopInstruction()];
+    instructionTable[file.absolute.path] = [];
 
     RobiPathSerializer.saveToFile(file, []);
 
     setState(() => focusedFile = file);
   }
 }
-
-StopOverTimeInstruction defaultStopInstruction() =>
-    StopOverTimeInstruction(initialVelocity: 0, time: 1);
 
 RobiConfig defaultRobiConfig() =>
     RobiConfig(0.032, 0.147, 0.06, 0.025, name: "Default");

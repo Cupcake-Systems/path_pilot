@@ -1,5 +1,3 @@
-import 'dart:math';
-
 import 'package:flutter/material.dart';
 import 'package:robi_line_drawer/editor/painters/abstract_painter.dart';
 import 'package:vector_math/vector_math.dart' show Vector2;

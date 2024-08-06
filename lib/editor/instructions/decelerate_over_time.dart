@@ -21,13 +21,13 @@ class DecelerateOverTimeEditor extends AbstractEditor {
     required super.entered,
     required super.exited,
   }) : super(instruction: instruction) {
+    DriveResult inst = instructionResult as DriveResult;
     double decelerationTime = sqrt(2 *
-        (instructionResult as DriveResult).accelerationDistance /
+        (inst.decelerationStartPoint.distanceTo(inst.endPosition)) /
         instruction.acceleration.abs());
-
     if (instruction.acceleration >= 0 || instruction.time <= 0) {
       warningMessage = "Pointless";
-    } else if (prevInstructionResult.managedVelocity <= 0) {
+    } else if (prevInstructionResult.maxVelocity <= 0) {
       warningMessage = "Cannot decelerate further";
     } else if (decelerationTime < instruction.time) {
       warningMessage =

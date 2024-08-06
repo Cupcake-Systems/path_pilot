@@ -81,13 +81,13 @@ class _AddInstructionDialogState extends State<AddInstructionDialog> {
 enum UserInstruction {
   drive,
   turn,
+  rapidTurn,
   accelerateOverDistance,
   decelerateOverDistance,
   accelerateOverTime,
   decelerateOverTime,
   driveDistance,
   driveTime,
-  stop,
 }
 
 MissionInstruction addInstruction(UserInstruction instruction,
@@ -95,59 +95,83 @@ MissionInstruction addInstruction(UserInstruction instruction,
   switch (instruction) {
     case UserInstruction.driveDistance:
       return DriveForwardDistanceInstruction(
-          distance: 0.5, initialVelocity: prevInstResult.managedVelocity);
+          distance: 0.5,
+          initialVelocity: prevInstResult.finalVelocity,
+          endVelocity: 0);
     case UserInstruction.accelerateOverDistance:
       return AccelerateOverDistanceInstruction(
-          initialVelocity: prevInstResult.managedVelocity,
+          initialVelocity: prevInstResult.finalVelocity,
           distance: 0.5,
-          acceleration: 0.3);
+          acceleration: 0.3,
+          endVelocity: 0);
     case UserInstruction.drive:
       double targetVel = 0.5;
       double acceleration = 0.3;
 
       if (prevInstResult is TurnResult) {
-        targetVel = lastDriveResult.managedVelocity;
+        targetVel = lastDriveResult.finalVelocity;
       }
 
-      if (prevInstResult.managedVelocity > targetVel) {
+      if (prevInstResult.finalVelocity > targetVel) {
         acceleration = -acceleration;
       }
 
       return DriveInstruction(
-          distance: 1,
-          targetVelocity: roundToDigits(targetVel, 2),
-          acceleration: acceleration);
+        distance: 1,
+        targetVelocity: roundToDigits(targetVel, 2),
+        acceleration: acceleration,
+        endVelocity: 0,
+        initialVelocity: prevInstResult.finalVelocity,
+      );
     case UserInstruction.turn:
-      return TurnInstruction(90, false, 0.1);
+      return TurnInstruction(
+        turnDegree: 90,
+        innerRadius: 0.05,
+        targetVelocity: prevInstResult.maxVelocity,
+        acceleration: 0.1,
+        endVelocity: prevInstResult.maxVelocity,
+        initialVelocity: prevInstResult.finalVelocity
+      );
+    case UserInstruction.rapidTurn:
+      return RapidTurnInstruction(
+        turnDegree: 90,
+      );
     case UserInstruction.accelerateOverTime:
       return AccelerateOverTimeInstruction(
-          initialVelocity: prevInstResult.managedVelocity,
-          time: 1,
-          acceleration: 0.3);
+        initialVelocity: prevInstResult.finalVelocity,
+        time: 1,
+        acceleration: 0.3,
+        endVelocity: 0,
+      );
     case UserInstruction.driveTime:
       return DriveForwardTimeInstruction(
-          time: 1, initialVelocity: prevInstResult.managedVelocity);
+        time: 1,
+        initialVelocity: prevInstResult.finalVelocity,
+        endVelocity: 0,
+      );
     case UserInstruction.decelerateOverDistance:
       return AccelerateOverDistanceInstruction(
-          initialVelocity: prevInstResult.managedVelocity,
-          distance: 0.5,
-          acceleration: -0.3);
+        initialVelocity: prevInstResult.finalVelocity,
+        distance: 0.5,
+        acceleration: -0.3,
+        endVelocity: 0,
+      );
     case UserInstruction.decelerateOverTime:
       return AccelerateOverTimeInstruction(
-          initialVelocity: prevInstResult.managedVelocity,
-          time: 1,
-          acceleration: -0.3);
-    case UserInstruction.stop:
-      const double time = 1;
-      return AccelerateOverTimeInstruction(
-          initialVelocity: prevInstResult.managedVelocity,
-          time: time,
-          acceleration: prevInstResult.managedVelocity / time);
+        initialVelocity: prevInstResult.finalVelocity,
+        time: 1,
+        acceleration: -0.3,
+        endVelocity: 0,
+      );
   }
 }
 
 const Map<String, List<UserInstruction>> groupedUserInstructions = {
-  "Basic": [UserInstruction.drive, UserInstruction.turn],
+  "Basic": [
+    UserInstruction.drive,
+    UserInstruction.turn,
+    UserInstruction.rapidTurn
+  ],
   "Drive": [UserInstruction.driveDistance, UserInstruction.driveTime],
   "Accelerate": [
     UserInstruction.accelerateOverDistance,
@@ -162,13 +186,13 @@ const Map<String, List<UserInstruction>> groupedUserInstructions = {
 const Map<UserInstruction, IconData> userInstructionToIcon = {
   UserInstruction.drive: Icons.arrow_upward,
   UserInstruction.turn: Icons.turn_right,
+  UserInstruction.rapidTurn: Icons.turn_right,
   UserInstruction.accelerateOverDistance: Icons.speed,
   UserInstruction.accelerateOverTime: Icons.speed,
   UserInstruction.driveDistance: Icons.arrow_upward,
   UserInstruction.driveTime: Icons.arrow_upward,
   UserInstruction.decelerateOverDistance: Icons.speed,
   UserInstruction.decelerateOverTime: Icons.speed,
-  UserInstruction.stop: Icons.stop,
 };
 
 String camelToSentence(String text) => text.replaceAllMapped(

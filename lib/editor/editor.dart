@@ -11,9 +11,8 @@ import 'package:robi_line_drawer/editor/instructions/decelerate_over_distance.da
 import 'package:robi_line_drawer/editor/instructions/decelerate_over_time.dart';
 import 'package:robi_line_drawer/editor/instructions/drive_distance.dart';
 import 'package:robi_line_drawer/editor/instructions/drive_time.dart';
-import 'package:robi_line_drawer/editor/instructions/stop.dart';
+import 'package:robi_line_drawer/editor/instructions/rapid_turn.dart';
 import 'package:robi_line_drawer/editor/painters/ir_read_painter.dart';
-import 'package:robi_line_drawer/file_browser.dart';
 import 'package:robi_line_drawer/robi_api/ir_read_api.dart';
 import 'package:robi_line_drawer/robi_api/robi_utils.dart';
 import 'package:robi_line_drawer/editor/visualizer.dart';
@@ -99,7 +98,7 @@ class _EditorState extends State<Editor> {
                 Flexible(
                   flex: 5,
                   child: ReorderableListView.builder(
-                    itemCount: instructions.length - 1,
+                    itemCount: instructions.length,
                     header: const Card(
                       child: Padding(
                         padding:
@@ -137,8 +136,7 @@ class _EditorState extends State<Editor> {
                                       instructionAdded:
                                           (MissionInstruction instruction) {
                                         instructions.insert(
-                                            instructions.length - 1,
-                                            instruction);
+                                            instructions.length, instruction);
                                         rerunSimulationAndUpdate();
                                       },
                                       simulationResult: simulationResult,
@@ -158,7 +156,6 @@ class _EditorState extends State<Editor> {
                                     vertical: 20, horizontal: 30),
                                 onPressed: () {
                                   instructions.clear();
-                                  instructions.add(defaultStopInstruction());
                                   rerunSimulationAndUpdate();
                                 },
                                 icon: const Icon(Icons.close),
@@ -166,19 +163,6 @@ class _EditorState extends State<Editor> {
                             ),
                           ],
                         ),
-                        StopEditor(
-                          instruction:
-                              instructions.last as StopOverTimeInstruction,
-                          simulationResult: simulationResult,
-                          instructionIndex: instructions.length - 1,
-                          change: (newInstruction) {
-                            instructions[instructions.length - 1] =
-                                newInstruction;
-                            rerunSimulationAndUpdate();
-                          },
-                          exited: exitedCallback,
-                          entered: enteredCallback,
-                        )
                       ],
                     ),
                     itemBuilder: (context, i) => instructionToEditor(i),
@@ -262,7 +246,6 @@ class _EditorState extends State<Editor> {
                         onPressed: () {
                           setState(() {
                             instructions.clear();
-                            instructions.add(defaultStopInstruction());
                             rerunSimulationAndUpdate();
                           });
                         },
@@ -424,6 +407,18 @@ class _EditorState extends State<Editor> {
         exited: exitedCallback,
         entered: enteredCallback,
       );
+    } else if (instruction is RapidTurnInstruction) {
+      return RapidTurnInstructionEditor(
+        key: ObjectKey(instruction),
+        instruction: instruction,
+        change: changeCallback,
+        removed: removedCallback,
+        simulationResult: simulationResult,
+        instructionIndex: i,
+        robiConfig: widget.robiConfig,
+        exited: exitedCallback,
+        entered: enteredCallback,
+      );
     } else if (instruction is DriveForwardDistanceInstruction) {
       return DriveDistanceEditor(
         key: ObjectKey(instruction),
@@ -459,23 +454,12 @@ class _EditorState extends State<Editor> {
 
       final instruction = instructions[i];
 
-      if (instruction is DriveInstruction) {
-        // Handle DriveForwardInstruction if needed
-      } else if (instruction is AccelerateOverDistanceInstruction) {
-        instruction.initialVelocity = prevInstResult.managedVelocity;
-      } else if (instruction is AccelerateOverTimeInstruction) {
-        instruction.initialVelocity = prevInstResult.managedVelocity;
-      } else if (instruction is StopOverTimeInstruction) {
-        instruction.initialVelocity = prevInstResult.managedVelocity;
-      } else if (instruction is DriveForwardDistanceInstruction) {
-        instruction.initialVelocity = prevInstResult.managedVelocity;
-      } else if (instruction is DriveForwardTimeInstruction) {
-        instruction.initialVelocity = prevInstResult.managedVelocity;
-      } else if (instruction is TurnInstruction) {
-        // Handle TurnInstruction if needed
-      } else {
-        throw UnsupportedError(
-            "Unsupported Instruction: ${instruction.runtimeType}");
+      if (i > 0) {
+        instructions[i - 1].endVelocity = instruction.targetVelocity;
+      }
+
+      if (i == instructions.length - 1) {
+        instruction.endVelocity = 0;
       }
     }
 

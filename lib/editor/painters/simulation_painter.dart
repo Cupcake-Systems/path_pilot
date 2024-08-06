@@ -1,10 +1,10 @@
 import 'dart:math';
 
+import 'package:curved_gradient/curved_gradient.dart';
 import 'package:flutter/material.dart';
 import 'package:robi_line_drawer/editor/painters/abstract_painter.dart';
 import 'package:vector_math/vector_math.dart' show Vector2;
 
-import '../../robi_api/robi_path_serializer.dart';
 import '../../robi_api/robi_utils.dart';
 import '../../robi_api/simulator.dart';
 import 'line_painter.dart';
@@ -33,16 +33,12 @@ class SimulationPainter extends MyPainter {
 
   @override
   void paint() {
-    InstructionResult prevResult = startResult;
-
     for (InstructionResult result in simulationResult.instructionResults) {
       if (result is DriveResult) {
-        drawDrive(prevResult, result);
+        drawDrive(result);
       } else if (result is TurnResult) {
-        drawTurn(prevResult, result);
+        drawTurn(result);
       }
-
-      prevResult = result;
     }
 
     paintScale();
@@ -105,57 +101,83 @@ class SimulationPainter extends MyPainter {
         size);
   }
 
-  void drawDrive(
-      InstructionResult prevInstructionResult, DriveResult instructionResult) {
-    if (prevInstructionResult.endPosition == instructionResult.endPosition) {
-      return;
-    }
+  static Alignment polarToAlignment(double deg) => Alignment(cosD(deg), -sinD(deg));
 
-    List<Color> colors = [
-      velocityToColor(prevInstructionResult.managedVelocity),
-      velocityToColor(instructionResult.managedVelocity)
-    ];
+  void drawDrive(DriveResult instructionResult) {
 
     final accelerationPaint = Paint()
-      ..shader = RadialGradient(
-        colors: colors,
-        radius: 0.5 / sqrt2,
+      ..shader = CurvedGradient(
+        colors: [
+          velocityToColor(instructionResult.initialVelocity),
+          velocityToColor(instructionResult.maxVelocity),
+        ],
+        begin: Alignment.center,
+        end: polarToAlignment(instructionResult.startRotation),
+        granularity: 10,
+        curveGenerator: (x) => sqrt(x),
       ).createShader(Rect.fromCircle(
-          center: vecToOffset(prevInstructionResult.endPosition, size),
-          radius: instructionResult.accelerationDistance * scale))
+          center: vecToOffset(instructionResult.startPosition, size),
+          radius: instructionResult.startPosition
+                  .distanceTo(instructionResult.accelerationEndPoint) *
+              scale))
+      ..strokeWidth = strokeWidth * scale;
+
+    final decelerationPaint = Paint()
+      ..shader = CurvedGradient(
+        colors: [
+          velocityToColor(instructionResult.finalVelocity),
+          velocityToColor(instructionResult.maxVelocity),
+        ],
+        begin: Alignment.center,
+        end: polarToAlignment(instructionResult.startRotation),
+        granularity: 10,
+        curveGenerator: (x) => sqrt(1 - x),
+      ).createShader(Rect.fromCircle(
+          center: vecToOffset(instructionResult.decelerationStartPoint, size),
+          radius: instructionResult.decelerationStartPoint
+                  .distanceTo(instructionResult.endPosition) *
+              scale))
       ..strokeWidth = strokeWidth * scale;
 
     if (instructionResult == highlightedInstruction) {
-      canvas.drawLine(vecToOffset(prevInstructionResult.endPosition, size),
+      canvas.drawLine(vecToOffset(instructionResult.startPosition, size),
           vecToOffset(instructionResult.endPosition, size), yellowOutlinePaint);
     }
 
     // Draw the original line
-    canvas.drawLine(vecToOffset(prevInstructionResult.endPosition, size),
-        vecToOffset(instructionResult.endPosition, size), accelerationPaint);
+    canvas.drawLine(
+      vecToOffset(instructionResult.startPosition, size),
+      vecToOffset(instructionResult.accelerationEndPoint, size),
+      accelerationPaint,
+    );
+    canvas.drawLine(
+      vecToOffset(instructionResult.accelerationEndPoint, size),
+      vecToOffset(instructionResult.decelerationStartPoint, size),
+      Paint()
+        ..color = velocityToColor(instructionResult.maxVelocity)
+        ..strokeWidth = strokeWidth * scale,
+    );
+    canvas.drawLine(
+      vecToOffset(instructionResult.decelerationStartPoint, size),
+      vecToOffset(instructionResult.endPosition, size),
+      decelerationPaint,
+    );
   }
 
-  void drawTurn(InstructionResult prevInstructionResult, TurnResult instruction) {
-    if (prevInstructionResult.endPosition == instruction.endPosition &&
-        (instruction.endRotation - prevInstructionResult.endRotation) % 360 >
-            0.0001) {
-      return;
-    }
-
-    final degree =
-        (prevInstructionResult.endRotation - instruction.endRotation).abs();
-    final left = prevInstructionResult.endRotation < instruction.endRotation;
+  void drawTurn(TurnResult instruction) {
+    final degree = (instruction.endRotation - instruction.startRotation).abs();
+    final left = instruction.startRotation < instruction.endRotation;
 
     List<Color> colors = [
-      velocityToColor(prevInstructionResult.managedVelocity),
-      velocityToColor(instruction.managedVelocity)
+      velocityToColor(instruction.initialVelocity),
+      velocityToColor(instruction.finalVelocity)
     ];
 
     drawCirclePart(
         instruction.turnRadius,
         degree,
-        prevInstructionResult.endRotation,
-        prevInstructionResult.endPosition,
+        instruction.startRotation,
+        instruction.startPosition,
         left,
         canvas,
         size,
@@ -180,8 +202,8 @@ class SimulationPainter extends MyPainter {
 
     if (left) {
       startAngle -= 180 + degree;
-      center.y *= -1;
     } else {
+      center.y *= -1;
       center.x *= -1;
     }
 
@@ -239,6 +261,6 @@ class SimulationPainter extends MyPainter {
   }
 
   Offset vecToOffset(Vector2 vec, Size size) =>
-      Offset(vec.x * scale, vec.y * scale)
+      Offset(vec.x * scale, -vec.y * scale)
           .translate(size.width / 2, size.height / 2);
 }

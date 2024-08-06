@@ -2,9 +2,9 @@ import 'dart:math';
 import 'dart:ui';
 
 import 'package:expandable/expandable.dart';
+import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:robi_line_drawer/editor/editor.dart';
-import 'package:robi_line_drawer/editor/painters/line_painter.dart';
 import 'package:robi_line_drawer/robi_api/robi_path_serializer.dart';
 import 'package:vector_math/vector_math.dart' show Vector2;
 
@@ -32,7 +32,7 @@ abstract class AbstractEditor extends StatelessWidget {
     required this.simulationResult,
     required this.instructionIndex,
     required this.change,
-    this.removed,
+    required this.removed,
     this.warningMessage,
     this.entered,
     this.exited,
@@ -49,7 +49,7 @@ abstract class AbstractEditor extends StatelessWidget {
     isLastInstruction =
         instructionIndex == simulationResult.instructionResults.length - 1;
 
-    if (isLastInstruction && instructionResult.managedVelocity > 0) {
+    if (isLastInstruction && instructionResult.finalVelocity > 0.00001) {
       warningMessage = "Robi will not stop at the end";
     }
   }
@@ -120,7 +120,7 @@ class RemovableWarningCard extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                                "Initial Velocity: ${roundToDigits(prevResult.managedVelocity * 100, 2)}cm/s"),
+                                "Initial Velocity: ${roundToDigits(prevResult.maxVelocity * 100, 2)}cm/s"),
                             Text(
                                 "Initial Position: ${vecToString(prevResult.endPosition, 2)}m"),
                             Text(
@@ -135,7 +135,7 @@ class RemovableWarningCard extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                                "End Velocity: ${roundToDigits(instructionResult.managedVelocity * 100, 2)}cm/s"),
+                                "End Velocity: ${roundToDigits(instructionResult.finalVelocity * 100, 2)}cm/s (Max.: ${roundToDigits(instructionResult.maxVelocity * 100, 2)}cm/s)"),
                             Text(
                                 "End Position: ${vecToString(instructionResult.endPosition, 2)}m"),
                             Text(
@@ -146,20 +146,41 @@ class RemovableWarningCard extends StatelessWidget {
                     ),
                     const Divider(),
                     const SizedBox(height: 10),
-                    Container(
-                      decoration: BoxDecoration(
-                        //borderRadius: BorderRadius.circular(10),
-                        border: Border.all(color: Colors.white.withAlpha(50)),
-                      ),
-                      width: 200,
-                      height: 200,
-                      child: CustomPaint(
-                        painter: DriveInstructionGraphDrawer(
-                          prevInstResult: prevResult,
-                          instructionResult: instructionResult,
-                          instruction: instruction,
+                    SizedBox(
+                      height: 300,
+                      child: AspectRatio(
+                        aspectRatio: 2,
+                        child: LineChart(
+                          LineChartData(
+                            minX: 0,
+                            minY: 0,
+                            maxX: instructionResult.startPosition
+                                .distanceTo(instructionResult.endPosition),
+                            maxY: instructionResult.maxVelocity,
+                            titlesData: const FlTitlesData(
+                              topTitles: AxisTitles(),
+                              rightTitles: AxisTitles(),
+                              leftTitles: AxisTitles(
+                                axisNameWidget: Text("Velocity in m/s"),
+                                sideTitles: SideTitles(
+                                    showTitles: true, reservedSize: 40),
+                              ),
+                              bottomTitles: AxisTitles(
+                                axisNameWidget: Text("Distance in m"),
+                                sideTitles: SideTitles(
+                                    showTitles: true, reservedSize: 40),
+                              ),
+                            ),
+                            lineBarsData: [
+                              LineChartBarData(
+                                spots: _generateData(
+                                    instruction, instructionResult),
+                                color: Colors.grey,
+                                dotData: const FlDotData(show: false),
+                              ),
+                            ],
+                          ),
                         ),
-                        child: Container(),
                       ),
                     ),
                     const SizedBox(height: 20),
@@ -194,153 +215,42 @@ class RemovableWarningCard extends StatelessWidget {
     );
   }
 
+  List<FlSpot> _generateData(
+      MissionInstruction instruction, InstructionResult result,
+      {double resolution = 0.01}) {
+    if (instruction is! DriveInstruction || result is! DriveResult) return [];
+
+    final totalDistance = result.startPosition.distanceTo(result.endPosition);
+
+    List<FlSpot> dataPoints = [];
+
+    for (double d = 0;
+        d <= result.startPosition.distanceTo(result.accelerationEndPoint);
+        d += resolution) {
+      double velocity = sqrt(2 * instruction.acceleration * d +
+          pow(result.initialVelocity, 2));
+      dataPoints.add(FlSpot(d, velocity));
+    }
+
+    dataPoints.add(FlSpot(
+        result.startPosition.distanceTo(result.accelerationEndPoint),
+        result.maxVelocity));
+
+    for (double d =
+            result.startPosition.distanceTo(result.decelerationStartPoint);
+        d < totalDistance;
+        d += resolution) {
+      double velocity = sqrt(
+          -2 * instruction.acceleration * (d - totalDistance) +
+              pow(result.finalVelocity, 2));
+      dataPoints.add(FlSpot(d, velocity));
+    }
+
+    dataPoints.add(FlSpot(totalDistance, result.finalVelocity));
+
+    return dataPoints;
+  }
+
   static String vecToString(Vector2 vec, int decimalPlaces) =>
       "(${vec.x.toStringAsFixed(decimalPlaces)}, ${vec.y.toStringAsFixed(decimalPlaces)})";
-}
-
-class DriveInstructionGraphDrawer extends CustomPainter {
-  final InstructionResult prevInstResult;
-  final InstructionResult instructionResult;
-  final MissionInstruction instruction;
-
-  static final graphPaint = Paint()
-    ..color = Colors.grey
-    ..strokeWidth = 3
-    ..style = PaintingStyle.stroke;
-
-  const DriveInstructionGraphDrawer({
-    required this.prevInstResult,
-    required this.instructionResult,
-    required this.instruction,
-  });
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    try {
-      drawInstruction(canvas, size);
-    } catch (e) {
-      return;
-    }
-  }
-
-  void drawInstruction(Canvas canvas, Size size) {
-    final isDriveInst = instruction is DriveInstruction;
-
-    final highestVelocity = [
-      prevInstResult.managedVelocity,
-      if (isDriveInst) (instruction as DriveInstruction).targetVelocity,
-      instructionResult.managedVelocity
-    ].reduce(max);
-
-    final totalDistanceCovered =
-        prevInstResult.endPosition.distanceTo(instructionResult.endPosition);
-
-    final velocityStart =
-        Vector2(0, prevInstResult.managedVelocity / highestVelocity);
-    final velocityEnd = Vector2(
-        isDriveInst
-            ? ((instructionResult as DriveResult).accelerationDistance /
-                totalDistanceCovered)
-            : 1,
-        instructionResult.managedVelocity / highestVelocity);
-
-    canvas.drawLine(vecToOffset(velocityStart, size),
-        vecToOffset(velocityEnd * 1.002, size), graphPaint);
-    canvas.drawLine(vecToOffset(velocityEnd, size),
-        vecToOffset(Vector2(1, velocityEnd.y), size), graphPaint);
-
-    LinePainter.paintText("0",
-        vecToOffset(Vector2.zero(), size).translate(-10, 10), canvas, size);
-
-    if (prevInstResult.managedVelocity > 0) {
-      if (highestVelocity != prevInstResult.managedVelocity) {
-        drawDashedLine(
-          canvas: canvas,
-          p1: vecToOffset(velocityStart, size),
-          p2: vecToOffset(Vector2(1, velocityStart.y), size),
-          pattern: const [10, 10],
-          paint: Paint()
-            ..strokeWidth = 2
-            ..color = Colors.grey.withAlpha(100)
-            ..style = PaintingStyle.stroke,
-        );
-      }
-      LinePainter.paintText(
-          "${(prevInstResult.managedVelocity * 100).toStringAsFixed(2)}cm/s",
-          vecToOffset(velocityStart, size).translate(-40, 7),
-          canvas,
-          size);
-    }
-
-    if (highestVelocity != instructionResult.managedVelocity &&
-        instructionResult.managedVelocity != 0) {
-      drawDashedLine(
-        canvas: canvas,
-        p1: vecToOffset(Vector2(0, velocityEnd.y), size),
-        p2: vecToOffset(Vector2(1, velocityEnd.y), size),
-        pattern: const [10, 10],
-        paint: Paint()
-          ..strokeWidth = 2
-          ..color = Colors.grey.withAlpha(100)
-          ..style = PaintingStyle.stroke,
-      );
-    }
-    LinePainter.paintText(
-        "${(instructionResult.managedVelocity * 100).toStringAsFixed(2)}cm/s",
-        vecToOffset(Vector2(1, velocityEnd.y), size).translate(45, 7),
-        canvas,
-        size);
-
-    if (velocityEnd.x > 0) {
-      if (velocityEnd.x < 0.99999) {
-        drawDashedLine(
-          canvas: canvas,
-          p1: vecToOffset(Vector2(velocityEnd.x, 0), size),
-          p2: vecToOffset(Vector2(velocityEnd.x, 1), size),
-          pattern: const [10, 10],
-          paint: Paint()
-            ..strokeWidth = 2
-            ..color = Colors.grey.withAlpha(100)
-            ..style = PaintingStyle.stroke,
-        );
-      }
-      if (isDriveInst) {
-        LinePainter.paintText(
-            "${(instructionResult as DriveResult).accelerationDistance.toStringAsFixed(2)}m",
-            vecToOffset(Vector2(velocityEnd.x, 0), size).translate(0, 20),
-            canvas,
-            size);
-      }
-    }
-  }
-
-  void drawDashedLine({
-    required Canvas canvas,
-    required Offset p1,
-    required Offset p2,
-    required Iterable<double> pattern,
-    required Paint paint,
-  }) {
-    assert(pattern.length.isEven);
-    final distance = (p2 - p1).distance;
-    final normalizedPattern = pattern.map((width) => width / distance).toList();
-    final points = <Offset>[];
-    double t = 0;
-    int i = 0;
-    while (t < 1) {
-      points.add(Offset.lerp(p1, p2, t)!);
-      t += normalizedPattern[i++]; // dashWidth
-      points.add(Offset.lerp(p1, p2, t.clamp(0, 1))!);
-      t += normalizedPattern[i++]; // dashSpace
-      i %= normalizedPattern.length;
-    }
-    canvas.drawPoints(PointMode.lines, points, paint);
-  }
-
-  Offset vecToOffset(Vector2 vec, Size size) {
-    return Offset(vec.x * size.height, size.height - vec.y * size.height);
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
 }

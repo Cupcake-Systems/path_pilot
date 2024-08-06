@@ -20,14 +20,14 @@ class DriveInstructionEditor extends AbstractEditor {
     required super.exited,
   }) : super(instruction: instruction) {
     if (!isLastInstruction &&
-        prevInstructionResult.managedVelocity <= 0 &&
+        prevInstructionResult.maxVelocity <= 0 &&
         instruction.targetVelocity <= 0) {
       warningMessage = "Zero velocity";
-    } else if ((instruction.targetVelocity - instructionResult.managedVelocity)
+    } else if ((instruction.targetVelocity - instructionResult.maxVelocity)
             .abs() >
         0.000001) {
       warningMessage =
-          "Robi will only reach ${(instructionResult.managedVelocity * 100).toStringAsFixed(2)} cm/s";
+          "Robi will only reach ${(instructionResult.maxVelocity * 100).toStringAsFixed(2)} cm/s";
     }
   }
 
@@ -69,7 +69,7 @@ class DriveInstructionEditor extends AbstractEditor {
               final tried = double.tryParse(value);
               if (tried == null) return;
               instruction.targetVelocity = tried / 100.0;
-              if (prevInstructionResult.managedVelocity <=
+              if (prevInstructionResult.maxVelocity <=
                   instruction.targetVelocity) {
                 instruction.acceleration = instruction.acceleration.abs();
               } else {
@@ -81,7 +81,7 @@ class DriveInstructionEditor extends AbstractEditor {
           ),
         ),
         const Text("cm/s"),
-        if (prevInstructionResult.managedVelocity !=
+        if (prevInstructionResult.maxVelocity !=
             instruction.targetVelocity) ...[
           Text(
               " ${instruction.acceleration > 0 ? "accelerating" : "decelerating"} at "),
@@ -93,7 +93,7 @@ class DriveInstructionEditor extends AbstractEditor {
                 if (value == null || value.isEmpty) return;
                 final tried = double.tryParse(value);
                 if (tried == null) return;
-                if (prevInstructionResult.managedVelocity <=
+                if (prevInstructionResult.maxVelocity <=
                     instruction.targetVelocity) {
                   instruction.acceleration = tried / 100.0;
                 } else {

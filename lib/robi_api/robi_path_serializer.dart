@@ -5,7 +5,17 @@ import 'package:robi_line_drawer/editor/add_instruction_dialog.dart';
 import 'package:robi_line_drawer/robi_api/robi_utils.dart';
 import 'package:vector_math/vector_math.dart';
 
-final startResult = DriveResult(0, 0, Vector2.zero(), 0);
+final startResult = DriveResult(
+  startRotation: 0,
+  endRotation: 0,
+  startPosition: Vector2.zero(),
+  endPosition: Vector2.zero(),
+  initialVelocity: 0,
+  maxVelocity: 0,
+  finalVelocity: 0,
+  accelerationEndPoint: Vector2.zero(),
+  decelerationStartPoint: Vector2.zero(),
+);
 
 class InstructionContainer {
   late final UserInstruction type;
@@ -30,8 +40,6 @@ class InstructionContainer {
       } else {
         return UserInstruction.decelerateOverDistance;
       }
-    } else if (instruction is StopOverTimeInstruction) {
-      return UserInstruction.stop;
     } else if (instruction is AccelerateOverTimeInstruction) {
       if (instruction.acceleration > 0) {
         return UserInstruction.accelerateOverTime;
@@ -60,6 +68,9 @@ class InstructionContainer {
       case UserInstruction.turn:
         instruction = TurnInstruction.fromJson(instJson);
         break;
+      case UserInstruction.rapidTurn:
+        instruction = RapidTurnInstruction.fromJson(instJson);
+        break;
       case UserInstruction.accelerateOverDistance:
       case UserInstruction.decelerateOverDistance:
         instruction = AccelerateOverDistanceInstruction.fromJson(instJson);
@@ -73,9 +84,6 @@ class InstructionContainer {
         break;
       case UserInstruction.driveTime:
         instruction = DriveForwardTimeInstruction.fromJson(instJson);
-        break;
-      case UserInstruction.stop:
-        instruction = StopOverTimeInstruction.fromJson(instJson);
         break;
     }
   }
