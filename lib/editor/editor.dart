@@ -376,7 +376,11 @@ class _EditorState extends State<Editor> {
   void rerunSimulationAndUpdate() {
 
     for (int i = 0; i < instructions.length - 1; ++i) {
-      instructions[i].endVelocity = instructions[i].targetVelocity;
+      if (instructions[i + 1] is RapidTurnInstruction) {
+        instructions[i].endVelocity = 0;
+      } else {
+        instructions[i].endVelocity = instructions[i].targetVelocity;
+      }
     }
 
     instructions.last.endVelocity = 0;
