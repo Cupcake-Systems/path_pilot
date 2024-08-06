@@ -63,10 +63,10 @@ class Simulator {
 
     assert(acceleration != 0);
 
-    final brakePoint =
-        ((2 * acceleration * instruction.distance - pow(endVelocity, 2)) -
-                pow(initialVelocity, 2)) /
-            (2 * acceleration);
+    final brakePoint = (2 * acceleration * instruction.distance +
+            pow(instruction.endVelocity, 2) -
+            pow(prevInstResult.finalVelocity, 2)) /
+        (4 * acceleration);
     final velocityAtBrakePoint =
         sqrt(pow(initialVelocity, 2) + (2 * acceleration * brakePoint));
 
@@ -148,8 +148,7 @@ class Simulator {
       BaseRapidTurnInstruction instruction) {
     return RapidTurnResult(
       startRotation: prevInstructionResult.endRotation,
-      endRotation:
-          prevInstructionResult.endRotation + instruction.turnDegree,
+      endRotation: prevInstructionResult.endRotation + instruction.turnDegree,
       startPosition: prevInstructionResult.endPosition,
       endPosition: prevInstructionResult.endPosition,
       initialVelocity: 0,

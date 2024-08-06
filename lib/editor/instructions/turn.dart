@@ -42,7 +42,7 @@ class TurnInstructionEditor extends AbstractEditor {
         IntrinsicWidth(
           child: TextFormField(
             style: const TextStyle(fontSize: 14),
-            initialValue: instruction.turnDegree.toString(),
+            initialValue: instruction.turnDegree.abs().toString(),
             onChanged: (String? value) {
               if (value == null || value.isEmpty) return;
               final tried = double.tryParse(value);

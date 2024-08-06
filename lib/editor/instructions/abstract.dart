@@ -226,8 +226,8 @@ class RemovableWarningCard extends StatelessWidget {
     for (double d = 0;
         d <= result.startPosition.distanceTo(result.accelerationEndPoint);
         d += resolution) {
-      double velocity = sqrt(2 * instruction.acceleration * d +
-          pow(result.initialVelocity, 2));
+      double velocity = sqrt(
+          2 * instruction.acceleration * d + pow(result.initialVelocity, 2));
       dataPoints.add(FlSpot(d, velocity));
     }
 
