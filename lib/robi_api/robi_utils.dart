@@ -1,5 +1,3 @@
-import 'dart:math';
-
 import 'package:vector_math/vector_math.dart';
 
 abstract class Serializable {
@@ -17,13 +15,12 @@ abstract class BasicInstruction extends Serializable {
 }
 
 abstract class MissionInstruction {
-  double targetVelocity, acceleration, endVelocity, initialVelocity;
+  double targetVelocity, acceleration, endVelocity;
 
   MissionInstruction({
     required this.targetVelocity,
     required this.acceleration,
     required this.endVelocity,
-    required this.initialVelocity,
   });
 
   BasicInstruction get basic;
@@ -125,7 +122,6 @@ class DriveInstruction extends MissionInstruction {
     required super.targetVelocity,
     required super.acceleration,
     required super.endVelocity,
-    required super.initialVelocity,
     required this.distance,
   });
 
@@ -135,7 +131,6 @@ class DriveInstruction extends MissionInstruction {
           targetVelocity: json["target_velocity"],
           acceleration: json["acceleration"],
           endVelocity: json["end_velocity"],
-          initialVelocity: json["initial_velocity"],
         );
 
   @override
@@ -144,7 +139,6 @@ class DriveInstruction extends MissionInstruction {
         "target_velocity": targetVelocity,
         "acceleration": acceleration,
         "end_velocity": endVelocity,
-        "initial_velocity": initialVelocity,
       };
 
   @override
@@ -156,178 +150,6 @@ class DriveInstruction extends MissionInstruction {
       );
 }
 
-class DriveForwardDistanceInstruction extends MissionInstruction {
-  double distance;
-
-  DriveForwardDistanceInstruction({
-    required this.distance,
-    required super.endVelocity,
-    required super.initialVelocity,
-  }) : super(acceleration: 0.0, targetVelocity: initialVelocity);
-
-  DriveForwardDistanceInstruction.fromJson(Map<String, dynamic> json)
-      : distance = json["distance"],
-        super(
-          targetVelocity: json["target_velocity"],
-          acceleration: json["acceleration"],
-          endVelocity: json["end_velocity"],
-          initialVelocity: json["initial_velocity"],
-        );
-
-  @override
-  Map<String, double> toJson() => DriveInstruction(
-          targetVelocity: targetVelocity,
-          acceleration: acceleration,
-          endVelocity: endVelocity,
-          initialVelocity: initialVelocity,
-          distance: distance)
-      .toJson();
-
-  @override
-  BasicInstruction get basic => BaseDriveInstruction(
-        targetVelocity: initialVelocity,
-        endVelocity: endVelocity,
-        acceleration: 0,
-        distance: distance,
-      );
-}
-
-class DriveForwardTimeInstruction extends MissionInstruction {
-  double time;
-
-  DriveForwardTimeInstruction({
-    required this.time,
-    required super.endVelocity,
-    required super.initialVelocity,
-  }) : super(targetVelocity: initialVelocity, acceleration: 0.0);
-
-  DriveForwardTimeInstruction.fromJson(Map<String, dynamic> json)
-      : time = json["time"],
-        super(
-          targetVelocity: json["target_velocity"],
-          acceleration: json["acceleration"],
-          endVelocity: json["end_velocity"],
-          initialVelocity: json["initial_velocity"],
-        );
-
-  @override
-  Map<String, double> toJson() => {
-        "time": time,
-        "target_velocity": targetVelocity,
-        "acceleration": acceleration,
-        "end_velocity": endVelocity,
-        "initial_velocity": initialVelocity,
-      };
-
-  @override
-  BasicInstruction get basic => BaseDriveInstruction(
-        targetVelocity: initialVelocity,
-        endVelocity: endVelocity,
-        acceleration: 0,
-        distance: time * initialVelocity,
-      );
-}
-
-class AccelerateOverDistanceInstruction extends MissionInstruction {
-  double distance;
-
-  static double _calculateFinalVelocity(
-      double initialVelocity, double distance, double acceleration) {
-    double finalVelocitySquared =
-        pow(initialVelocity, 2) + 2 * acceleration * distance;
-    return sqrt(finalVelocitySquared < 0 ? 0 : finalVelocitySquared);
-  }
-
-  AccelerateOverDistanceInstruction({
-    required this.distance,
-    required super.acceleration,
-    required super.endVelocity,
-    required super.initialVelocity,
-  }) : super(
-            targetVelocity: _calculateFinalVelocity(
-                initialVelocity, distance, acceleration));
-
-  AccelerateOverDistanceInstruction.fromJson(Map<String, dynamic> json)
-      : distance = json["distance"],
-        super(
-          targetVelocity: json["target_velocity"],
-          acceleration: json["acceleration"],
-          endVelocity: json["end_velocity"],
-          initialVelocity: json["initial_velocity"],
-        );
-
-  @override
-  Map<String, dynamic> toJson() => {
-        "distance": distance,
-        "target_velocity": targetVelocity,
-        "acceleration": acceleration,
-        "end_velocity": endVelocity,
-        "initial_velocity": initialVelocity,
-      };
-
-  @override
-  BasicInstruction get basic => BaseDriveInstruction(
-        distance: distance,
-        targetVelocity:
-            _calculateFinalVelocity(initialVelocity, distance, acceleration),
-        acceleration: acceleration,
-        endVelocity: endVelocity,
-      );
-}
-
-class AccelerateOverTimeInstruction extends MissionInstruction {
-  double time;
-
-  AccelerateOverTimeInstruction({
-    required this.time,
-    required super.acceleration,
-    required super.endVelocity,
-    required super.initialVelocity,
-  }) : super(
-            targetVelocity:
-                calculateFinalVelocity(initialVelocity, time, acceleration));
-
-  AccelerateOverTimeInstruction.fromJson(Map<String, dynamic> json)
-      : time = json["time"],
-        super(
-          targetVelocity: json["target_velocity"],
-          acceleration: json["acceleration"],
-          endVelocity: json["end_velocity"],
-          initialVelocity: json["initial_velocity"],
-        );
-
-  @override
-  Map<String, dynamic> toJson() => {
-        "time": time,
-        "target_velocity": targetVelocity,
-        "acceleration": acceleration,
-        "end_velocity": endVelocity,
-        "initial_velocity": initialVelocity,
-      };
-
-  @override
-  BasicInstruction get basic => BaseDriveInstruction(
-        distance: calculateDistance(time, initialVelocity, acceleration),
-        targetVelocity:
-            calculateFinalVelocity(initialVelocity, time, acceleration),
-        acceleration: acceleration,
-        endVelocity: endVelocity,
-      );
-
-  static double calculateFinalVelocity(
-      double initialVelocity, double time, double acceleration) {
-    double finalVelocity = initialVelocity + acceleration * time;
-    return finalVelocity > 0 ? finalVelocity : 0;
-  }
-
-  static double calculateDistance(
-      double time, double initialVelocity, double acceleration) {
-    double distance =
-        initialVelocity * time + 0.5 * acceleration * pow(time, 2);
-    return distance > 0 ? distance : initialVelocity * time;
-  }
-}
-
 class TurnInstruction extends MissionInstruction {
   double turnDegree, innerRadius;
 
@@ -337,7 +159,6 @@ class TurnInstruction extends MissionInstruction {
     required super.targetVelocity,
     required super.acceleration,
     required super.endVelocity,
-    required super.initialVelocity,
   });
 
   @override
@@ -348,7 +169,6 @@ class TurnInstruction extends MissionInstruction {
           targetVelocity: json["target_velocity"],
           acceleration: json["acceleration"],
           endVelocity: json["end_velocity"],
-          initialVelocity: json["initial_velocity"],
         );
 
   @override
@@ -358,7 +178,6 @@ class TurnInstruction extends MissionInstruction {
         "target_velocity": targetVelocity,
         "acceleration": acceleration,
         "end_velocity": endVelocity,
-        "initial_velocity": initialVelocity,
       };
 
   @override
@@ -379,7 +198,6 @@ class RapidTurnInstruction extends MissionInstruction {
           targetVelocity: 0.0,
           acceleration: 0.0,
           endVelocity: 0.0,
-          initialVelocity: 0.0,
         );
 
   @override
@@ -389,7 +207,6 @@ class RapidTurnInstruction extends MissionInstruction {
           targetVelocity: json["target_velocity"],
           acceleration: json["acceleration"],
           endVelocity: json["end_velocity"],
-          initialVelocity: json["initial_velocity"],
         );
 
   @override
@@ -398,7 +215,6 @@ class RapidTurnInstruction extends MissionInstruction {
         "target_velocity": targetVelocity,
         "acceleration": acceleration,
         "end_velocity": endVelocity,
-        "initial_velocity": initialVelocity,
       };
 
   @override

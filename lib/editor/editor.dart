@@ -6,11 +6,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:robi_line_drawer/editor/add_instruction_dialog.dart';
 import 'package:robi_line_drawer/editor/instructions/abstract.dart';
-import 'package:robi_line_drawer/editor/instructions/accelerate_over_distance.dart';
-import 'package:robi_line_drawer/editor/instructions/decelerate_over_distance.dart';
-import 'package:robi_line_drawer/editor/instructions/decelerate_over_time.dart';
-import 'package:robi_line_drawer/editor/instructions/drive_distance.dart';
-import 'package:robi_line_drawer/editor/instructions/drive_time.dart';
 import 'package:robi_line_drawer/editor/instructions/rapid_turn.dart';
 import 'package:robi_line_drawer/editor/painters/ir_read_painter.dart';
 import 'package:robi_line_drawer/robi_api/ir_read_api.dart';
@@ -20,7 +15,6 @@ import 'package:vector_math/vector_math.dart';
 
 import '../robi_api/robi_path_serializer.dart';
 import '../robi_api/simulator.dart';
-import 'instructions/accelerate_over_time.dart';
 import 'instructions/drive.dart';
 import 'instructions/turn.dart';
 
@@ -336,55 +330,7 @@ class _EditorState extends State<Editor> {
       rerunSimulationAndUpdate();
     }
 
-    if (instruction is AccelerateOverDistanceInstruction) {
-      if (instruction.acceleration > 0) {
-        return AccelerateOverDistanceEditor(
-          key: ObjectKey(instruction),
-          instruction: instruction,
-          change: changeCallback,
-          exited: exitedCallback,
-          entered: enteredCallback,
-          removed: removedCallback,
-          simulationResult: simulationResult,
-          instructionIndex: i,
-        );
-      } else {
-        return DecelerateOverDistanceEditor(
-          key: ObjectKey(instruction),
-          instruction: instruction,
-          simulationResult: simulationResult,
-          instructionIndex: i,
-          change: changeCallback,
-          removed: removedCallback,
-          exited: exitedCallback,
-          entered: enteredCallback,
-        );
-      }
-    } else if (instruction is AccelerateOverTimeInstruction) {
-      if (instruction.acceleration > 0) {
-        return AccelerateOverTimeEditor(
-          key: ObjectKey(instruction),
-          instruction: instruction,
-          change: changeCallback,
-          removed: removedCallback,
-          simulationResult: simulationResult,
-          instructionIndex: i,
-          exited: exitedCallback,
-          entered: enteredCallback,
-        );
-      } else {
-        return DecelerateOverTimeEditor(
-          key: ObjectKey(instruction),
-          instruction: instruction,
-          simulationResult: simulationResult,
-          instructionIndex: i,
-          change: changeCallback,
-          removed: removedCallback,
-          exited: exitedCallback,
-          entered: enteredCallback,
-        );
-      }
-    } else if (instruction is DriveInstruction) {
+    if (instruction is DriveInstruction) {
       return DriveInstructionEditor(
         key: ObjectKey(instruction),
         instruction: instruction,
@@ -419,49 +365,17 @@ class _EditorState extends State<Editor> {
         exited: exitedCallback,
         entered: enteredCallback,
       );
-    } else if (instruction is DriveForwardDistanceInstruction) {
-      return DriveDistanceEditor(
-        key: ObjectKey(instruction),
-        instruction: instruction,
-        simulationResult: simulationResult,
-        instructionIndex: i,
-        change: changeCallback,
-        removed: removedCallback,
-        exited: exitedCallback,
-        entered: enteredCallback,
-      );
-    } else if (instruction is DriveForwardTimeInstruction) {
-      return DriveTimeEditor(
-        key: ObjectKey(instruction),
-        instruction: instruction,
-        simulationResult: simulationResult,
-        instructionIndex: i,
-        change: changeCallback,
-        removed: removedCallback,
-        exited: exitedCallback,
-        entered: enteredCallback,
-      );
     }
     throw UnsupportedError("");
   }
 
   void rerunSimulationAndUpdate() {
-    for (int i = 0; i < instructions.length; ++i) {
-      final simResult = simulator.calculate(instructions.sublist(0, i));
 
-      InstructionResult prevInstResult =
-          simResult.instructionResults.lastOrNull ?? startResult;
-
-      final instruction = instructions[i];
-
-      if (i > 0) {
-        instructions[i - 1].endVelocity = instruction.targetVelocity;
-      }
-
-      if (i == instructions.length - 1) {
-        instruction.endVelocity = 0;
-      }
+    for (int i = 0; i < instructions.length - 1; ++i) {
+      instructions[i].endVelocity = instructions[i].targetVelocity;
     }
+
+    instructions.last.endVelocity = 0;
 
     setState(() {
       simulationResult = simulator.calculate(instructions);

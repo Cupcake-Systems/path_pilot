@@ -34,22 +34,6 @@ class InstructionContainer {
   static UserInstruction instructionToType(MissionInstruction instruction) {
     if (instruction is DriveInstruction) {
       return UserInstruction.drive;
-    } else if (instruction is AccelerateOverDistanceInstruction) {
-      if (instruction.acceleration > 0) {
-        return UserInstruction.accelerateOverDistance;
-      } else {
-        return UserInstruction.decelerateOverDistance;
-      }
-    } else if (instruction is AccelerateOverTimeInstruction) {
-      if (instruction.acceleration > 0) {
-        return UserInstruction.accelerateOverTime;
-      } else {
-        return UserInstruction.decelerateOverTime;
-      }
-    } else if (instruction is DriveForwardDistanceInstruction) {
-      return UserInstruction.driveDistance;
-    } else if (instruction is DriveForwardTimeInstruction) {
-      return UserInstruction.driveTime;
     } else if (instruction is TurnInstruction) {
       return UserInstruction.turn;
     } else {
@@ -70,20 +54,6 @@ class InstructionContainer {
         break;
       case UserInstruction.rapidTurn:
         instruction = RapidTurnInstruction.fromJson(instJson);
-        break;
-      case UserInstruction.accelerateOverDistance:
-      case UserInstruction.decelerateOverDistance:
-        instruction = AccelerateOverDistanceInstruction.fromJson(instJson);
-        break;
-      case UserInstruction.accelerateOverTime:
-      case UserInstruction.decelerateOverTime:
-        instruction = AccelerateOverTimeInstruction.fromJson(instJson);
-        break;
-      case UserInstruction.driveDistance:
-        instruction = DriveForwardDistanceInstruction.fromJson(instJson);
-        break;
-      case UserInstruction.driveTime:
-        instruction = DriveForwardTimeInstruction.fromJson(instJson);
         break;
     }
   }
