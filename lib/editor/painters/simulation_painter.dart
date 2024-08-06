@@ -7,11 +7,9 @@ import 'package:vector_math/vector_math.dart' show Vector2;
 
 import '../../robi_api/robi_utils.dart';
 import '../../robi_api/simulator.dart';
-import 'line_painter.dart';
 
 class SimulationPainter extends MyPainter {
   final SimulationResult simulationResult;
-  final double scale;
   final Canvas canvas;
   final Size size;
   final double strokeWidth;
@@ -19,12 +17,11 @@ class SimulationPainter extends MyPainter {
 
   late final yellowOutlinePaint = Paint()
     ..color = Colors.yellow
-    ..strokeWidth = (strokeWidth + 0.01) * scale
+    ..strokeWidth = (strokeWidth + 0.01)
     ..style = PaintingStyle.stroke;
 
   SimulationPainter({
     required this.simulationResult,
-    required this.scale,
     required this.canvas,
     required this.size,
     this.strokeWidth = 0.02,
@@ -40,71 +37,12 @@ class SimulationPainter extends MyPainter {
         drawTurn(result);
       }
     }
-
-    paintScale();
-    paintVelocityScale();
   }
 
-  void paintScale() {
-    final Paint paint = Paint()
-      ..strokeWidth = 1
-      ..color = white;
-
-    canvas.drawLine(Offset(size.width / 2 - 49, size.height - 20),
-        Offset(size.width / 2 + 49, size.height - 20), paint);
-    canvas.drawLine(Offset(size.width / 2 - 50, size.height - 25),
-        Offset(size.width / 2 - 50, size.height - 15), paint);
-    canvas.drawLine(Offset(size.width / 2 + 50, size.height - 25),
-        Offset(size.width / 2 + 50, size.height - 15), paint);
-
-    LinePainter.paintText("${(100.0 / scale).toStringAsFixed(2)}m",
-        Offset(size.width / 2, size.height - 22), canvas, size);
-  }
-
-  void paintVelocityScale() {
-    if (simulationResult.maxTargetedVelocity <= 0) return;
-
-    List<Color> colors = [
-      velocityToColor(0),
-      velocityToColor(simulationResult.maxTargetedVelocity)
-    ];
-
-    final lineStart = Offset(size.width - 130, size.height - 20);
-    final lineEnd = Offset(size.width - 30, size.height - 20);
-
-    final accelerationPaint = Paint()
-      ..shader = RadialGradient(
-        colors: colors,
-        radius: 0.5 / sqrt2,
-      ).createShader(
-          Rect.fromCircle(center: lineStart, radius: lineEnd.dx - lineStart.dx))
-      ..strokeWidth = 10;
-
-    canvas.drawLine(lineStart, lineEnd, accelerationPaint);
-    canvas.drawLine(
-        lineStart.translate(-1, -5),
-        lineStart.translate(-1, 5),
-        Paint()
-          ..color = white
-          ..strokeWidth = 1);
-    canvas.drawLine(
-        lineEnd.translate(1, -5),
-        lineEnd.translate(1, 5),
-        Paint()
-          ..color = white
-          ..strokeWidth = 1);
-    LinePainter.paintText("0m/s", lineStart.translate(0, -7), canvas, size);
-    LinePainter.paintText(
-        "${simulationResult.maxTargetedVelocity.toStringAsFixed(2)}m/s",
-        lineEnd.translate(0, -7),
-        canvas,
-        size);
-  }
-
-  static Alignment polarToAlignment(double deg) => Alignment(cosD(deg), -sinD(deg));
+  static Alignment polarToAlignment(double deg) =>
+      Alignment(cosD(deg), -sinD(deg));
 
   void drawDrive(DriveResult instructionResult) {
-
     final accelerationPaint = Paint()
       ..shader = CurvedGradient(
         colors: [
@@ -116,11 +54,10 @@ class SimulationPainter extends MyPainter {
         granularity: 10,
         curveGenerator: (x) => sqrt(x),
       ).createShader(Rect.fromCircle(
-          center: vecToOffset(instructionResult.startPosition, size),
+          center: vecToOffset(instructionResult.startPosition),
           radius: instructionResult.startPosition
-                  .distanceTo(instructionResult.accelerationEndPoint) *
-              scale))
-      ..strokeWidth = strokeWidth * scale;
+              .distanceTo(instructionResult.accelerationEndPoint)))
+      ..strokeWidth = strokeWidth;
 
     final decelerationPaint = Paint()
       ..shader = CurvedGradient(
@@ -133,33 +70,32 @@ class SimulationPainter extends MyPainter {
         granularity: 10,
         curveGenerator: (x) => sqrt(1 - x),
       ).createShader(Rect.fromCircle(
-          center: vecToOffset(instructionResult.decelerationStartPoint, size),
+          center: vecToOffset(instructionResult.decelerationStartPoint),
           radius: instructionResult.decelerationStartPoint
-                  .distanceTo(instructionResult.endPosition) *
-              scale))
-      ..strokeWidth = strokeWidth * scale;
+              .distanceTo(instructionResult.endPosition)))
+      ..strokeWidth = strokeWidth;
 
     if (instructionResult == highlightedInstruction) {
-      canvas.drawLine(vecToOffset(instructionResult.startPosition, size),
-          vecToOffset(instructionResult.endPosition, size), yellowOutlinePaint);
+      canvas.drawLine(vecToOffset(instructionResult.startPosition),
+          vecToOffset(instructionResult.endPosition), yellowOutlinePaint);
     }
 
     // Draw the original line
     canvas.drawLine(
-      vecToOffset(instructionResult.startPosition, size),
-      vecToOffset(instructionResult.accelerationEndPoint, size),
+      vecToOffset(instructionResult.startPosition),
+      vecToOffset(instructionResult.accelerationEndPoint),
       accelerationPaint,
     );
     canvas.drawLine(
-      vecToOffset(instructionResult.accelerationEndPoint, size),
-      vecToOffset(instructionResult.decelerationStartPoint, size),
+      vecToOffset(instructionResult.accelerationEndPoint),
+      vecToOffset(instructionResult.decelerationStartPoint),
       Paint()
         ..color = velocityToColor(instructionResult.maxVelocity)
-        ..strokeWidth = strokeWidth * scale,
+        ..strokeWidth = strokeWidth,
     );
     canvas.drawLine(
-      vecToOffset(instructionResult.decelerationStartPoint, size),
-      vecToOffset(instructionResult.endPosition, size),
+      vecToOffset(instructionResult.decelerationStartPoint),
+      vecToOffset(instructionResult.endPosition),
       decelerationPaint,
     );
   }
@@ -209,8 +145,7 @@ class SimulationPainter extends MyPainter {
 
     center += offset;
 
-    final rect = Rect.fromCircle(
-        center: vecToOffset(center, size), radius: radius * scale);
+    final rect = Rect.fromCircle(center: vecToOffset(center), radius: radius);
 
     double o = startAngle;
 
@@ -220,7 +155,7 @@ class SimulationPainter extends MyPainter {
 
     final paint = Paint()
       ..style = PaintingStyle.stroke
-      ..strokeWidth = strokeWidth * scale
+      ..strokeWidth = strokeWidth
       ..shader = SweepGradient(
         colors: colors,
         stops: [0, degree / 360],
@@ -229,10 +164,9 @@ class SimulationPainter extends MyPainter {
 
     if (degree >= 360) {
       if (highlight) {
-        canvas.drawCircle(
-            vecToOffset(center, size), radius * scale, yellowOutlinePaint);
+        canvas.drawCircle(vecToOffset(center), radius, yellowOutlinePaint);
       }
-      canvas.drawCircle(vecToOffset(center, size), radius * scale, paint);
+      canvas.drawCircle(vecToOffset(center), radius, paint);
     }
 
     if (highlight) {
@@ -253,14 +187,14 @@ class SimulationPainter extends MyPainter {
     );
   }
 
-  Color velocityToColor(double velocity) {
-    int r =
-        ((1 - velocity / simulationResult.maxTargetedVelocity) * 255).round();
-    int g = 255 - r;
-    return Color.fromARGB(255, r, g, 0);
-  }
+  Color velocityToColor(double velocity) =>
+      velToColor(velocity, simulationResult.maxTargetedVelocity);
 
-  Offset vecToOffset(Vector2 vec, Size size) =>
-      Offset(vec.x * scale, -vec.y * scale)
-          .translate(size.width / 2, size.height / 2);
+  Offset vecToOffset(Vector2 vec) => Offset(vec.x, -vec.y);
+}
+
+Color velToColor(double velocity, double maxVelocity) {
+  int r = ((1 - velocity / maxVelocity) * 255).round();
+  int g = 255 - r;
+  return Color.fromARGB(255, r, g, 0);
 }

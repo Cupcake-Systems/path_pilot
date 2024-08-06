@@ -13,7 +13,6 @@ import 'package:robi_line_drawer/robi_api/robi_utils.dart';
 import 'package:robi_line_drawer/editor/visualizer.dart';
 import 'package:vector_math/vector_math.dart';
 
-import '../robi_api/robi_path_serializer.dart';
 import '../robi_api/simulator.dart';
 import 'instructions/drive.dart';
 import 'instructions/turn.dart';
@@ -43,7 +42,8 @@ class Editor extends StatefulWidget {
 
 class _EditorState extends State<Editor> {
   late List<MissionInstruction> instructions = widget.instructions;
-  double scale = 200;
+  double scale = 10;
+  Offset offset = Offset.zero;
   double ramerDouglasPeuckerTolerance = 0.5;
   late Simulator simulator = Simulator(widget.robiConfig);
   late SimulationResult simulationResult;
@@ -73,7 +73,11 @@ class _EditorState extends State<Editor> {
             simulationResult: simulationResult,
             key: ValueKey(simulationResult),
             scale: scale,
-            scaleChanged: (newScale) => scale = newScale,
+            offset: offset,
+            transformChanged: (newScale, newOffset) {
+              offset = newOffset;
+              scale = newScale;
+            },
             robiConfig: widget.robiConfig,
             irReadPainterSettings: irReadPainterSettings,
             highlightedInstruction: highlightedInstruction,

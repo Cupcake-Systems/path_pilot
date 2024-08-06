@@ -19,7 +19,6 @@ class IrReadPainterSettings {
 
 class IrReadPainter extends MyPainter {
   final RobiConfig robiConfig;
-  final double scale;
   final IrReadPainterSettings settings;
   final Canvas canvas;
   final Size size;
@@ -27,18 +26,16 @@ class IrReadPainter extends MyPainter {
   final List<Vector2> pathApproximation;
 
   late final Paint leftTrackPaint = Paint()
-    ..strokeWidth = robiConfig.wheelWidth * scale
+    ..strokeWidth = robiConfig.wheelWidth
     ..color = white.withOpacity(0.6)
     ..style = PaintingStyle.stroke;
   late final Paint rightTrackPaint = Paint()
-    ..strokeWidth = robiConfig.wheelWidth * scale
+    ..strokeWidth = robiConfig.wheelWidth
     ..color = white.withOpacity(0.6)
     ..style = PaintingStyle.stroke;
-  late final middle = Offset(size.width / 2, size.height / 2);
 
   IrReadPainter({
     required this.robiConfig,
-    required this.scale,
     required this.settings,
     required this.canvas,
     required this.size,
@@ -47,12 +44,12 @@ class IrReadPainter extends MyPainter {
   });
 
   void addLine(Vector2 a, Path path) {
-    path.lineTo(a.x * scale + middle.dx, a.y * scale + middle.dy);
+    path.lineTo(a.x , a.y);
   }
 
   void drawCircle(Vector2 a, Paint paint, {double radius = 0.005}) {
     final o = Offset(a.x, a.y);
-    canvas.drawCircle(o * scale + middle, radius * scale, paint);
+    canvas.drawCircle(o , radius , paint);
   }
 
   @override
@@ -62,8 +59,8 @@ class IrReadPainter extends MyPainter {
 
     Vector2 first = irCalculatorResult.irData.first.$2.position;
 
-    leftPath.moveTo(first.x * scale + middle.dx, first.y * scale + middle.dy);
-    rightPath.moveTo(first.x * scale + middle.dx, first.y * scale + middle.dy);
+    leftPath.moveTo(first.x, first.y );
+    rightPath.moveTo(first.x, first.y );
 
     for (int i = 0; i < irCalculatorResult.wheelPositions.length; ++i) {
       final wheelPositions = irCalculatorResult.wheelPositions[i];
@@ -101,7 +98,6 @@ class IrReadPainter extends MyPainter {
 
   void paintReducedLineEstimate() {
     final path = Path();
-    path.moveTo(middle.dx, middle.dy);
 
     for (final point in pathApproximation) {
       drawCircle(point, Paint()..color = Colors.white);
@@ -111,7 +107,7 @@ class IrReadPainter extends MyPainter {
     canvas.drawPath(
         path,
         Paint()
-          ..strokeWidth = 0.005 * scale
+          ..strokeWidth = 0.005
           ..color = Colors.blue
           ..style = PaintingStyle.stroke);
   }
