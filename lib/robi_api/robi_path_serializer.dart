@@ -36,6 +36,8 @@ class InstructionContainer {
       return UserInstruction.drive;
     } else if (instruction is TurnInstruction) {
       return UserInstruction.turn;
+    } else if (instruction is RapidTurnInstruction) {
+      return UserInstruction.rapidTurn;
     } else {
       throw UnsupportedError("");
     }
@@ -58,15 +60,16 @@ class InstructionContainer {
     }
   }
 
-  Map<String, dynamic> toJson() => {
+  Map<String, dynamic> toJson() =>
+      {
         "type": type.name,
         "instruction": instruction.toJson(),
       };
 }
 
 class RobiPathSerializer {
-  static Future<File> saveToFile(
-          File file, List<MissionInstruction> instructions) =>
+  static Future<File> saveToFile(File file,
+      List<MissionInstruction> instructions) =>
       file.writeAsString(encode(instructions));
 
   static String encode(List<MissionInstruction> instructions) {
@@ -81,7 +84,10 @@ class RobiPathSerializer {
     try {
       final List<dynamic> decoded = jsonDecode(json);
       final parsed =
-          decoded.map((e) => InstructionContainer.fromJson(e).instruction);
+      decoded.map((e) =>
+      InstructionContainer
+          .fromJson(e)
+          .instruction);
       return parsed;
     } on Exception {
       return null;
