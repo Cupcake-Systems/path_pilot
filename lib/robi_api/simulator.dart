@@ -1,6 +1,5 @@
 import 'dart:math';
 
-import 'package:robi_line_drawer/robi_api/robi_path_serializer.dart';
 import 'package:robi_line_drawer/robi_api/robi_utils.dart';
 import 'package:vector_math/vector_math.dart';
 
@@ -12,7 +11,7 @@ class Simulator {
   SimulationResult calculate(List<MissionInstruction> instructions) {
     List<InstructionResult> results = [];
 
-    InstructionResult prevInstruction = startResult;
+    InstructionResult? prevInstruction;
 
     double maxManagedVel = 0;
     double maxTargetVel = 0;
@@ -21,24 +20,23 @@ class Simulator {
       final instruction = instructions[i];
       instructions.elementAtOrNull(i + 1);
 
-      BasicInstruction baseInstruction = instruction.basic;
       InstructionResult result;
-      if (baseInstruction is BaseDriveInstruction) {
-        if (baseInstruction.targetVelocity > maxTargetVel) {
-          maxTargetVel = baseInstruction.targetVelocity;
-        }
-
-        result = simulateDrive(prevInstruction, baseInstruction);
-      } else if (baseInstruction is BaseTurnInstruction) {
-        result = simulateTurn(prevInstruction, baseInstruction);
-      } else if (baseInstruction is BaseRapidTurnInstruction) {
-        result = simulateRapidTurn(prevInstruction, baseInstruction);
+      if (instruction is DriveInstruction) {
+        result = simulateDrive(prevInstruction, instruction);
+      } else if (instruction is TurnInstruction) {
+        result = simulateTurn(prevInstruction, instruction);
+      } else if (instruction is RapidTurnInstruction) {
+        result = simulateRapidTurn(prevInstruction, instruction);
       } else {
         throw UnsupportedError("");
       }
 
-      if (result.maxVelocity > maxManagedVel) {
-        maxManagedVel = result.maxVelocity;
+      if (instruction.targetVelocity > maxTargetVel) {
+        maxTargetVel = instruction.targetVelocity;
+      }
+
+      if (result.maxOuterVelocity > maxManagedVel) {
+        maxManagedVel = result.maxOuterVelocity;
       }
 
       results.add(result);
@@ -49,111 +47,173 @@ class Simulator {
   }
 
   DriveResult simulateDrive(
-      InstructionResult prevInstResult, BaseDriveInstruction instruction) {
-    final startPosition = prevInstResult.endPosition;
-    final rotation = prevInstResult.endRotation;
-    final initialVelocity = prevInstResult.finalVelocity;
-    final endPosition = startPosition +
-        polarToCartesian(prevInstResult.endRotation, instruction.distance);
+      InstructionResult? prevInstResult, DriveInstruction instruction) {
+    final initialVelocity = (prevInstResult == null ||
+            prevInstResult.finalInnerVelocity.abs() < 0.0000001)
+        ? 0.0
+        : prevInstResult.finalInnerVelocity;
     final acceleration = instruction.acceleration;
-    final targetMaxVelocity = instruction.targetVelocity;
-    final endVelocity = instruction.endVelocity;
 
-    double maxVelocity, accelerationEndPoint, decelerationStartPoint;
+    final calcResult = calculateMotion(
+      initialVelocity,
+      acceleration,
+      instruction.targetDistance,
+      instruction.targetVelocity,
+      instruction.targetFinalVelocity,
+    );
 
-    assert(acceleration != 0);
+    return DriveResult(
+      startRotation: prevInstResult?.endRotation ?? 0,
+      startPosition: prevInstResult?.endPosition ?? Vector2.zero(),
+      initialVelocity: initialVelocity,
+      maxVelocity: calcResult.maxVelocity,
+      finalVelocity: calcResult.finalVelocity,
+      acceleration: acceleration,
+      accelerationDistance: calcResult.accelerationDistance,
+      decelerationDistance: calcResult.decelerationDistance,
+      constantSpeedDistance: calcResult.constantSpeedDistance,
+    );
+  }
 
-    final brakePoint = (2 * acceleration * instruction.distance +
-            pow(instruction.endVelocity, 2) -
-            pow(prevInstResult.finalVelocity, 2)) /
+// Refactored simulateTurn function
+  TurnResult simulateTurn(
+      InstructionResult? prevInstructionResult, TurnInstruction instruction) {
+    double linearToAngular(double l) => l / robiConfig.trackWidth * (180 / pi);
+
+    final innerRadius = instruction.innerRadius;
+    final outerRadius = innerRadius + robiConfig.trackWidth;
+    final k = innerRadius / outerRadius;
+
+    final outerAcceleration = instruction.acceleration;
+    final innerAcceleration = outerAcceleration * k;
+    final angularAcceleration =
+        linearToAngular(outerAcceleration - innerAcceleration);
+    final initialOuterVelocity = prevInstructionResult?.finalInnerVelocity ?? 0;
+    final initialInnerVelocity = initialOuterVelocity * k;
+    final initialAngularVelocity =
+        linearToAngular(initialOuterVelocity - initialInnerVelocity);
+    double finalOuterVelocity = instruction.targetFinalVelocity;
+    double finalInnerVelocity = finalOuterVelocity * k;
+    double targetFinalAngularVelocity =
+        linearToAngular(finalOuterVelocity - finalInnerVelocity);
+    final targetOuterVelocity = instruction.targetVelocity;
+    final targetInnerVelocity = targetOuterVelocity * k;
+    final targetAngularVelocity =
+        linearToAngular(targetOuterVelocity - targetInnerVelocity);
+
+    final calcResult = calculateMotion(
+      initialAngularVelocity,
+      angularAcceleration,
+      instruction.turnDegree,
+      targetAngularVelocity,
+      targetFinalAngularVelocity,
+    );
+
+    return TurnResult(
+      left: instruction.left,
+      startRotation: prevInstructionResult?.endRotation ?? 0,
+      startPosition: prevInstructionResult?.endPosition ?? Vector2.zero(),
+      innerRadius: innerRadius,
+      outerRadius: outerRadius,
+      accelerationDegree: calcResult.accelerationDistance,
+      decelerationDegree: calcResult.decelerationDistance,
+      constantSpeedDegree: calcResult.constantSpeedDistance,
+      maxAngularVelocity: calcResult.maxVelocity,
+      initialAngularVelocity: initialAngularVelocity,
+      finalAngularVelocity: calcResult.finalVelocity,
+      angularAcceleration: angularAcceleration,
+    );
+  }
+
+  RapidTurnResult simulateRapidTurn(InstructionResult? prevInstructionResult,
+      RapidTurnInstruction instruction) {
+    double linearToAngular(double l) =>
+        l / (robiConfig.trackWidth * pi) * 360;
+
+    final angularAcceleration = linearToAngular(instruction.acceleration);
+    final targetMaxAngularVelocity =
+        linearToAngular(instruction.targetVelocity);
+
+    final calcResult = calculateMotion(0, angularAcceleration,
+        instruction.turnDegree, targetMaxAngularVelocity, 0);
+
+    return RapidTurnResult(
+      trackWidth: robiConfig.trackWidth,
+      left: instruction.left,
+      startRotation: prevInstructionResult?.endRotation ?? 0,
+      startPosition: prevInstructionResult?.endPosition ?? Vector2.zero(),
+      maxAngularVelocity: calcResult.maxVelocity,
+      accelerationDegree: calcResult.accelerationDistance,
+      totalTurnDegree: instruction.turnDegree,
+      angularAcceleration: angularAcceleration,
+    );
+  }
+
+  CalculationResult calculateMotion(
+      double initialVelocity,
+      double acceleration,
+      double targetDistance,
+      double targetMaxVelocity,
+      double targetFinalVelocity) {
+    if (acceleration <= 0) {
+      return CalculationResult(
+        maxVelocity: initialVelocity,
+        finalVelocity: initialVelocity,
+        accelerationDistance: 0,
+        decelerationDistance: 0,
+        constantSpeedDistance: targetDistance,
+      );
+    }
+
+    double maxVelocity, accelerationDistance, decelerationStartPoint;
+
+    double brakePoint = (2 * acceleration * targetDistance +
+            pow(targetFinalVelocity, 2) -
+            pow(initialVelocity, 2)) /
         (4 * acceleration);
+    brakePoint = min(brakePoint, targetDistance);
+
     final velocityAtBrakePoint =
         sqrt(pow(initialVelocity, 2) + (2 * acceleration * brakePoint));
 
     if (velocityAtBrakePoint > targetMaxVelocity) {
       maxVelocity = targetMaxVelocity;
-      accelerationEndPoint =
+      accelerationDistance =
           (pow(targetMaxVelocity, 2) - pow(initialVelocity, 2)) /
               (2 * acceleration);
-      decelerationStartPoint = (2 * acceleration * instruction.distance -
+      decelerationStartPoint = (2 * acceleration * targetDistance -
               pow(targetMaxVelocity, 2) +
-              pow(endVelocity, 2)) /
+              pow(targetFinalVelocity, 2)) /
           (2 * acceleration);
     } else {
       maxVelocity = velocityAtBrakePoint;
-      accelerationEndPoint = brakePoint;
+      accelerationDistance = brakePoint;
       decelerationStartPoint = brakePoint;
     }
 
-    return DriveResult(
-      startRotation: rotation,
-      endRotation: rotation,
-      startPosition: prevInstResult.endPosition,
-      endPosition: endPosition,
-      initialVelocity: initialVelocity,
+    decelerationStartPoint = max(decelerationStartPoint, 0);
+    accelerationDistance = max(accelerationDistance, 0);
+    maxVelocity = max(maxVelocity, initialVelocity);
+
+    double decelerationDistance = targetDistance - decelerationStartPoint;
+    if (decelerationDistance.abs() < 0.000001) decelerationDistance = 0;
+
+    double finalVelocitySqr =
+        pow(maxVelocity, 2) - 2 * acceleration * decelerationDistance;
+
+    if (finalVelocitySqr.abs() < 0.0000001) finalVelocitySqr = 0;
+
+    assert(finalVelocitySqr >= 0);
+
+    final finalVelocity = sqrt(finalVelocitySqr);
+
+    return CalculationResult(
       maxVelocity: maxVelocity,
-      finalVelocity: endVelocity,
-      accelerationEndPoint:
-          polarToCartesian(rotation, accelerationEndPoint) + startPosition,
-      decelerationStartPoint:
-          polarToCartesian(rotation, decelerationStartPoint) + startPosition,
-    );
-  }
-
-  TurnResult simulateTurn(InstructionResult prevInstructionResult,
-      BaseTurnInstruction instruction) {
-    final radius = instruction.innerRadius + robiConfig.trackWidth / 2;
-    final startPosition = prevInstructionResult.endPosition;
-    final startRotation = prevInstructionResult.endRotation;
-    final endRotation = startRotation + instruction.turnDegree;
-
-    final innerDistance =
-        instruction.innerRadius * pi * instruction.turnDegree / 180;
-    final outerDistance = (instruction.innerRadius + robiConfig.trackWidth) *
-        pi *
-        instruction.turnDegree /
-        180;
-
-    final timeForCompletion =
-        outerDistance / prevInstructionResult.finalVelocity;
-    final innerVelocity = innerDistance / timeForCompletion;
-
-    late final Vector2 center, endPosition;
-
-    if (instruction.turnDegree > 0) {
-      center = startPosition + polarToCartesian(startRotation + 90, radius);
-      endPosition = center +
-          polarToCartesian(
-              startRotation + (270 + instruction.turnDegree), radius);
-    } else {
-      center = startPosition + polarToCartesian(startRotation - 90, radius);
-      endPosition = center +
-          polarToCartesian(
-              startRotation + (90 - instruction.turnDegree.abs()), radius);
-    }
-
-    return TurnResult(
-      startRotation: startRotation,
-      endRotation: endRotation,
-      startPosition: startPosition,
-      endPosition: endPosition,
-      initialVelocity: prevInstructionResult.finalVelocity,
-      maxVelocity: prevInstructionResult.finalVelocity,
-      finalVelocity: innerVelocity,
-      turnRadius: radius,
-    );
-  }
-
-  RapidTurnResult simulateRapidTurn(InstructionResult prevInstructionResult,
-      BaseRapidTurnInstruction instruction) {
-    return RapidTurnResult(
-      startRotation: prevInstructionResult.endRotation,
-      endRotation: prevInstructionResult.endRotation + instruction.turnDegree,
-      startPosition: prevInstructionResult.endPosition,
-      endPosition: prevInstructionResult.endPosition,
-      initialVelocity: 0,
-      maxVelocity: 0,
-      finalVelocity: 0,
+      finalVelocity: finalVelocity,
+      accelerationDistance: accelerationDistance,
+      decelerationDistance: decelerationDistance,
+      constantSpeedDistance:
+          targetDistance - accelerationDistance - decelerationDistance,
     );
   }
 }
@@ -164,3 +224,19 @@ Vector2 polarToCartesian(double deg, double radius) =>
 double sinD(double deg) => sin(deg * (pi / 180));
 
 double cosD(double deg) => cos(deg * (pi / 180));
+
+class CalculationResult {
+  final double maxVelocity;
+  final double finalVelocity;
+  final double accelerationDistance;
+  final double decelerationDistance;
+  final double constantSpeedDistance;
+
+  CalculationResult({
+    required this.maxVelocity,
+    required this.finalVelocity,
+    required this.accelerationDistance,
+    required this.decelerationDistance,
+    required this.constantSpeedDistance,
+  });
+}

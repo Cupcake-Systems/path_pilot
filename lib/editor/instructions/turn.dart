@@ -7,83 +7,82 @@ import '../editor.dart';
 class TurnInstructionEditor extends AbstractEditor {
   @override
   final TurnInstruction instruction;
-  final RobiConfig robiConfig;
 
   TurnInstructionEditor({
     super.key,
     required this.instruction,
-    required this.robiConfig,
     required super.simulationResult,
     required super.instructionIndex,
     required super.change,
     required super.removed,
     required super.entered,
     required super.exited,
-  }) : super(instruction: instruction) {
-    if (prevInstructionResult.maxVelocity <= 0) {
-      warningMessage = "Zero velocity";
-    }
-  }
+  }) : super(instruction: instruction);
 
   @override
   Widget build(BuildContext context) {
     return RemovableWarningCard(
+      change: change,
       entered: entered,
       exited: exited,
       instruction: instruction,
       warningMessage: warningMessage,
       removed: removed,
-      prevResult: prevInstructionResult,
       instructionResult: instructionResult,
-      children: [
-        Icon(instruction.turnDegree > 0 ? Icons.turn_left : Icons.turn_right),
-        const SizedBox(width: 10),
-        const Text("Turn "),
-        IntrinsicWidth(
-          child: TextFormField(
-            style: const TextStyle(fontSize: 14),
-            initialValue: instruction.turnDegree.abs().toString(),
-            onChanged: (String? value) {
-              if (value == null || value.isEmpty) return;
-              final tried = double.tryParse(value);
-              if (tried == null) return;
-              instruction.turnDegree = tried;
-              change(instruction);
-            },
-            inputFormatters: inputFormatters,
+      header: Card.filled(
+        child: Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Row(
+            children: [
+              Icon(instruction.left ? Icons.turn_left : Icons.turn_right,
+                  size: 18),
+              const SizedBox(width: 8),
+              Text("${instruction.left ? "Left" : "Right"} Turn"),
+            ],
           ),
         ),
-        const Text("° to the "),
-        DropdownMenu(
-          textStyle: const TextStyle(fontSize: 14),
-          width: 100,
-          inputDecorationTheme: const InputDecorationTheme(),
-          initialSelection: instruction.turnDegree,
-          onSelected: (double? value) {
-            instruction.turnDegree = value!;
-            change(instruction);
-          },
-          dropdownMenuEntries: [
-            DropdownMenuEntry(value: instruction.turnDegree.abs(), label: "left"),
-            DropdownMenuEntry(value: -instruction.turnDegree.abs(), label: "right"),
+      ),
+      children: [
+        Row(
+          children: [
+            const Text("Turn Degree"),
+            Slider(
+              value: instruction.turnDegree,
+              onChanged: (value) {
+                instruction.turnDegree = value;
+                change(instruction);
+              },
+              min: 0,
+              max: 720,
+            ),
+            Text("${roundToDigits(instruction.turnDegree, 2)}°"),
           ],
         ),
-        const Text("with a "),
-        IntrinsicWidth(
-          child: TextFormField(
-            style: const TextStyle(fontSize: 14),
-            initialValue: "${instruction.innerRadius * 100}",
-            onChanged: (String? value) {
-              if (value == null || value.isEmpty) return;
-              final tried = double.tryParse(value);
-              if (tried == null) return;
-              instruction.innerRadius = tried / 100;
-              change(instruction);
-            },
-            inputFormatters: inputFormatters,
-          ),
+        Row(
+          children: [
+            const Text("Inner Radius"),
+            Slider(
+              value: instruction.innerRadius,
+              onChanged: (value) {
+                instruction.innerRadius = value;
+                change(instruction);
+              },
+            ),
+            Text("${roundToDigits(instruction.innerRadius * 100, 2)}cm"),
+          ],
         ),
-        const Text("cm inner radius")
+        Row(
+          children: [
+            const Text("Turn Left "),
+            Checkbox(
+              value: instruction.left,
+              onChanged: (value) {
+                instruction.left = value!;
+                change(instruction);
+              },
+            ),
+          ],
+        ),
       ],
     );
   }

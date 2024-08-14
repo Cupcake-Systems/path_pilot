@@ -34,12 +34,17 @@ class PathToInstructions {
 
       rotation += alpha;
 
-      final turnInstruction = RapidTurnInstruction(turnDegree: alpha);
+      final turnInstruction = RapidTurnInstruction(
+        left: alpha > 0,
+        turnDegree: alpha.abs(),
+        acceleration: 0.1,
+        targetVelocity: 0.2,
+      );
       final driveInstruction = DriveInstruction(
         targetVelocity: 0.2,
         acceleration: 0.3,
-        endVelocity: 0,
-        distance: prevPoint.distanceTo(point),
+        targetFinalVelocity: 0,
+        targetDistance: prevPoint.distanceTo(point),
       );
 
       instructions += [turnInstruction, driveInstruction];

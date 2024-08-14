@@ -1,174 +1,79 @@
+import 'dart:math';
+
+import 'package:flutter/foundation.dart';
+import 'package:robi_line_drawer/robi_api/exporter/exporter_instructions.dart';
+import 'package:robi_line_drawer/robi_api/simulator.dart';
 import 'package:vector_math/vector_math.dart';
 
-abstract class Serializable {
-  Map<String, dynamic> toJson();
-}
-
-abstract class BasicInstruction extends Serializable {
-  final double targetVelocity, endVelocity, acceleration;
-
-  BasicInstruction({
-    required this.targetVelocity,
-    required this.endVelocity,
-    required this.acceleration,
-  });
-}
-
 abstract class MissionInstruction {
-  double targetVelocity, acceleration, endVelocity;
+  double targetVelocity, acceleration, targetFinalVelocity;
 
   MissionInstruction({
     required this.targetVelocity,
     required this.acceleration,
-    required this.endVelocity,
-  });
-
-  BasicInstruction get basic;
+    required this.targetFinalVelocity,
+  }) {
+    assert(targetVelocity >= 0);
+    assert(acceleration >= 0);
+    assert(targetFinalVelocity >= 0);
+  }
 
   Map<String, dynamic> toJson();
 }
 
-class BaseTurnInstruction extends BasicInstruction {
-  final double turnDegree, innerRadius;
-
-  BaseTurnInstruction({
-    required super.targetVelocity,
-    required super.endVelocity,
-    required super.acceleration,
-    required this.turnDegree,
-    required this.innerRadius,
-  });
-
-  @override
-  BaseTurnInstruction.fromJson(Map<String, dynamic> json)
-      : turnDegree = json["turn_degree"],
-        innerRadius = json["radius"],
-        super(
-          endVelocity: json["end_velocity"],
-          acceleration: json["acceleration"],
-          targetVelocity: json["target_velocity"],
-        );
-
-  @override
-  Map<String, dynamic> toJson() => {
-        "turn_degree": turnDegree,
-        "radius": innerRadius,
-        "end_velocity": endVelocity,
-        "acceleration": acceleration,
-        "target_velocity": targetVelocity,
-      };
-}
-
-class BaseRapidTurnInstruction extends BasicInstruction {
-  final double turnDegree;
-
-  BaseRapidTurnInstruction({
-    required super.targetVelocity,
-    required super.endVelocity,
-    required super.acceleration,
-    required this.turnDegree,
-  });
-
-  @override
-  BaseRapidTurnInstruction.fromJson(Map<String, dynamic> json)
-      : turnDegree = json["turn_degree"],
-        super(
-          endVelocity: json["end_velocity"],
-          acceleration: json["acceleration"],
-          targetVelocity: json["target_velocity"],
-        );
-
-  @override
-  Map<String, dynamic> toJson() => {
-        "turn_degree": turnDegree,
-        "end_velocity": endVelocity,
-        "acceleration": acceleration,
-        "target_velocity": targetVelocity,
-      };
-}
-
-class BaseDriveInstruction extends BasicInstruction {
-  final double distance;
-
-  BaseDriveInstruction({
-    required super.targetVelocity,
-    required super.endVelocity,
-    required super.acceleration,
-    required this.distance,
-  });
-
-  @override
-  BaseDriveInstruction.fromJson(Map<String, dynamic> json)
-      : distance = json["distance"],
-        super(
-          endVelocity: json["end_velocity"],
-          acceleration: json["acceleration"],
-          targetVelocity: json["target_velocity"],
-        );
-
-  @override
-  Map<String, dynamic> toJson() => {
-        "distance": distance,
-        "target_velocity": targetVelocity,
-        "acceleration": acceleration,
-        "end_velocity": endVelocity,
-      };
-}
-
 class DriveInstruction extends MissionInstruction {
-  double distance;
+  double targetDistance;
 
   DriveInstruction({
     required super.targetVelocity,
     required super.acceleration,
-    required super.endVelocity,
-    required this.distance,
-  });
+    required super.targetFinalVelocity,
+    required this.targetDistance,
+  }) {
+    assert(targetDistance >= 0);
+  }
 
   DriveInstruction.fromJson(Map<String, dynamic> json)
-      : distance = json["distance"],
+      : targetDistance = json["distance"],
         super(
           targetVelocity: json["target_velocity"],
           acceleration: json["acceleration"],
-          endVelocity: json["end_velocity"],
+          targetFinalVelocity: json["end_velocity"],
         );
 
   @override
   Map<String, double> toJson() => {
-        "distance": distance,
+        "distance": targetDistance,
         "target_velocity": targetVelocity,
         "acceleration": acceleration,
-        "end_velocity": endVelocity,
+        "end_velocity": targetFinalVelocity,
       };
-
-  @override
-  BasicInstruction get basic => BaseDriveInstruction(
-        targetVelocity: targetVelocity,
-        endVelocity: endVelocity,
-        acceleration: acceleration,
-        distance: distance,
-      );
 }
 
 class TurnInstruction extends MissionInstruction {
   double turnDegree, innerRadius;
+  bool left;
 
   TurnInstruction({
+    required this.left,
     required this.turnDegree,
     required this.innerRadius,
     required super.targetVelocity,
     required super.acceleration,
-    required super.endVelocity,
-  });
+    required super.targetFinalVelocity,
+  }) {
+    assert(turnDegree >= 0);
+  }
 
   @override
   TurnInstruction.fromJson(Map<String, dynamic> json)
       : turnDegree = json["turn_degree"],
         innerRadius = json["inner_radius"],
+        left = json["left"],
         super(
           targetVelocity: json["target_velocity"],
           acceleration: json["acceleration"],
-          endVelocity: json["end_velocity"],
+          targetFinalVelocity: json["end_velocity"],
         );
 
   @override
@@ -177,36 +82,32 @@ class TurnInstruction extends MissionInstruction {
         "inner_radius": innerRadius,
         "target_velocity": targetVelocity,
         "acceleration": acceleration,
-        "end_velocity": endVelocity,
+        "end_velocity": targetFinalVelocity,
+        "left": left,
       };
-
-  @override
-  BasicInstruction get basic => BaseTurnInstruction(
-        targetVelocity: targetVelocity,
-        endVelocity: endVelocity,
-        acceleration: acceleration,
-        turnDegree: turnDegree,
-        innerRadius: innerRadius,
-      );
 }
 
 class RapidTurnInstruction extends MissionInstruction {
   double turnDegree;
+  bool left;
 
-  RapidTurnInstruction({required this.turnDegree})
-      : super(
-          targetVelocity: 0.0,
-          acceleration: 0.0,
-          endVelocity: 0.0,
-        );
+  RapidTurnInstruction({
+    required this.left,
+    required this.turnDegree,
+    required super.acceleration,
+    required super.targetVelocity,
+  }) : super(targetFinalVelocity: 0.0) {
+    assert(turnDegree > 0);
+  }
 
   @override
   RapidTurnInstruction.fromJson(Map<String, dynamic> json)
       : turnDegree = json["turn_degree"],
+        left = json["left"],
         super(
           targetVelocity: json["target_velocity"],
           acceleration: json["acceleration"],
-          endVelocity: json["end_velocity"],
+          targetFinalVelocity: json["end_velocity"],
         );
 
   @override
@@ -214,77 +115,321 @@ class RapidTurnInstruction extends MissionInstruction {
         "turn_degree": turnDegree,
         "target_velocity": targetVelocity,
         "acceleration": acceleration,
-        "end_velocity": endVelocity,
+        "end_velocity": targetFinalVelocity,
+        "left": left,
       };
-
-  @override
-  BasicInstruction get basic => BaseRapidTurnInstruction(
-      targetVelocity: targetVelocity,
-      endVelocity: 0,
-      acceleration: acceleration,
-      turnDegree: turnDegree);
 }
 
 abstract class InstructionResult {
   final double startRotation,
       endRotation,
-      initialVelocity,
-      maxVelocity,
-      finalVelocity;
+      maxOuterVelocity,
+      maxInnerVelocity,
+      finalOuterVelocity,
+      finalInnerVelocity,
+      outerAcceleration,
+      innerAcceleration;
   final Vector2 startPosition, endPosition;
 
   InstructionResult({
     required this.startRotation,
     required this.endRotation,
+    required this.maxOuterVelocity,
+    required this.maxInnerVelocity,
+    required this.finalOuterVelocity,
+    required this.finalInnerVelocity,
+    required this.outerAcceleration,
+    required this.innerAcceleration,
     required this.startPosition,
     required this.endPosition,
-    required this.initialVelocity,
-    required this.maxVelocity,
-    required this.finalVelocity
   });
+
+  ExportedMissionInstruction export();
 }
 
 class DriveResult extends InstructionResult {
-  final Vector2 accelerationEndPoint, decelerationStartPoint;
+  final double initialVelocity,
+      maxVelocity,
+      finalVelocity,
+      acceleration,
+      accelerationDistance,
+      decelerationDistance,
+      constantSpeedDistance;
+
+  late final double totalDistance =
+      accelerationDistance + decelerationDistance + constantSpeedDistance;
+  late final double accelerationTime = _calculateAccelerationTime();
+  late final double decelerationTime = _calculateDecelerationTime();
+  late final double constantSpeedTime =
+      maxVelocity > 0 ? constantSpeedDistance / maxVelocity : 0;
 
   DriveResult({
-    required super.startRotation,
-    required super.endRotation,
     required super.startPosition,
-    required super.endPosition,
-    required super.initialVelocity,
-    required super.maxVelocity,
-    required super.finalVelocity,
-    required this.accelerationEndPoint,
-    required this.decelerationStartPoint,
-  });
+    required super.startRotation,
+    required this.maxVelocity,
+    required this.finalVelocity,
+    required this.acceleration,
+    required this.initialVelocity,
+    required this.constantSpeedDistance,
+    required this.accelerationDistance,
+    required this.decelerationDistance,
+  }) : super(
+          maxOuterVelocity: maxVelocity,
+          maxInnerVelocity: maxVelocity,
+          finalInnerVelocity: finalVelocity,
+          finalOuterVelocity: finalVelocity,
+          outerAcceleration: acceleration,
+          innerAcceleration: acceleration,
+          endRotation: startRotation,
+          endPosition: startPosition +
+              polarToCartesian(
+                startRotation,
+                accelerationDistance +
+                    decelerationDistance +
+                    constantSpeedDistance,
+              ),
+        ) {
+    if (kDebugMode) {
+      try {
+        assert(maxVelocity >= 0);
+        assert(finalVelocity >= 0);
+        assert(acceleration >= 0);
+        assert(initialVelocity >= 0);
+        assert(constantSpeedDistance >= 0);
+        assert(accelerationDistance >= 0);
+        assert(decelerationDistance >= 0);
+      } on AssertionError {
+        print(this);
+        rethrow;
+      }
+    }
+  }
+
+  double _calculateAccelerationTime() {
+    if (acceleration == 0) return 0;
+    return (-initialVelocity +
+            sqrt(pow(initialVelocity, 2) +
+                2 * accelerationDistance * acceleration)) /
+        acceleration;
+  }
+
+  double _calculateDecelerationTime() {
+    if (acceleration == 0) return 0;
+
+    double discriminant =
+        pow(maxVelocity, 2) - 2 * decelerationDistance * acceleration;
+
+    if (discriminant.abs() < 0.000001) discriminant = 0;
+
+    return (sqrt(discriminant) - maxVelocity) / -acceleration;
+  }
+
+  @override
+  String toString() {
+    return '''TurnResult(
+    --- Given ---
+    Acceleration: ${acceleration}m/s²
+    Initial Velocity: ${initialVelocity}m/s    
+    --- Calculated ---
+    Distance:
+      Driven Distance: ${totalDistance}m
+      Acceleration Distance: ${accelerationDistance}m
+      Constant Speed Distance: ${constantSpeedDistance}m
+      Deceleration Distance: ${decelerationDistance}m
+    Time:
+      Acceleration Time: ${accelerationTime}s
+      Constant Speed Time: ${constantSpeedTime}s
+      Deceleration Time: ${decelerationTime}s
+    Max Velocity: ${maxVelocity}m/s
+    Final Velocity: ${finalVelocity}m/s
+)''';
+  }
+
+  @override
+  ExportedDriveInstruction export() {
+    assert(accelerationTime >= 0);
+    assert(decelerationTime >= 0);
+    assert(constantSpeedTime >= 0);
+
+    return ExportedDriveInstruction(
+      acceleration: acceleration,
+      initialVelocity: initialVelocity,
+      accelerationTime: accelerationTime,
+      decelerationTime: decelerationTime,
+      constantSpeedTime: constantSpeedTime,
+    );
+  }
 }
 
 class TurnResult extends InstructionResult {
-  final double turnRadius;
+  final double innerRadius,
+      outerRadius,
+      accelerationDegree,
+      decelerationDegree,
+      constantSpeedDegree,
+      maxAngularVelocity,
+      finalAngularVelocity,
+      initialAngularVelocity,
+      angularAcceleration;
+  final bool left;
+
+  late final totalTurnDegree =
+      accelerationDegree + decelerationDegree + constantSpeedDegree;
+  late final trackWidth = outerRadius - innerRadius;
+  late final initialInnerVelocity =
+      angularToLinear(initialAngularVelocity, innerRadius);
+  late final initialOuterVelocity =
+      angularToLinear(initialAngularVelocity, outerRadius);
 
   TurnResult({
+    required this.left,
     required super.startRotation,
-    required super.endRotation,
     required super.startPosition,
-    required super.endPosition,
-    required super.initialVelocity,
-    required super.maxVelocity,
-    required super.finalVelocity,
-    required this.turnRadius,
-  });
+    required this.innerRadius,
+    required this.outerRadius,
+    required this.accelerationDegree,
+    required this.decelerationDegree,
+    required this.maxAngularVelocity,
+    required this.constantSpeedDegree,
+    required this.finalAngularVelocity,
+    required this.initialAngularVelocity,
+    required this.angularAcceleration,
+  }) : super(
+          endRotation: startRotation +
+              (accelerationDegree + decelerationDegree + constantSpeedDegree) *
+                  (left ? 1 : -1),
+          endPosition: _calculateEndPosition(
+              left,
+              (innerRadius + outerRadius) / 2,
+              startRotation,
+              startPosition,
+              accelerationDegree + decelerationDegree + constantSpeedDegree),
+          maxInnerVelocity: angularToLinear(maxAngularVelocity, innerRadius),
+          maxOuterVelocity: angularToLinear(maxAngularVelocity, outerRadius),
+          finalInnerVelocity:
+              angularToLinear(finalAngularVelocity, innerRadius),
+          finalOuterVelocity:
+              angularToLinear(finalAngularVelocity, outerRadius),
+          outerAcceleration: angularToLinear(angularAcceleration, innerRadius),
+          innerAcceleration: angularToLinear(angularAcceleration, outerRadius),
+        );
+
+  @override
+  String toString() {
+    return '''TurnResult(
+    left: $left
+    totalTurnDegree: $totalTurnDegree°
+    innerRadius: ${innerRadius}m
+    Acceleration:
+      Inner: ${innerAcceleration}m/s²
+      Outer: ${outerAcceleration}m/s²
+      Angular: $angularAcceleration°/s²
+      Acceleration Degree: $accelerationDegree°
+      Deceleration Degree: $decelerationDegree°
+    Initial Velocity:
+      inner: ${initialInnerVelocity}m/s
+      outer: ${initialOuterVelocity}m/s
+      angular: $initialAngularVelocity°/s
+    Max Velocity:
+      inner: ${maxInnerVelocity}m/s
+      outer: ${maxOuterVelocity}m/s
+      angular: $maxAngularVelocity°/s
+    Final Velocity:
+      inner: ${finalInnerVelocity}m/s
+      outer: ${finalOuterVelocity}m/s
+      angular: $finalAngularVelocity°/s
+)''';
+  }
+
+  @override
+  ExportedTurnInstruction export() => ExportedTurnInstruction(
+        acceleration: outerAcceleration,
+        initialVelocity: initialOuterVelocity,
+        left: endRotation > startRotation,
+        totalTurnDegree: totalTurnDegree.abs(),
+        innerRadius: innerRadius,
+        accelerationDegree: accelerationDegree.abs(),
+        decelerationDegree: decelerationDegree.abs(),
+      );
+
+  static Vector2 _calculateEndPosition(bool left, double radius,
+      double startRotation, Vector2 startPosition, double totalTurnDegree) {
+    late final Vector2 center;
+    if (left) {
+      center = startPosition + polarToCartesian(startRotation + 90, radius);
+      return center +
+          polarToCartesian(startRotation + (270 + totalTurnDegree), radius);
+    } else {
+      center = startPosition + polarToCartesian(startRotation - 90, radius);
+      return center +
+          polarToCartesian(startRotation + (90 - totalTurnDegree), radius);
+    }
+  }
+
+  double linearToAngular(double inner, double outer) =>
+      (outer - inner) / trackWidth * (180 / pi);
 }
 
 class RapidTurnResult extends InstructionResult {
+  final double accelerationDegree,
+      totalTurnDegree,
+      angularAcceleration,
+      maxAngularVelocity,
+      trackWidth;
+  final double finalAngularVelocity = 0;
+  final bool left;
+
   RapidTurnResult({
+    required this.left,
     required super.startRotation,
-    required super.endRotation,
+    required this.angularAcceleration,
     required super.startPosition,
-    required super.endPosition,
-    required super.initialVelocity,
-    required super.maxVelocity,
-    required super.finalVelocity,
-  });
+    required this.maxAngularVelocity,
+    required this.accelerationDegree,
+    required this.totalTurnDegree,
+    required this.trackWidth,
+  }) : super(
+          outerAcceleration:
+              angularToLinear(angularAcceleration, trackWidth / 2),
+          innerAcceleration:
+              angularToLinear(angularAcceleration, trackWidth / 2),
+          finalOuterVelocity: 0,
+          finalInnerVelocity: 0,
+          maxOuterVelocity: angularToLinear(maxAngularVelocity, trackWidth / 2),
+          maxInnerVelocity: angularToLinear(maxAngularVelocity, trackWidth / 2),
+          endPosition: startPosition,
+          endRotation: startRotation + (totalTurnDegree * (left ? 1 : -1)),
+        );
+
+  @override
+  ExportedRapidTurnInstruction export() => ExportedRapidTurnInstruction(
+      acceleration: angularAcceleration,
+      left: endRotation > startRotation,
+      totalTurnDegree: totalTurnDegree,
+      accelerationDegree: accelerationDegree);
+
+  @override
+  String toString() {
+    return '''TurnResult(
+    Left: $left
+    Total Turn Degree: $totalTurnDegree°
+    Track Width: ${trackWidth}m
+    Acceleration:
+      Inner: ${innerAcceleration}m/s²
+      Outer: ${outerAcceleration}m/s²
+      Angular: $angularAcceleration°/s²
+      Acceleration Degree: $accelerationDegree°
+      Deceleration Degree: $accelerationDegree°
+    Max Velocity:
+      inner: ${maxInnerVelocity}m/s
+      outer: ${maxOuterVelocity}m/s
+      angular: $maxAngularVelocity°/s
+    Final Velocity:
+      inner: ${finalInnerVelocity}m/s
+      outer: ${finalOuterVelocity}m/s
+      angular: $finalAngularVelocity°/s
+)''';
+  }
 }
 
 class SimulationResult {
@@ -325,3 +470,5 @@ class RobiConfig {
 
 double freqToVel(int freq, double wheelRadius) =>
     freq * 0.00098174 * wheelRadius;
+
+double angularToLinear(double a, double r) => (pi * a * r) / 180;

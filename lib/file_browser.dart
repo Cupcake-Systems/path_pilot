@@ -10,10 +10,11 @@ import 'package:robi_line_drawer/editor/robi_config.dart';
 import 'package:robi_line_drawer/main.dart';
 import 'package:robi_line_drawer/robi_api/robi_path_serializer.dart';
 import 'package:robi_line_drawer/robi_api/robi_utils.dart';
+import 'package:robi_line_drawer/robi_api/simulator.dart';
 import 'package:robi_line_drawer/settings/settings.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 
-import 'exporter.dart';
+import 'robi_api/exporter/exporter.dart';
 
 class FileBrowser extends StatefulWidget {
   const FileBrowser({super.key});
@@ -223,10 +224,14 @@ class _FileBrowserState extends State<FileBrowser>
                               fileName: "exported.json",
                             );
                             if (path == null) return;
+                            final sim =
+                                Simulator(RobiConfigStorage.lastUsedConfig);
+                            final simResult =
+                                sim.calculate(instructionTable[filePath]!);
                             Exporter.saveToFile(
                               File(path),
                               RobiConfigStorage.lastUsedConfig,
-                              instructionTable[filePath]!,
+                              simResult.instructionResults,
                             );
                           },
                           instructionsChanged:

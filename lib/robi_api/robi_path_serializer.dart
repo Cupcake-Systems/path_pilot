@@ -3,19 +3,6 @@ import 'dart:io';
 
 import 'package:robi_line_drawer/editor/add_instruction_dialog.dart';
 import 'package:robi_line_drawer/robi_api/robi_utils.dart';
-import 'package:vector_math/vector_math.dart';
-
-final startResult = DriveResult(
-  startRotation: 0,
-  endRotation: 0,
-  startPosition: Vector2.zero(),
-  endPosition: Vector2.zero(),
-  initialVelocity: 0,
-  maxVelocity: 0,
-  finalVelocity: 0,
-  accelerationEndPoint: Vector2.zero(),
-  decelerationStartPoint: Vector2.zero(),
-);
 
 class InstructionContainer {
   late final UserInstruction type;
@@ -60,16 +47,15 @@ class InstructionContainer {
     }
   }
 
-  Map<String, dynamic> toJson() =>
-      {
+  Map<String, dynamic> toJson() => {
         "type": type.name,
         "instruction": instruction.toJson(),
       };
 }
 
 class RobiPathSerializer {
-  static Future<File> saveToFile(File file,
-      List<MissionInstruction> instructions) =>
+  static Future<File> saveToFile(
+          File file, List<MissionInstruction> instructions) =>
       file.writeAsString(encode(instructions));
 
   static String encode(List<MissionInstruction> instructions) {
@@ -84,10 +70,7 @@ class RobiPathSerializer {
     try {
       final List<dynamic> decoded = jsonDecode(json);
       final parsed =
-      decoded.map((e) =>
-      InstructionContainer
-          .fromJson(e)
-          .instruction);
+          decoded.map((e) => InstructionContainer.fromJson(e).instruction);
       return parsed;
     } on Exception {
       return null;

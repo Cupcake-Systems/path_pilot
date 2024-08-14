@@ -18,94 +18,44 @@ class DriveInstructionEditor extends AbstractEditor {
     required super.removed,
     required super.entered,
     required super.exited,
-  }) : super(instruction: instruction) {
-    if (!isLastInstruction &&
-        prevInstructionResult.maxVelocity <= 0 &&
-        instruction.targetVelocity <= 0) {
-      warningMessage = "Zero velocity";
-    } else if ((instruction.targetVelocity - instructionResult.maxVelocity)
-            .abs() >
-        0.000001) {
-      warningMessage =
-          "Robi will only reach ${(instructionResult.maxVelocity * 100).toStringAsFixed(2)} cm/s";
-    }
-  }
+  }) : super(instruction: instruction);
 
   @override
   Widget build(BuildContext context) {
     return RemovableWarningCard(
+      change: change,
       instruction: instruction,
       warningMessage: warningMessage,
       removed: removed,
       entered: entered,
       exited: exited,
-      prevResult: prevInstructionResult,
       instructionResult: instructionResult,
+      header: Card.filled(
+        child: Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Row(
+            children: [
+              Icon(userInstructionToIcon[UserInstruction.drive], size: 18),
+              const SizedBox(width: 8),
+              const Text("Drive"),
+            ],
+          ),
+        ),
+      ),
       children: [
-        Icon(userInstructionToIcon[UserInstruction.drive]),
-        const SizedBox(width: 10),
-        const Text("Drive "),
-        IntrinsicWidth(
-          child: TextFormField(
-            style: const TextStyle(fontSize: 14),
-            initialValue: instruction.distance.toString(),
-            onChanged: (String? value) {
-              if (value == null || value.isEmpty) return;
-              final tried = double.tryParse(value);
-              if (tried == null) return;
-              instruction.distance = tried;
-              change(instruction);
-            },
-            inputFormatters: inputFormatters,
-          ),
-        ),
-        const Text("m with a targeted velocity of "),
-        IntrinsicWidth(
-          child: TextFormField(
-            style: const TextStyle(fontSize: 14),
-            initialValue: "${instruction.targetVelocity * 100}",
-            onChanged: (String? value) {
-              if (value == null || value.isEmpty) return;
-              final tried = double.tryParse(value);
-              if (tried == null) return;
-              instruction.targetVelocity = tried / 100.0;
-              if (prevInstructionResult.maxVelocity <=
-                  instruction.targetVelocity) {
-                instruction.acceleration = instruction.acceleration.abs();
-              } else {
-                instruction.acceleration = -instruction.acceleration.abs();
-              }
-              change(instruction);
-            },
-            inputFormatters: inputFormatters,
-          ),
-        ),
-        const Text("cm/s"),
-        if (prevInstructionResult.maxVelocity !=
-            instruction.targetVelocity) ...[
-          Text(
-              " ${instruction.acceleration > 0 ? "accelerating" : "decelerating"} at "),
-          IntrinsicWidth(
-            child: TextFormField(
-              style: const TextStyle(fontSize: 14),
-              initialValue: "${instruction.acceleration.abs() * 100}",
-              onChanged: (String? value) {
-                if (value == null || value.isEmpty) return;
-                final tried = double.tryParse(value);
-                if (tried == null) return;
-                if (prevInstructionResult.maxVelocity <=
-                    instruction.targetVelocity) {
-                  instruction.acceleration = tried / 100.0;
-                } else {
-                  instruction.acceleration = -tried / 100.0;
-                }
+        Row(
+          children: [
+            const Text("Distance to drive"),
+            Slider(
+              value: instruction.targetDistance,
+              onChanged: (value) {
+                instruction.targetDistance = value;
                 change(instruction);
               },
-              inputFormatters: inputFormatters,
             ),
-          ),
-          const Text("cm/s²"),
-        ],
+            Text("${roundToDigits(instruction.targetDistance * 100, 2)}cm"),
+          ],
+        ),
       ],
     );
   }

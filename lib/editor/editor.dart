@@ -139,6 +139,7 @@ class _EditorState extends State<Editor> {
                                             instructions.length, instruction);
                                         rerunSimulationAndUpdate();
                                       },
+                                      robiConfig: widget.robiConfig,
                                       simulationResult: simulationResult,
                                     ),
                                   ),
@@ -363,7 +364,6 @@ class _EditorState extends State<Editor> {
         removed: removedCallback,
         simulationResult: simulationResult,
         instructionIndex: i,
-        robiConfig: widget.robiConfig,
         exited: exitedCallback,
         entered: enteredCallback,
       );
@@ -375,7 +375,6 @@ class _EditorState extends State<Editor> {
         removed: removedCallback,
         simulationResult: simulationResult,
         instructionIndex: i,
-        robiConfig: widget.robiConfig,
         exited: exitedCallback,
         entered: enteredCallback,
       );
@@ -385,14 +384,37 @@ class _EditorState extends State<Editor> {
 
   void rerunSimulationAndUpdate() {
     for (int i = 0; i < instructions.length - 1; ++i) {
+      final calcRes = simulator.calculate(instructions.sublist(0, i));
+
+      final instruction = instructions[i];
+      final nextInstruction = instructions[i + 1];
+
       if (instructions[i + 1] is RapidTurnInstruction) {
-        instructions[i].endVelocity = 0;
+        // Always stop at end of instruction if next instruction is rapid turn.
+        instruction.targetFinalVelocity = 0;
       } else {
-        instructions[i].endVelocity = instructions[i].targetVelocity;
+        if (instruction.targetVelocity > nextInstruction.targetVelocity) {
+          // Ensure the initial velocity for the next instruction is always <= than the target velocity.
+          instruction.targetFinalVelocity = nextInstruction.targetVelocity;
+        } else {
+          instruction.targetFinalVelocity = instruction.targetVelocity;
+        }
+      }
+
+      if (i > 0) {
+        // Ensure the initial velocity for the next instruction is always <= than the target velocity
+        // because an instruction cannot decelerate to target velocity, only accelerate.
+        if (calcRes.instructionResults.last.finalOuterVelocity >
+            nextInstruction.targetVelocity) {
+          setState(() {
+            instruction.acceleration = 1; // TODO: Calculate the value
+          });
+        }
       }
     }
 
-    instructions.lastOrNull?.endVelocity = 0;
+    // Always decelerate to stop at end
+    instructions.lastOrNull?.targetFinalVelocity = 0;
 
     setState(() {
       simulationResult = simulator.calculate(instructions);

@@ -1,17 +1,18 @@
 import 'package:flutter/material.dart';
 
-import '../robi_api/robi_path_serializer.dart';
 import '../robi_api/robi_utils.dart';
 import 'editor.dart';
 
 class AddInstructionDialog extends StatefulWidget {
   final Function(MissionInstruction instruction) instructionAdded;
   final SimulationResult simulationResult;
+  final RobiConfig robiConfig;
 
   const AddInstructionDialog({
     super.key,
     required this.instructionAdded,
     required this.simulationResult,
+    required this.robiConfig,
   });
 
   @override
@@ -62,13 +63,7 @@ class _AddInstructionDialogState extends State<AddInstructionDialog> {
         TextButton(
           onPressed: () {
             Navigator.pop(context);
-            final inst = addInstruction(
-                selectedInstruction,
-                widget.simulationResult.instructionResults.lastOrNull ??
-                    startResult,
-                widget.simulationResult.instructionResults.lastWhere(
-                    (e) => e is DriveResult,
-                    orElse: () => startResult) as DriveResult);
+            final inst = addInstruction(selectedInstruction, widget.robiConfig);
             widget.instructionAdded(inst);
           },
           child: const Text("Ok"),
@@ -84,38 +79,34 @@ enum UserInstruction {
   rapidTurn,
 }
 
-MissionInstruction addInstruction(UserInstruction instruction,
-    InstructionResult prevInstResult, DriveResult lastDriveResult) {
+MissionInstruction addInstruction(
+    UserInstruction instruction, RobiConfig robiConfig) {
   switch (instruction) {
     case UserInstruction.drive:
       double targetVel = 0.5;
       double acceleration = 0.3;
 
-      if (prevInstResult is TurnResult) {
-        targetVel = lastDriveResult.finalVelocity;
-      }
-
-      if (prevInstResult.finalVelocity > targetVel) {
-        acceleration = -acceleration;
-      }
-
       return DriveInstruction(
-        distance: 1,
+        targetDistance: 1,
         targetVelocity: roundToDigits(targetVel, 2),
         acceleration: acceleration,
-        endVelocity: 0,
+        targetFinalVelocity: 0,
       );
     case UserInstruction.turn:
       return TurnInstruction(
+        left: true,
         turnDegree: 90,
-        innerRadius: 0.05,
-        targetVelocity: prevInstResult.maxVelocity,
+        innerRadius: 0.5 - robiConfig.trackWidth / 2,
+        targetVelocity: 0.3,
         acceleration: 0.1,
-        endVelocity: prevInstResult.maxVelocity,
+        targetFinalVelocity: 0,
       );
     case UserInstruction.rapidTurn:
       return RapidTurnInstruction(
+        left: true,
         turnDegree: 90,
+        acceleration: 0.1,
+        targetVelocity: 0.1,
       );
   }
 }

@@ -4,17 +4,15 @@ import 'package:expandable/expandable.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:robi_line_drawer/editor/editor.dart';
-import 'package:robi_line_drawer/robi_api/robi_path_serializer.dart';
 import 'package:vector_math/vector_math.dart' show Vector2;
 
 import '../../robi_api/robi_utils.dart';
 
 abstract class AbstractEditor extends StatelessWidget {
-  final MissionInstruction instruction;
   final SimulationResult simulationResult;
   final int instructionIndex;
+  final MissionInstruction instruction;
 
-  late final InstructionResult prevInstructionResult;
   late final InstructionResult instructionResult;
   late final bool isLastInstruction;
 
@@ -23,34 +21,37 @@ abstract class AbstractEditor extends StatelessWidget {
   final Function(InstructionResult instructionResult)? entered;
   final Function()? exited;
 
-  String? warningMessage;
+  late final String? warningMessage = _generateWarning();
+  final String? _warning;
 
   AbstractEditor({
     super.key,
-    required this.instruction,
     required this.simulationResult,
     required this.instructionIndex,
     required this.change,
     required this.removed,
-    this.warningMessage,
+    required this.instruction,
+    String? warning,
     this.entered,
     this.exited,
-  }) {
-    if (instructionIndex > 0) {
-      prevInstructionResult = simulationResult.instructionResults
-              .elementAtOrNull(instructionIndex - 1) ??
-          startResult;
-    } else {
-      prevInstructionResult = startResult;
-    }
-
+  }) : _warning = warning {
     instructionResult = simulationResult.instructionResults[instructionIndex];
     isLastInstruction =
         instructionIndex == simulationResult.instructionResults.length - 1;
+  }
 
-    if (isLastInstruction && instructionResult.finalVelocity > 0.00001) {
-      warningMessage = "Robi will not stop at the end";
+  String? _generateWarning() {
+    if (_warning != null) return _warning;
+    if (isLastInstruction &&
+        instructionResult.maxOuterVelocity.abs() > 0.00001) {
+      return "Robi will not stop at the end";
     }
+    if ((instructionResult.maxOuterVelocity - instruction.targetVelocity)
+            .abs() >
+        0.000001) {
+      return "Robi will only reach ${roundToDigits(instructionResult.maxOuterVelocity * 100, 2)}cm/s";
+    }
+    return null;
   }
 }
 
@@ -58,10 +59,11 @@ class RemovableWarningCard extends StatelessWidget {
   final Function()? removed;
   final Function(InstructionResult instructionResult)? entered;
   final Function()? exited;
+  final Function(MissionInstruction instruction) change;
 
+  final Widget header;
   final List<Widget> children;
 
-  final InstructionResult prevResult;
   final InstructionResult instructionResult;
   final MissionInstruction instruction;
 
@@ -70,17 +72,50 @@ class RemovableWarningCard extends StatelessWidget {
   const RemovableWarningCard({
     super.key,
     required this.children,
-    required this.prevResult,
     required this.instructionResult,
     required this.instruction,
     this.removed,
     this.entered,
     this.exited,
+    required this.change,
     this.warningMessage,
+    required this.header,
   });
 
   @override
   Widget build(BuildContext context) {
+    double maxX, maxY;
+    List<FlSpot> data;
+    String xAxisTitle, yAxisTitle;
+
+    if (instructionResult is DriveResult) {
+      final inst = instructionResult as DriveResult;
+      maxX = inst.totalDistance * 100;
+      maxY = inst.maxVelocity * 100;
+      data = _generateDataDrive(inst);
+      xAxisTitle = "cm driven";
+      yAxisTitle = "Velocity in cm/s";
+    } else if (instructionResult is TurnResult ||
+        instructionResult is RapidTurnResult) {
+      xAxisTitle = "Degrees turned";
+      yAxisTitle = "Velocity in °/s";
+      if (instructionResult is TurnResult) {
+        final inst = instructionResult as TurnResult;
+        maxX = inst.totalTurnDegree.abs();
+        maxY = inst.maxAngularVelocity;
+        data = _generateDataTurn(inst);
+      } else if (instructionResult is RapidTurnResult) {
+        final inst = instructionResult as RapidTurnResult;
+        maxX = inst.totalTurnDegree.abs();
+        maxY = inst.maxAngularVelocity;
+        data = _generateDataRapidTurn(inst);
+      } else {
+        throw UnsupportedError("");
+      }
+    } else {
+      throw UnsupportedError("");
+    }
+
     return MouseRegion(
       onEnter: (event) {
         if (entered != null) entered!(instructionResult);
@@ -94,12 +129,8 @@ class RemovableWarningCard extends StatelessWidget {
             ExpandablePanel(
               header: Row(
                 children: [
-                  Expanded(
-                    child: Wrap(
-                      crossAxisAlignment: WrapCrossAlignment.center,
-                      children: children,
-                    ),
-                  ),
+                  header,
+                  const Spacer(),
                   if (removed != null)
                     IconButton(
                         onPressed: removed, icon: const Icon(Icons.delete)),
@@ -112,39 +143,44 @@ class RemovableWarningCard extends StatelessWidget {
                 child: Column(
                   children: [
                     const Divider(),
-                    Wrap(
-                      crossAxisAlignment: WrapCrossAlignment.center,
-                      children: [
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                                "Initial Velocity: ${roundToDigits(prevResult.maxVelocity * 100, 2)}cm/s"),
-                            Text(
-                                "Initial Position: ${vecToString(prevResult.endPosition, 2)}m"),
-                            Text(
-                                "Initial Rotation: ${roundToDigits(prevResult.endRotation, 2)}°"),
-                          ],
-                        ),
-                        const Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 10),
-                          child: Icon(Icons.arrow_forward),
-                        ),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                                "End Velocity: ${roundToDigits(instructionResult.finalVelocity * 100, 2)}cm/s (Max.: ${roundToDigits(instructionResult.maxVelocity * 100, 2)}cm/s)"),
-                            Text(
-                                "End Position: ${vecToString(instructionResult.endPosition, 2)}m"),
-                            Text(
-                                "End Rotation: ${roundToDigits(instructionResult.endRotation, 2)}°"),
-                          ],
-                        ),
-                      ],
+                    SizedBox(
+                      height: 200,
+                      child: ListView(
+                        children: [
+                          Row(
+                            children: [
+                              const Text("Acceleration"),
+                              Slider(
+                                value: instruction.acceleration,
+                                onChanged: (value) {
+                                  instruction.acceleration = value;
+                                  change(instruction);
+                                },
+                              ),
+                              Text(
+                                  "${roundToDigits(instruction.acceleration * 100, 2)}cm/s²"),
+                            ],
+                          ),
+                          Row(
+                            children: [
+                              const Text("Target Velocity"),
+                              Slider(
+                                value: instruction.targetVelocity,
+                                onChanged: (value) {
+                                  instruction.targetVelocity = value;
+                                  change(instruction);
+                                },
+                                min: 0.001,
+                              ),
+                              Text(
+                                  "${roundToDigits(instruction.targetVelocity * 100, 2)}cm/s"),
+                            ],
+                          ),
+                          ...children
+                        ],
+                      ),
                     ),
                     const Divider(),
-                    const SizedBox(height: 10),
                     SizedBox(
                       height: 300,
                       child: AspectRatio(
@@ -153,27 +189,25 @@ class RemovableWarningCard extends StatelessWidget {
                           LineChartData(
                             minX: 0,
                             minY: 0,
-                            maxX: instructionResult.startPosition
-                                .distanceTo(instructionResult.endPosition),
-                            maxY: instructionResult.maxVelocity,
-                            titlesData: const FlTitlesData(
-                              topTitles: AxisTitles(),
-                              rightTitles: AxisTitles(),
+                            maxX: maxX,
+                            maxY: maxY,
+                            titlesData: FlTitlesData(
+                              topTitles: const AxisTitles(),
+                              rightTitles: const AxisTitles(),
                               leftTitles: AxisTitles(
-                                axisNameWidget: Text("Velocity in m/s"),
-                                sideTitles: SideTitles(
+                                axisNameWidget: Text(yAxisTitle),
+                                sideTitles: const SideTitles(
                                     showTitles: true, reservedSize: 40),
                               ),
                               bottomTitles: AxisTitles(
-                                axisNameWidget: Text("Distance in m"),
-                                sideTitles: SideTitles(
+                                axisNameWidget: Text(xAxisTitle),
+                                sideTitles: const SideTitles(
                                     showTitles: true, reservedSize: 40),
                               ),
                             ),
                             lineBarsData: [
                               LineChartBarData(
-                                spots: _generateData(
-                                    instruction, instructionResult),
+                                spots: data,
                                 color: Colors.grey,
                                 dotData: const FlDotData(show: false),
                               ),
@@ -215,39 +249,80 @@ class RemovableWarningCard extends StatelessWidget {
   }
 
   List<FlSpot> _generateData(
-      MissionInstruction instruction, InstructionResult result,
-      {double resolution = 0.01}) {
-    if (instruction is! DriveInstruction || result is! DriveResult) return [];
-
-    final totalDistance = result.startPosition.distanceTo(result.endPosition);
-
+      double acceleration,
+      double initialVelocity,
+      double finalVelocity,
+      double maxVelocity,
+      double accelerationDistance,
+      double decelerationDistance,
+      double totalDistance,
+      {double scaleX = 1.0,
+      double scaleY = 1.0}) {
     List<FlSpot> dataPoints = [];
+    const dd = 0.001;
 
-    for (double d = 0;
-        d <= result.startPosition.distanceTo(result.accelerationEndPoint);
-        d += resolution) {
-      double velocity = sqrt(
-          2 * instruction.acceleration * d + pow(result.initialVelocity, 2));
-      dataPoints.add(FlSpot(d, velocity));
+    // Acceleration phase
+    for (double d = 0; d <= accelerationDistance; d += dd) {
+      double velocity = sqrt(2 * acceleration * d + pow(initialVelocity, 2));
+      dataPoints.add(FlSpot(d * scaleX, velocity * scaleY));
     }
 
-    dataPoints.add(FlSpot(
-        result.startPosition.distanceTo(result.accelerationEndPoint),
-        result.maxVelocity));
+    // Max velocity point
+    dataPoints.add(FlSpot(accelerationDistance * scaleX, maxVelocity * scaleY));
 
-    for (double d =
-            result.startPosition.distanceTo(result.decelerationStartPoint);
+    // Deceleration phase
+    for (double d = totalDistance - decelerationDistance;
         d < totalDistance;
-        d += resolution) {
-      double velocity = sqrt(
-          -2 * instruction.acceleration * (d - totalDistance) +
-              pow(result.finalVelocity, 2));
-      dataPoints.add(FlSpot(d, velocity));
+        d += dd) {
+      double velocity =
+          sqrt(-2 * acceleration * (d - totalDistance) + pow(finalVelocity, 2));
+      dataPoints.add(FlSpot(d * scaleX, velocity * scaleY));
     }
 
-    dataPoints.add(FlSpot(totalDistance, result.finalVelocity));
+    // Final velocity point
+    dataPoints.add(FlSpot(totalDistance * scaleX, finalVelocity * scaleY));
 
     return dataPoints;
+  }
+
+  List<FlSpot> _generateDataDrive(DriveResult result) {
+    return _generateData(
+      result.acceleration,
+      result.initialVelocity,
+      result.finalVelocity,
+      result.maxVelocity,
+      result.accelerationDistance,
+      result.decelerationDistance,
+      result.totalDistance,
+      scaleX: 100,
+      scaleY: 100,
+    );
+  }
+
+// Refactored _generateDataTurn function
+  List<FlSpot> _generateDataTurn(TurnResult result) {
+    return _generateData(
+      result.angularAcceleration,
+      result.initialAngularVelocity,
+      result.finalAngularVelocity,
+      result.maxAngularVelocity,
+      result.accelerationDegree,
+      result.decelerationDegree,
+      result.totalTurnDegree,
+    );
+  }
+
+// Refactored _generateDataRapidTurn function
+  List<FlSpot> _generateDataRapidTurn(RapidTurnResult result) {
+    return _generateData(
+      result.angularAcceleration,
+      0,
+      result.finalAngularVelocity,
+      result.maxAngularVelocity,
+      result.accelerationDegree,
+      result.accelerationDegree,
+      result.totalTurnDegree,
+    );
   }
 
   static String vecToString(Vector2 vec, int decimalPlaces) =>
