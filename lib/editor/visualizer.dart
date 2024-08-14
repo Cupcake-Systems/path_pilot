@@ -51,7 +51,6 @@ class _VisualizerState extends State<Visualizer> {
       padding: const EdgeInsets.all(8),
       child: Column(
         children: [
-          AppBar(title: const Text("Visual Editor")),
           Expanded(
             child: Container(
               decoration: BoxDecoration(

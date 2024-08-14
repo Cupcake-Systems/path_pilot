@@ -93,24 +93,27 @@ class _EditorState extends State<Editor> {
             padding: const EdgeInsets.all(8.0),
             child: Column(
               children: [
-                AppBar(title: const Text("Instructions Editor")),
-                const Divider(),
                 Flexible(
                   flex: 2,
                   child: ReorderableListView.builder(
                     itemCount: instructions.length,
-                    header: const Card(
-                      child: Padding(
-                        padding:
-                            EdgeInsets.symmetric(vertical: 12, horizontal: 40),
-                        child: Row(
-                          children: [
-                            Icon(Icons.start),
-                            SizedBox(width: 10),
-                            Text("Start"),
-                          ],
+                    header: Column(
+                      children: [
+                        AppBar(title: const Text("Instructions")),
+                        const Card(
+                          child: Padding(
+                            padding: EdgeInsets.symmetric(
+                                vertical: 12, horizontal: 40),
+                            child: Row(
+                              children: [
+                                Icon(Icons.start),
+                                SizedBox(width: 10),
+                                Text("Start"),
+                              ],
+                            ),
+                          ),
                         ),
-                      ),
+                      ],
                     ),
                     footer: Column(
                       mainAxisSize: MainAxisSize.min,
@@ -177,20 +180,19 @@ class _EditorState extends State<Editor> {
                 ),
                 if (irCalculatorResult != null) ...[
                   const Divider(),
-                  AppBar(
-                    title: const Text("IR Readings Settings"),
-                    actions: [
-                      IconButton(
-                        onPressed: () =>
-                            setState(() => irCalculatorResult = null),
-                        icon: const Icon(Icons.delete),
-                      )
-                    ],
-                  ),
-                  const Divider(),
                   Flexible(
                       child: ListView(
                     children: [
+                      AppBar(
+                        title: const Text("IR Readings Settings"),
+                        actions: [
+                          IconButton(
+                            onPressed: () =>
+                                setState(() => irCalculatorResult = null),
+                            icon: const Icon(Icons.delete),
+                          )
+                        ],
+                      ),
                       CheckboxListTile(
                         value: irReadPainterSettings.showTracks,
                         onChanged: (value) => setState(
