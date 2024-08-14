@@ -43,7 +43,7 @@ abstract class AbstractEditor extends StatelessWidget {
   String? _generateWarning() {
     if (_warning != null) return _warning;
     if (isLastInstruction &&
-        instructionResult.maxOuterVelocity.abs() > 0.00001) {
+        instructionResult.finalOuterVelocity.abs() > 0.00001) {
       return "Robi will not stop at the end";
     }
     if ((instructionResult.maxOuterVelocity - instruction.targetVelocity)
