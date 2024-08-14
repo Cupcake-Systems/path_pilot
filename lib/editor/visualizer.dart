@@ -112,8 +112,15 @@ class _VisualizerState extends State<Visualizer> {
                   },
                 ),
               ),
+              ElevatedButton(
+                onPressed: () {
+                  setState(() => _offset = Offset.zero);
+                  widget.transformChanged(scale, _offset);
+                },
+                child: const Text("Center"),
+              )
             ],
-          )
+          ),
         ],
       ),
     );

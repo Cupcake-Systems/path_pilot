@@ -5,7 +5,7 @@ import 'package:robi_line_drawer/editor/painters/ir_read_painter.dart';
 import 'package:robi_line_drawer/editor/painters/simulation_painter.dart';
 import 'package:robi_line_drawer/robi_api/ir_read_api.dart';
 import 'package:robi_line_drawer/robi_api/robi_utils.dart';
-import 'package:vector_math/vector_math.dart';
+import 'package:vector_math/vector_math.dart' show Vector2;
 
 import 'abstract_painter.dart';
 
@@ -52,34 +52,37 @@ class LinePainter extends CustomPainter {
     final int xLineCount = size.width ~/ scale + 1;
     final int yLineCount = size.height ~/ scale + 1;
 
-    for (double i = offset.dx - scale * xLineCount;
-        i < xLineCount * scale;
-        i += scale) {
-      canvas.drawLine(Offset(i, 0), Offset(i, size.height), paint);
+    for (double xo = size.width / 2 + offset.dx % scale - scale * xLineCount;
+        xo < xLineCount * scale;
+        xo += scale) {
+      canvas.drawLine(Offset(xo, 0), Offset(xo, size.height), paint);
     }
 
-    for (double i = offset.dx + 0.5 * scale - scale * xLineCount;
-        i < xLineCount * scale;
-        i += scale) {
-      canvas.drawLine(Offset(i, 0), Offset(i, size.height),
-          paint..color = white.withAlpha(50));
+    for (double yo = size.height / 2 + offset.dy % scale - scale * yLineCount;
+        yo < yLineCount * scale;
+        yo += scale) {
+      canvas.drawLine(Offset(0, yo), Offset(size.width, yo), paint);
     }
 
-    for (double i = offset.dy - scale * yLineCount;
-        i < yLineCount * scale;
-        i += scale) {
-      canvas.drawLine(Offset(0, i), Offset(size.width, i), paint);
+    paint.color = white.withAlpha(50);
+
+    for (double xo = size.width / 2 +
+            offset.dx % scale -
+            scale * xLineCount +
+            0.5 * scale;
+        xo < xLineCount * scale;
+        xo += scale) {
+      canvas.drawLine(Offset(xo, 0), Offset(xo, size.height), paint);
     }
 
-    for (double i = offset.dy + 0.5 * scale - scale * yLineCount;
-        i < yLineCount * scale;
-        i += scale) {
-      canvas.drawLine(Offset(0, i), Offset(size.width, i), paint);
+    for (double yo = size.height / 2 +
+            offset.dy % scale -
+            scale * yLineCount +
+            0.5 * scale;
+        yo < yLineCount * scale;
+        yo += scale) {
+      canvas.drawLine(Offset(0, yo), Offset(size.width, yo), paint);
     }
-
-    canvas.drawLine(Offset(0, offset.dy), Offset(size.width, offset.dy), paint);
-    canvas.drawLine(
-        Offset(offset.dx, 0), Offset(offset.dx, size.height), paint);
   }
 
   void paintScale(Canvas canvas, Size size) {
@@ -149,7 +152,9 @@ class LinePainter extends CustomPainter {
     paintVelocityScale(canvas, size);
 
     canvas.save();
-    canvas.translate(offset.dx, offset.dy);
+
+    final Offset center = Offset(size.width / 2, size.height / 2);
+    canvas.translate(center.dx + offset.dx, center.dy + offset.dy);
     canvas.scale(scale);
 
     if (irCalculatorResult != null) assert(irPathApproximation != null);
