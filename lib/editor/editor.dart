@@ -95,179 +95,223 @@ class _EditorState extends State<Editor> {
               children: [
                 Flexible(
                   flex: 2,
-                  child: ReorderableListView.builder(
-                    itemCount: instructions.length,
-                    header: Column(
-                      children: [
-                        AppBar(title: const Text("Instructions")),
-                        const Card(
-                          child: Padding(
-                            padding: EdgeInsets.symmetric(
-                                vertical: 12, horizontal: 40),
-                            child: Row(
-                              children: [
-                                Icon(Icons.start),
-                                SizedBox(width: 10),
-                                Text("Start"),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ],
+                  child: Scaffold(
+                    appBar: AppBar(
+                      title: const Text("Instructions"),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
                     ),
-                    footer: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        Row(
-                          children: [
-                            Expanded(
-                              child: Card.outlined(
+                    body: ReorderableListView.builder(
+                      itemCount: instructions.length,
+                      footer: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Card.outlined(
+                                  child: IconButton(
+                                    style: IconButton.styleFrom(
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(10),
+                                      ),
+                                    ),
+                                    padding: const EdgeInsets.symmetric(
+                                        vertical: 20),
+                                    icon: const Icon(Icons.add),
+                                    onPressed: () => showDialog(
+                                      context: context,
+                                      builder: (BuildContext context) =>
+                                          AddInstructionDialog(
+                                        instructionAdded:
+                                            (MissionInstruction instruction) {
+                                          instructions.insert(
+                                              instructions.length, instruction);
+                                          rerunSimulationAndUpdate();
+                                        },
+                                        robiConfig: widget.robiConfig,
+                                        simulationResult: simulationResult,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              Card.outlined(
                                 child: IconButton(
                                   style: IconButton.styleFrom(
                                     shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(10),
                                     ),
                                   ),
-                                  padding:
-                                      const EdgeInsets.symmetric(vertical: 20),
-                                  icon: const Icon(Icons.add),
-                                  onPressed: () => showDialog(
-                                    context: context,
-                                    builder: (BuildContext context) =>
-                                        AddInstructionDialog(
-                                      instructionAdded:
-                                          (MissionInstruction instruction) {
-                                        instructions.insert(
-                                            instructions.length, instruction);
-                                        rerunSimulationAndUpdate();
-                                      },
-                                      robiConfig: widget.robiConfig,
-                                      simulationResult: simulationResult,
-                                    ),
-                                  ),
+                                  padding: const EdgeInsets.symmetric(
+                                      vertical: 20, horizontal: 30),
+                                  onPressed: () {
+                                    instructions.clear();
+                                    rerunSimulationAndUpdate();
+                                  },
+                                  icon: const Icon(Icons.close),
                                 ),
                               ),
-                            ),
-                            Card.outlined(
-                              child: IconButton(
-                                style: IconButton.styleFrom(
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(10),
-                                  ),
-                                ),
-                                padding: const EdgeInsets.symmetric(
-                                    vertical: 20, horizontal: 30),
-                                onPressed: () {
-                                  instructions.clear();
-                                  rerunSimulationAndUpdate();
-                                },
-                                icon: const Icon(Icons.close),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
+                            ],
+                          ),
+                        ],
+                      ),
+                      itemBuilder: (context, i) => instructionToEditor(i),
+                      onReorder: (int oldIndex, int newIndex) {
+                        if (oldIndex < newIndex) --newIndex;
+                        instructions.insert(
+                            newIndex, instructions.removeAt(oldIndex));
+                        rerunSimulationAndUpdate();
+                      },
                     ),
-                    itemBuilder: (context, i) => instructionToEditor(i),
-                    onReorder: (int oldIndex, int newIndex) {
-                      if (oldIndex < newIndex) --newIndex;
-                      instructions.insert(
-                          newIndex, instructions.removeAt(oldIndex));
-                      rerunSimulationAndUpdate();
-                    },
                   ),
                 ),
                 if (irCalculatorResult != null) ...[
                   const Divider(),
                   Flexible(
-                      child: ListView(
-                    children: [
-                      AppBar(
+                    child: Scaffold(
+                      appBar: AppBar(
                         title: const Text("IR Readings Settings"),
                         actions: [
                           IconButton(
                             onPressed: () =>
                                 setState(() => irCalculatorResult = null),
                             icon: const Icon(Icons.delete),
-                          )
+                          ),
+                        ],
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10)),
+                      ),
+                      body: ListView(
+                        children: [
+                          const Text(
+                            "Visibility",
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: Table(
+                              columnWidths: const {
+                                0: FlexColumnWidth(1),
+                                1: FlexColumnWidth(2),
+                              },
+                              defaultVerticalAlignment:
+                                  TableCellVerticalAlignment.middle,
+                              children: [
+                                TableRow(
+                                  children: [
+                                    const Text("Show wheel track"),
+                                    Checkbox(
+                                      value: irReadPainterSettings.showTracks,
+                                      onChanged: (value) => setState(
+                                        () => irReadPainterSettings.showTracks =
+                                            value!,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                TableRow(
+                                  children: [
+                                    Text(
+                                        "Show only IR readings < ${irReadPainterSettings.irReadingsThreshold}"),
+                                    Slider(
+                                      value: irReadPainterSettings
+                                          .irReadingsThreshold
+                                          .toDouble(),
+                                      onChanged: (value) {
+                                        setState(() {
+                                          irReadPainterSettings
+                                                  .irReadingsThreshold =
+                                              value.round();
+                                        });
+                                      },
+                                      max: 1024,
+                                      divisions: 1024,
+                                    ),
+                                  ],
+                                ),
+                                TableRow(
+                                  children: [
+                                    const Text("Show calculated path"),
+                                    Checkbox(
+                                      value: irReadPainterSettings
+                                          .showCalculatedPath,
+                                      onChanged: (value) => setState(() =>
+                                          irReadPainterSettings
+                                              .showCalculatedPath = value!),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+                          const Text(
+                            "Path Approximation",
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: Table(
+                              columnWidths: const {
+                                0: FlexColumnWidth(1),
+                                1: FlexColumnWidth(2),
+                              },
+                              children: [
+                                TableRow(
+                                  children: [
+                                    const Text(
+                                        "Ramer Douglas Peucker tolerance"),
+                                    Slider(
+                                      value: ramerDouglasPeuckerTolerance,
+                                      onChanged: (value) => setState(() {
+                                        ramerDouglasPeuckerTolerance = value;
+                                        approximateIrPath();
+                                      }),
+                                      max: 5,
+                                    ),
+                                  ],
+                                ),
+                                TableRow(
+                                  children: [
+                                    Text(
+                                        "IR inclusion threshold: < $irInclusionThreshold"),
+                                    Slider(
+                                      value: irInclusionThreshold.toDouble(),
+                                      onChanged: (value) => setState(() {
+                                        irInclusionThreshold = value.round();
+                                        approximateIrPath();
+                                      }),
+                                      divisions: 1024,
+                                      max: 1024,
+                                    ),
+                                  ],
+                                ),
+                                TableRow(
+                                  children: [
+                                    const Text("Convert to Path"),
+                                    ElevatedButton(
+                                      onPressed: () {
+                                        PathToInstructions c =
+                                            PathToInstructions(
+                                                irPathApproximation:
+                                                    irPathApproximation!);
+                                        setState(
+                                            () => instructions = c.calculate());
+                                        rerunSimulationAndUpdate();
+                                      },
+                                      child: const Text("To Path"),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
                         ],
                       ),
-                      CheckboxListTile(
-                        value: irReadPainterSettings.showTracks,
-                        onChanged: (value) => setState(
-                            () => irReadPainterSettings.showTracks = value!),
-                        title: const Text("Show Wheel Track"),
-                      ),
-                      ListTile(
-                        title: Row(
-                          children: [
-                            Text(
-                                "Show only IR Readings < ${irReadPainterSettings.irReadingsThreshold}"),
-                            Slider(
-                              value: irReadPainterSettings.irReadingsThreshold
-                                  .toDouble(),
-                              onChanged: (value) {
-                                setState(() {
-                                  irReadPainterSettings.irReadingsThreshold =
-                                      value.round();
-                                });
-                              },
-                              min: 0,
-                              max: 1024,
-                            )
-                          ],
-                        ),
-                      ),
-                      CheckboxListTile(
-                        value: irReadPainterSettings.showCalculatedPath,
-                        onChanged: (value) => setState(() =>
-                            irReadPainterSettings.showCalculatedPath = value!),
-                        title: const Text("Show Calculated Path"),
-                      ),
-                      ListTile(
-                        title: Row(
-                          children: [
-                            const Text("Ramer Douglas Peucker Tolerance"),
-                            Slider(
-                              value: ramerDouglasPeuckerTolerance,
-                              onChanged: (value) => setState(() {
-                                ramerDouglasPeuckerTolerance = value;
-                                approximateIrPath();
-                              }),
-                              max: 5,
-                            ),
-                          ],
-                        ),
-                      ),
-                      ListTile(
-                        title: Row(
-                          children: [
-                            Text(
-                                "IR Inclusion Threshold: < $irInclusionThreshold"),
-                            Slider(
-                              value: irInclusionThreshold.toDouble(),
-                              onChanged: (value) => setState(() {
-                                irInclusionThreshold = value.round();
-                                approximateIrPath();
-                              }),
-                              min: 0,
-                              max: 1024,
-                            )
-                          ],
-                        ),
-                      ),
-                      ElevatedButton(
-                        onPressed: () {
-                          PathToInstructions c = PathToInstructions(
-                              irPathApproximation: irPathApproximation!);
-                          setState(() => instructions = c.calculate());
-                          rerunSimulationAndUpdate();
-                        },
-                        child: const Text("To Path"),
-                      )
-                    ],
-                  )),
+                    ),
+                  ),
                 ],
                 const Divider(),
                 Row(
