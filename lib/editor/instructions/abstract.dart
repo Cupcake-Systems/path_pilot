@@ -143,9 +143,10 @@ class RemovableWarningCard extends StatelessWidget {
                 child: Column(
                   children: [
                     const Divider(),
-                    SizedBox(
-                      height: 200,
+                    ConstrainedBox(
+                      constraints: const BoxConstraints(maxHeight: 200),
                       child: ListView(
+                        shrinkWrap: true,
                         children: [
                           Row(
                             children: [
