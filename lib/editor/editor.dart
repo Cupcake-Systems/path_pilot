@@ -14,6 +14,8 @@ import 'package:robi_line_drawer/robi_api/robi_utils.dart';
 import 'package:robi_line_drawer/editor/visualizer.dart';
 import 'package:vector_math/vector_math.dart';
 
+import '../app_storage.dart';
+import '../robi_api/exporter/exporter.dart';
 import '../robi_api/simulator.dart';
 import 'instructions/drive.dart';
 import 'instructions/turn.dart';
@@ -25,7 +27,6 @@ final inputFormatters = [
 class Editor extends StatefulWidget {
   final List<MissionInstruction> instructions;
   final RobiConfig robiConfig;
-  final void Function() exportPressed;
   final void Function(List<MissionInstruction> instructions)
       instructionsChanged;
 
@@ -33,7 +34,6 @@ class Editor extends StatefulWidget {
     super.key,
     required this.instructions,
     required this.robiConfig,
-    required this.exportPressed,
     required this.instructionsChanged,
   });
 
@@ -348,7 +348,7 @@ class _EditorState extends State<Editor> {
                     IconButton.filledTonal(
                       onPressed: simulationResult.instructionResults.isEmpty
                           ? null
-                          : widget.exportPressed,
+                          : exportClick,
                       icon: const Padding(
                         padding: EdgeInsets.symmetric(horizontal: 8),
                         child: Row(
@@ -363,6 +363,19 @@ class _EditorState extends State<Editor> {
           ),
         ),
       ],
+    );
+  }
+
+  void exportClick() async {
+    final path = await FilePicker.platform.saveFile(
+      dialogTitle: "Please select an output file:",
+      fileName: "exported.json",
+    );
+    if (path == null) return;
+    Exporter.saveToFile(
+      File(path),
+      RobiConfigStorage.lastUsedConfig,
+      simulationResult.instructionResults,
     );
   }
 
