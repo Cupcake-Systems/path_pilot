@@ -1,6 +1,5 @@
 import 'dart:math';
 
-import 'package:expandable/expandable.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:robi_line_drawer/editor/editor.dart';
@@ -17,7 +16,7 @@ abstract class AbstractEditor extends StatelessWidget {
   late final bool isLastInstruction;
 
   final Function(MissionInstruction newInstruction) change;
-  final Function()? removed;
+  final Function() removed;
   final Function(InstructionResult instructionResult)? entered;
   final Function()? exited;
 
@@ -55,8 +54,8 @@ abstract class AbstractEditor extends StatelessWidget {
   }
 }
 
-class RemovableWarningCard extends StatelessWidget {
-  final Function()? removed;
+class RemovableWarningCard extends StatefulWidget {
+  final Function() removed;
   final Function(InstructionResult instructionResult)? entered;
   final Function()? exited;
   final Function(MissionInstruction instruction) change;
@@ -74,7 +73,7 @@ class RemovableWarningCard extends StatelessWidget {
     required this.children,
     required this.instructionResult,
     required this.instruction,
-    this.removed,
+    required this.removed,
     this.entered,
     this.exited,
     required this.change,
@@ -83,182 +82,19 @@ class RemovableWarningCard extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
-    double maxX, maxY;
-    List<FlSpot> data;
-    String xAxisTitle, yAxisTitle;
+  State<RemovableWarningCard> createState() => _RemovableWarningCardState();
 
-    if (instructionResult is DriveResult) {
-      final inst = instructionResult as DriveResult;
-      maxX = inst.totalDistance * 100;
-      maxY = inst.maxVelocity * 100;
-      data = _generateDataDrive(inst);
-      xAxisTitle = "cm driven";
-      yAxisTitle = "Velocity in cm/s";
-    } else if (instructionResult is TurnResult ||
-        instructionResult is RapidTurnResult) {
-      xAxisTitle = "Degrees turned";
-      yAxisTitle = "Velocity in °/s";
-      if (instructionResult is TurnResult) {
-        final inst = instructionResult as TurnResult;
-        maxX = inst.totalTurnDegree.abs();
-        maxY = inst.maxAngularVelocity;
-        data = _generateDataTurn(inst);
-      } else if (instructionResult is RapidTurnResult) {
-        final inst = instructionResult as RapidTurnResult;
-        maxX = inst.totalTurnDegree.abs();
-        maxY = inst.maxAngularVelocity;
-        data = _generateDataRapidTurn(inst);
-      } else {
-        throw UnsupportedError("");
-      }
-    } else {
-      throw UnsupportedError("");
-    }
-
-    return MouseRegion(
-      onEnter: (event) {
-        if (entered != null) entered!(instructionResult);
-      },
-      onExit: (event) {
-        if (exited != null) exited!();
-      },
-      child: Card(
-        child: Column(
-          children: [
-            ExpandablePanel(
-              header: Row(
-                children: [
-                  header,
-                  const Spacer(),
-                  if (removed != null)
-                    IconButton(
-                        onPressed: removed, icon: const Icon(Icons.delete)),
-                  const SizedBox(width: 40),
-                ],
-              ),
-              collapsed: const SizedBox.shrink(),
-              expanded: Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: Column(
-                  children: [
-                    const Divider(),
-                    ConstrainedBox(
-                      constraints: const BoxConstraints(maxHeight: 200),
-                      child: ListView(
-                        shrinkWrap: true,
-                        children: [
-                          Row(
-                            children: [
-                              const Text("Acceleration"),
-                              Slider(
-                                value: instruction.acceleration,
-                                onChanged: (value) {
-                                  instruction.acceleration = value;
-                                  change(instruction);
-                                },
-                              ),
-                              Text(
-                                  "${roundToDigits(instruction.acceleration * 100, 2)}cm/s²"),
-                            ],
-                          ),
-                          Row(
-                            children: [
-                              const Text("Target Velocity"),
-                              Slider(
-                                value: instruction.targetVelocity,
-                                onChanged: (value) {
-                                  instruction.targetVelocity = value;
-                                  change(instruction);
-                                },
-                                min: 0.001,
-                              ),
-                              Text(
-                                  "${roundToDigits(instruction.targetVelocity * 100, 2)}cm/s"),
-                            ],
-                          ),
-                          ...children
-                        ],
-                      ),
-                    ),
-                    const Divider(),
-                    SizedBox(
-                      height: 300,
-                      child: AspectRatio(
-                        aspectRatio: 2,
-                        child: LineChart(
-                          LineChartData(
-                            minX: 0,
-                            minY: 0,
-                            maxX: maxX,
-                            maxY: maxY,
-                            titlesData: FlTitlesData(
-                              topTitles: const AxisTitles(),
-                              rightTitles: const AxisTitles(),
-                              leftTitles: AxisTitles(
-                                axisNameWidget: Text(yAxisTitle),
-                                sideTitles: const SideTitles(
-                                    showTitles: true, reservedSize: 40),
-                              ),
-                              bottomTitles: AxisTitles(
-                                axisNameWidget: Text(xAxisTitle),
-                                sideTitles: const SideTitles(
-                                    showTitles: true, reservedSize: 40),
-                              ),
-                            ),
-                            lineBarsData: [
-                              LineChartBarData(
-                                spots: data,
-                                color: Colors.grey,
-                                dotData: const FlDotData(show: false),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-                  ],
-                ),
-              ),
-              theme: const ExpandableThemeData(
-                  iconPlacement: ExpandablePanelIconPlacement.left,
-                  inkWellBorderRadius: BorderRadius.all(Radius.circular(10)),
-                  iconColor: Colors.white),
-            ),
-            if (warningMessage != null) ...[
-              const Divider(height: 0),
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                    borderRadius: const BorderRadius.vertical(
-                        bottom: Radius.circular(10)),
-                    color: Colors.yellow.withAlpha(50)),
-                child: Row(
-                  children: [
-                    const Icon(Icons.warning),
-                    const SizedBox(width: 10),
-                    Text(warningMessage!),
-                  ],
-                ),
-              ),
-            ],
-          ],
-        ),
-      ),
-    );
-  }
-
-  List<FlSpot> _generateData(
-      double acceleration,
-      double initialVelocity,
-      double finalVelocity,
-      double maxVelocity,
-      double accelerationDistance,
-      double decelerationDistance,
-      double totalDistance,
-      {double scaleX = 1.0,
-      double scaleY = 1.0}) {
+  static List<FlSpot> generateData(
+    double acceleration,
+    double initialVelocity,
+    double finalVelocity,
+    double maxVelocity,
+    double accelerationDistance,
+    double decelerationDistance,
+    double totalDistance, {
+    double scaleX = 1.0,
+    double scaleY = 1.0,
+  }) {
     List<FlSpot> dataPoints = [];
     const dd = 0.001;
 
@@ -286,8 +122,173 @@ class RemovableWarningCard extends StatelessWidget {
     return dataPoints;
   }
 
+  static String vecToString(Vector2 vec, int decimalPlaces) =>
+      "(${vec.x.toStringAsFixed(decimalPlaces)}, ${vec.y.toStringAsFixed(decimalPlaces)})";
+}
+
+class _RemovableWarningCardState extends State<RemovableWarningCard> {
+  bool isExpanded = false;
+
+  @override
+  Widget build(BuildContext context) {
+    double maxX = 0, maxY = 0;
+    List<FlSpot> data = [];
+    String xAxisTitle = "", yAxisTitle = "";
+
+    if (isExpanded) {
+      if (widget.instructionResult is DriveResult) {
+        final inst = widget.instructionResult as DriveResult;
+        maxX = inst.totalDistance * 100;
+        maxY = inst.maxVelocity * 100;
+        data = _generateDataDrive(inst);
+        xAxisTitle = "cm driven";
+        yAxisTitle = "Velocity in cm/s";
+      } else if (widget.instructionResult is TurnResult ||
+          widget.instructionResult is RapidTurnResult) {
+        xAxisTitle = "Degrees turned";
+        yAxisTitle = "Velocity in °/s";
+        if (widget.instructionResult is TurnResult) {
+          final inst = widget.instructionResult as TurnResult;
+          maxX = inst.totalTurnDegree.abs();
+          maxY = inst.maxAngularVelocity;
+          data = _generateDataTurn(inst);
+        } else if (widget.instructionResult is RapidTurnResult) {
+          final inst = widget.instructionResult as RapidTurnResult;
+          maxX = inst.totalTurnDegree.abs();
+          maxY = inst.maxAngularVelocity;
+          data = _generateDataRapidTurn(inst);
+        } else {
+          throw UnsupportedError("");
+        }
+      } else {
+        throw UnsupportedError("");
+      }
+    }
+
+    return MouseRegion(
+      onEnter: (event) {
+        if (widget.entered != null) widget.entered!(widget.instructionResult);
+      },
+      onExit: (event) {
+        if (widget.exited != null) widget.exited!();
+      },
+      child: Card(
+        child: Column(
+          children: [
+            ExpansionTile(
+              onExpansionChanged: (value) => setState(() => isExpanded = value),
+              collapsedShape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10)),
+              childrenPadding: const EdgeInsets.all(8),
+              title: widget.header,
+              trailing: Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: IconButton(
+                  onPressed: widget.removed,
+                  icon: const Icon(Icons.delete),
+                ),
+              ),
+              leading: Icon(isExpanded ? Icons.expand_less : Icons.expand_more),
+              subtitle: widget.warningMessage == null
+                  ? null
+                  : Container(
+                      padding: const EdgeInsets.all(10),
+                      margin: const EdgeInsets.symmetric(horizontal: 4),
+                      decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(10),
+                          color: Colors.yellow.withAlpha(50)),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.warning),
+                          const SizedBox(width: 10),
+                          Text(widget.warningMessage ?? ""),
+                        ],
+                      ),
+                    ),
+              children: isExpanded
+                  ? [
+                      Row(
+                        children: [
+                          const Text("Acceleration"),
+                          Slider(
+                            value: widget.instruction.acceleration,
+                            onChanged: (value) {
+                              widget.instruction.acceleration = value;
+                              widget.change(widget.instruction);
+                            },
+                          ),
+                          Text(
+                              "${roundToDigits(widget.instruction.acceleration * 100, 2)}cm/s²"),
+                        ],
+                      ),
+                      Row(
+                        children: [
+                          const Text("Target Velocity"),
+                          Slider(
+                            value: widget.instruction.targetVelocity,
+                            onChanged: (value) {
+                              widget.instruction.targetVelocity = value;
+                              widget.change(widget.instruction);
+                            },
+                            min: 0.001,
+                          ),
+                          Text(
+                              "${roundToDigits(widget.instruction.targetVelocity * 100, 2)}cm/s"),
+                        ],
+                      ),
+                      ...widget.children,
+                      const SizedBox(height: 20),
+                      SizedBox(
+                        height: 300,
+                        child: AspectRatio(
+                          aspectRatio: 2,
+                          child: LineChart(
+                            LineChartData(
+                              minX: 0,
+                              minY: 0,
+                              maxX: maxX,
+                              maxY: maxY,
+                              titlesData: FlTitlesData(
+                                topTitles: const AxisTitles(),
+                                rightTitles: const AxisTitles(),
+                                leftTitles: AxisTitles(
+                                  axisNameWidget: Text(yAxisTitle),
+                                  sideTitles: const SideTitles(
+                                      showTitles: true, reservedSize: 40),
+                                ),
+                                bottomTitles: AxisTitles(
+                                  axisNameWidget: Text(xAxisTitle),
+                                  axisNameSize: 20,
+                                  sideTitles: const SideTitles(
+                                      showTitles: true, reservedSize: 30),
+                                ),
+                              ),
+                              lineBarsData: [
+                                LineChartBarData(
+                                  spots: data,
+                                  color: Colors.grey,
+                                  dotData: const FlDotData(show: false),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                    ]
+                  : const [],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   List<FlSpot> _generateDataDrive(DriveResult result) {
-    return _generateData(
+    return RemovableWarningCard.generateData(
       result.acceleration,
       result.initialVelocity,
       result.finalVelocity,
@@ -302,7 +303,7 @@ class RemovableWarningCard extends StatelessWidget {
 
 // Refactored _generateDataTurn function
   List<FlSpot> _generateDataTurn(TurnResult result) {
-    return _generateData(
+    return RemovableWarningCard.generateData(
       result.angularAcceleration,
       result.initialAngularVelocity,
       result.finalAngularVelocity,
@@ -315,7 +316,7 @@ class RemovableWarningCard extends StatelessWidget {
 
 // Refactored _generateDataRapidTurn function
   List<FlSpot> _generateDataRapidTurn(RapidTurnResult result) {
-    return _generateData(
+    return RemovableWarningCard.generateData(
       result.angularAcceleration,
       0,
       result.finalAngularVelocity,
@@ -325,7 +326,4 @@ class RemovableWarningCard extends StatelessWidget {
       result.totalTurnDegree,
     );
   }
-
-  static String vecToString(Vector2 vec, int decimalPlaces) =>
-      "(${vec.x.toStringAsFixed(decimalPlaces)}, ${vec.y.toStringAsFixed(decimalPlaces)})";
 }
