@@ -42,29 +42,27 @@ class Editor extends StatefulWidget {
 }
 
 class _EditorState extends State<Editor> {
+
   late List<MissionInstruction> instructions = widget.instructions;
+  late Simulator simulator = Simulator(widget.robiConfig);
+
+  // Visualizer
   double scale = 10;
   Offset offset = Offset.zero;
-  double ramerDouglasPeuckerTolerance = 0.5;
-  late Simulator simulator = Simulator(widget.robiConfig);
-  late SimulationResult simulationResult;
+  InstructionResult? highlightedInstruction;
+  IrCalculatorResult? irCalculatorResult;
+  List<Vector2>? irPathApproximation;
+  late SimulationResult simulationResult = simulator.calculate(instructions);
 
+  // IR readings settings
+  double ramerDouglasPeuckerTolerance = 0.5;
   IrReadPainterSettings irReadPainterSettings = IrReadPainterSettings(
     irReadingsThreshold: 1024,
     showCalculatedPath: true,
     showTracks: false,
   );
-  InstructionResult? highlightedInstruction;
-  IrCalculatorResult? irCalculatorResult;
-  List<Vector2>? irPathApproximation;
   IrCalculator? irCalculator;
   int irInclusionThreshold = 100;
-
-  @override
-  void initState() {
-    super.initState();
-    simulationResult = simulator.calculate(instructions);
-  }
 
   @override
   Widget build(BuildContext context) {
