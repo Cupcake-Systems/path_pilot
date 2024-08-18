@@ -131,7 +131,7 @@ abstract class InstructionResult {
       innerAcceleration;
   final Vector2 startPosition, endPosition;
 
-  InstructionResult({
+  const InstructionResult({
     required this.startRotation,
     required this.endRotation,
     required this.maxOuterVelocity,

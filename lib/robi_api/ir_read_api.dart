@@ -41,7 +41,7 @@ class IrReadResult {
   final double resolution;
   final List<Measurement> measurements;
 
-  IrReadResult({required this.resolution, required this.measurements});
+  const IrReadResult({required this.resolution, required this.measurements});
 
   factory IrReadResult.fromData(String data) {
     final lines = data.trim().split("\n");
@@ -60,14 +60,17 @@ class IrReading {
   final int value;
   final Vector2 position;
 
-  IrReading(this.value, this.position);
+  const IrReading(this.value, this.position);
 }
 
 class IrCalculatorResult {
   final List<(IrReading left, IrReading middle, IrReading right)> irData;
   final List<(Vector2 left, Vector2 right)> wheelPositions;
 
-  IrCalculatorResult({required this.irData, required this.wheelPositions});
+  const IrCalculatorResult({
+    required this.irData,
+    required this.wheelPositions,
+  });
 }
 
 class IrCalculator {
