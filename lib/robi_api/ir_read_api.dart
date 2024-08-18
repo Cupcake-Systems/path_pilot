@@ -75,18 +75,17 @@ class IrCalculatorResult {
 
 class IrCalculator {
   final IrReadResult irReadResult;
-  final RobiConfig robiConfig;
 
-  late final mc = sqrt(
-      pow(robiConfig.distanceWheelIr, 2) + pow(robiConfig.trackWidth / 2, 2));
-  late final rc = sqrt(pow(robiConfig.distanceWheelIr, 2) +
-      pow(robiConfig.trackWidth / 2 - 0.01, 2));
-  late final lc = sqrt(pow(robiConfig.distanceWheelIr, 2) +
-      pow(robiConfig.trackWidth / 2 + 0.01, 2));
+  IrCalculator({required this.irReadResult});
 
-  IrCalculator({required this.irReadResult, required this.robiConfig});
+  IrCalculatorResult calculate(RobiConfig robiConfig) {
+    final mc = sqrt(
+        pow(robiConfig.distanceWheelIr, 2) + pow(robiConfig.trackWidth / 2, 2));
+    final rc = sqrt(pow(robiConfig.distanceWheelIr, 2) +
+        pow(robiConfig.trackWidth / 2 - 0.01, 2));
+    final lc = sqrt(pow(robiConfig.distanceWheelIr, 2) +
+        pow(robiConfig.trackWidth / 2 + 0.01, 2));
 
-  IrCalculatorResult calculate() {
     Vector2 lastRightOffset = Vector2(0, -robiConfig.trackWidth / 2);
     Vector2 lastLeftOffset = Vector2(0, robiConfig.trackWidth / 2);
 

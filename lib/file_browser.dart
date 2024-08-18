@@ -3,10 +3,8 @@ import 'dart:io';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:path/path.dart';
-import 'package:robi_line_drawer/app_storage.dart';
 import 'package:robi_line_drawer/constants.dart';
 import 'package:robi_line_drawer/editor/editor.dart';
-import 'package:robi_line_drawer/editor/robi_config.dart';
 import 'package:robi_line_drawer/main.dart';
 import 'package:robi_line_drawer/robi_api/robi_path_serializer.dart';
 import 'package:robi_line_drawer/robi_api/robi_utils.dart';
@@ -68,53 +66,6 @@ class _FileBrowserState extends State<FileBrowser>
                       ),
                     ],
                     child: const MenuAcceleratorLabel('&File'),
-                  ),
-                  SubmenuButton(
-                    menuChildren: [
-                      MenuItemButton(
-                        leadingIcon: const Icon(Icons.add),
-                        onPressed: () => showDialog(
-                          context: context,
-                          builder: (context) => RobiConfigurator(
-                              addedConfig: (config) => setState(() {
-                                    RobiConfigStorage.add(config);
-                                    RobiConfigStorage.lastUsedConfigIndex =
-                                        RobiConfigStorage.length - 1;
-                                  }),
-                              index: RobiConfigStorage.length),
-                        ),
-                        child: const MenuAcceleratorLabel('&New'),
-                      ),
-                      const Divider(height: 0),
-                      SubmenuButton(
-                        menuChildren: [
-                          for (int i = 0; i < RobiConfigStorage.length; ++i)
-                            RadioMenuButton(
-                              trailingIcon: RobiConfigStorage.length <= 1
-                                  ? null
-                                  : IconButton(
-                                      icon: const Icon(Icons.delete),
-                                      onPressed: () => setState(() {
-                                        RobiConfigStorage.remove(
-                                            RobiConfigStorage.get(i));
-                                        RobiConfigStorage.lastUsedConfigIndex =
-                                            0;
-                                      }),
-                                    ),
-                              value: RobiConfigStorage.get(i),
-                              groupValue: RobiConfigStorage.lastUsedConfig,
-                              onChanged: (value) => setState(() =>
-                                  RobiConfigStorage.lastUsedConfigIndex =
-                                      RobiConfigStorage.indexOf(value!)),
-                              child: MenuAcceleratorLabel(
-                                  RobiConfigStorage.get(i).name ??
-                                      '&Config ${i + 1}'),
-                            )
-                        ],
-                        child: const MenuAcceleratorLabel('&Select'),
-                      ),
-                    ],
-                    child: const MenuAcceleratorLabel("&Robi Config"),
                   ),
                   SubmenuButton(
                     menuChildren: [
@@ -260,7 +211,6 @@ class _FileBrowserState extends State<FileBrowser>
       openTabs.add(
         Editor(
           initailInstructions: newInstructions.toList(),
-          robiConfig: RobiConfigStorage.lastUsedConfig,
           file: tab,
         ),
       );
@@ -288,7 +238,6 @@ class _FileBrowserState extends State<FileBrowser>
       () => openTabs.add(
         Editor(
           initailInstructions: const [],
-          robiConfig: RobiConfigStorage.lastUsedConfig,
           file: file,
         ),
       ),

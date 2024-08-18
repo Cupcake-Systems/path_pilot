@@ -9,6 +9,7 @@ import 'package:robi_line_drawer/editor/instructions/abstract.dart';
 import 'package:robi_line_drawer/editor/instructions/rapid_turn.dart';
 import 'package:robi_line_drawer/editor/ir_line_approximation/path_to_instructions.dart';
 import 'package:robi_line_drawer/editor/painters/ir_read_painter.dart';
+import 'package:robi_line_drawer/editor/robi_config.dart';
 import 'package:robi_line_drawer/robi_api/ir_read_api.dart';
 import 'package:robi_line_drawer/robi_api/robi_utils.dart';
 import 'package:robi_line_drawer/editor/visualizer.dart';
@@ -27,13 +28,11 @@ final inputFormatters = [
 
 class Editor extends StatefulWidget {
   final List<MissionInstruction> initailInstructions;
-  final RobiConfig robiConfig;
   final File file;
 
   const Editor({
     super.key,
     required this.initailInstructions,
-    required this.robiConfig,
     required this.file,
   });
 
@@ -42,9 +41,11 @@ class Editor extends StatefulWidget {
 }
 
 class _EditorState extends State<Editor> with AutomaticKeepAliveClientMixin {
+  RobiConfig selectedRobiConfig = RobiConfigStorage.lastUsedConfig;
+
   late List<MissionInstruction> instructions =
       List.from(widget.initailInstructions);
-  late Simulator simulator = Simulator(widget.robiConfig);
+  late Simulator simulator = Simulator(selectedRobiConfig);
 
   // Visualizer
   double scale = 10;
@@ -79,7 +80,7 @@ class _EditorState extends State<Editor> with AutomaticKeepAliveClientMixin {
               offset = newOffset;
               scale = newScale;
             },
-            robiConfig: widget.robiConfig,
+            robiConfig: selectedRobiConfig,
             irReadPainterSettings: irReadPainterSettings,
             highlightedInstruction: highlightedInstruction,
             irCalculatorResult: irCalculatorResult,
@@ -132,11 +133,89 @@ class _EditorState extends State<Editor> with AutomaticKeepAliveClientMixin {
                             child: const MenuAcceleratorLabel('&Save'),
                           ),
                           const VerticalDivider(width: 0),
+                          SubmenuButton(
+                            menuChildren: [
+                              MenuItemButton(
+                                leadingIcon: const Icon(Icons.add),
+                                onPressed: () => showDialog(
+                                  context: context,
+                                  builder: (context) => RobiConfigurator(
+                                    addedConfig: (config) {
+                                      RobiConfigStorage.add(config);
+                                      RobiConfigStorage.lastUsedConfigIndex =
+                                          RobiConfigStorage.length - 1;
+                                      setState(() {
+                                        selectedRobiConfig = config;
+                                        rerunSimulationAndUpdate();
+                                        irCalculatorResult = irCalculator!
+                                            .calculate(selectedRobiConfig);
+                                        approximateIrPath();
+                                      });
+                                    },
+                                    index: RobiConfigStorage.length,
+                                  ),
+                                ),
+                                child: const MenuAcceleratorLabel('&New'),
+                              ),
+                              const Divider(height: 0),
+                              SubmenuButton(
+                                menuChildren: [
+                                  for (int i = 0;
+                                      i < RobiConfigStorage.length;
+                                      ++i)
+                                    RadioMenuButton(
+                                      trailingIcon: RobiConfigStorage.length <=
+                                              1
+                                          ? null
+                                          : IconButton(
+                                              icon: const Icon(Icons.delete),
+                                              onPressed: () {
+                                                RobiConfigStorage.remove(
+                                                    RobiConfigStorage.get(i));
+                                                RobiConfigStorage
+                                                    .lastUsedConfigIndex = 0;
+                                                setState(() {
+                                                  selectedRobiConfig =
+                                                      RobiConfigStorage.get(0);
+                                                  rerunSimulationAndUpdate();
+                                                  irCalculatorResult =
+                                                      irCalculator!.calculate(
+                                                          selectedRobiConfig);
+                                                  approximateIrPath();
+                                                });
+                                              },
+                                            ),
+                                      value: RobiConfigStorage.get(i),
+                                      groupValue: selectedRobiConfig,
+                                      onChanged: (value) {
+                                        RobiConfigStorage.lastUsedConfigIndex =
+                                            RobiConfigStorage.indexOf(value!);
+                                        setState(() {
+                                          selectedRobiConfig = value;
+                                          rerunSimulationAndUpdate();
+                                          irCalculatorResult = irCalculator!
+                                              .calculate(selectedRobiConfig);
+                                          approximateIrPath();
+                                        });
+                                      },
+                                      child: MenuAcceleratorLabel(
+                                          RobiConfigStorage.get(i).name ??
+                                              '&Config ${i + 1}'),
+                                    )
+                                ],
+                                child: const MenuAcceleratorLabel('&Select'),
+                              ),
+                            ],
+                            child: const MenuAcceleratorLabel("&Robi Config"),
+                          ),
+                          const VerticalDivider(width: 0),
                           MenuItemButton(
-                            onPressed: simulationResult.instructionResults.isEmpty
-                                ? null
-                                : exportClick,
-                            trailingIcon: const Icon(Icons.file_upload_outlined),
+                            onPressed:
+                                simulationResult.instructionResults.isEmpty
+                                    ? null
+                                    : exportClick,
+                            trailingIcon:
+                                const Icon(Icons.file_upload_outlined),
                             child: const MenuAcceleratorLabel("&Export"),
                           ),
                         ],
@@ -169,7 +248,7 @@ class _EditorState extends State<Editor> with AutomaticKeepAliveClientMixin {
                                             instructions.length, instruction);
                                         rerunSimulationAndUpdate();
                                       },
-                                      robiConfig: widget.robiConfig,
+                                      robiConfig: selectedRobiConfig,
                                       simulationResult: simulationResult,
                                     ),
                                   ),
@@ -236,8 +315,8 @@ class _EditorState extends State<Editor> with AutomaticKeepAliveClientMixin {
                                       Checkbox(
                                         value: irReadPainterSettings.showTracks,
                                         onChanged: (value) => setState(
-                                          () => irReadPainterSettings.showTracks =
-                                              value!,
+                                          () => irReadPainterSettings
+                                              .showTracks = value!,
                                         ),
                                       ),
                                     ],
@@ -327,8 +406,8 @@ class _EditorState extends State<Editor> with AutomaticKeepAliveClientMixin {
                                               PathToInstructions(
                                                   irPathApproximation:
                                                       irPathApproximation!);
-                                          setState(
-                                              () => instructions = c.calculate());
+                                          setState(() =>
+                                              instructions = c.calculate());
                                           rerunSimulationAndUpdate();
                                         },
                                         child: const Text("To Path"),
@@ -354,11 +433,11 @@ class _EditorState extends State<Editor> with AutomaticKeepAliveClientMixin {
                           final file = File(result.files.single.path!);
                           final importedIrReadResult =
                               IrReadResult.fromFile(file);
-                          irCalculator = IrCalculator(
-                              irReadResult: importedIrReadResult,
-                              robiConfig: widget.robiConfig);
+                          irCalculator =
+                              IrCalculator(irReadResult: importedIrReadResult);
                           setState(() {
-                            irCalculatorResult = irCalculator!.calculate();
+                            irCalculatorResult =
+                                irCalculator!.calculate(selectedRobiConfig);
                             approximateIrPath();
                           });
                         },
