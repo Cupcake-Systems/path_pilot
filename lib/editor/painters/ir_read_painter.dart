@@ -43,9 +43,7 @@ class IrReadPainter extends MyPainter {
     required this.pathApproximation,
   });
 
-  void addLine(Vector2 a, Path path) {
-    path.lineTo(a.x, -a.y);
-  }
+  static void addLine(Vector2 a, Path path) => path.lineTo(a.x, -a.y);
 
   void drawCircle(Vector2 a, Paint paint, {double radius = 0.005}) {
     final o = Offset(a.x, -a.y);
@@ -54,13 +52,13 @@ class IrReadPainter extends MyPainter {
 
   @override
   void paint() {
-    Path leftPath = Path();
-    Path rightPath = Path();
+    final leftPath = Path();
+    final rightPath = Path();
 
     (Vector2, Vector2) first = irCalculatorResult.wheelPositions.first;
 
-    leftPath.moveTo(first.$1.x, first.$1.y);
-    rightPath.moveTo(first.$2.x, first.$2.y);
+    leftPath.moveTo(first.$1.x, -first.$1.y);
+    rightPath.moveTo(first.$2.x, -first.$2.y);
 
     for (int i = 0; i < irCalculatorResult.wheelPositions.length; ++i) {
       final wheelPositions = irCalculatorResult.wheelPositions[i];
