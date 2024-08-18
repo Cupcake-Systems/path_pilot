@@ -95,11 +95,17 @@ class RemovableWarningCard extends StatefulWidget {
     double scaleX = 1.0,
     double scaleY = 1.0,
   }) {
-    List<FlSpot> dataPoints = [];
-    const dd = 0.001;
+    final List<FlSpot> dataPoints = [];
+
+    const resolution = 100;
+
+    double dd =
+        ((accelerationDistance + decelerationDistance) / totalDistance) * 0.01;
+    if (dd <= 0) dd = 0.01;
 
     // Acceleration phase
-    for (double d = 0; d <= accelerationDistance; d += dd) {
+    for (int i = 0; i < resolution; ++i) {
+      final d = i / resolution * accelerationDistance;
       double velocity = sqrt(2 * acceleration * d + pow(initialVelocity, 2));
       dataPoints.add(FlSpot(d * scaleX, velocity * scaleY));
     }
@@ -108,9 +114,10 @@ class RemovableWarningCard extends StatefulWidget {
     dataPoints.add(FlSpot(accelerationDistance * scaleX, maxVelocity * scaleY));
 
     // Deceleration phase
-    for (double d = totalDistance - decelerationDistance;
-        d < totalDistance;
-        d += dd) {
+    for (int i = 0; i < resolution; ++i) {
+      final d = i / resolution * decelerationDistance +
+          totalDistance -
+          decelerationDistance;
       double velocity =
           sqrt(-2 * acceleration * (d - totalDistance) + pow(finalVelocity, 2));
       dataPoints.add(FlSpot(d * scaleX, velocity * scaleY));
@@ -118,7 +125,6 @@ class RemovableWarningCard extends StatefulWidget {
 
     // Final velocity point
     dataPoints.add(FlSpot(totalDistance * scaleX, finalVelocity * scaleY));
-
     return dataPoints;
   }
 
