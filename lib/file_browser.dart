@@ -163,7 +163,13 @@ class _FileBrowserState extends State<FileBrowser>
         ),
         Expanded(
           child: openTabs.isEmpty
-              ? const Center()
+              ? Center(
+                  child: ElevatedButton.icon(
+                    icon: const Icon(Icons.add),
+                    onPressed: newFile,
+                    label: const Text('Create'),
+                  ),
+                )
               : DefaultTabController(
                   length: openTabs.length,
                   child: Scaffold(
