@@ -15,8 +15,8 @@ class SimulationPainter extends MyPainter {
   final double strokeWidth;
   final InstructionResult? highlightedInstruction;
 
-  late final yellowOutlinePaint = Paint()
-    ..color = Colors.yellow
+  late final highlightPaint = Paint()
+    ..color = Colors.orangeAccent
     ..strokeWidth = (strokeWidth + 0.01)
     ..style = PaintingStyle.stroke;
 
@@ -86,7 +86,7 @@ class SimulationPainter extends MyPainter {
 
     if (instructionResult == highlightedInstruction) {
       canvas.drawLine(vecToOffset(instructionResult.startPosition),
-          vecToOffset(instructionResult.endPosition), yellowOutlinePaint);
+          vecToOffset(instructionResult.endPosition), highlightPaint);
     }
 
     // Draw the original line
@@ -197,7 +197,7 @@ class SimulationPainter extends MyPainter {
         radians(startAngle - degreeOffset),
         radians(sweepAngle),
         false,
-        yellowOutlinePaint,
+        highlightPaint,
       );
     }
 
