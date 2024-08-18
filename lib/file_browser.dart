@@ -13,7 +13,6 @@ import 'package:robi_line_drawer/robi_api/robi_utils.dart';
 import 'package:robi_line_drawer/settings/settings.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 
-
 class FileBrowser extends StatefulWidget {
   const FileBrowser({super.key});
 
@@ -211,18 +210,20 @@ class _FileBrowserState extends State<FileBrowser>
                         ),
                       ),
                     ),
-                    body: TabBarView(children: [
-                      for (final filePath in instructionTable.keys) ...[
-                        Editor(
-                          instructions: instructionTable[filePath]!,
-                          robiConfig: RobiConfigStorage.lastUsedConfig,
-                          instructionsChanged:
-                              (List<MissionInstruction> instructions) {
-                            instructionTable[filePath] = instructions;
-                          },
-                        ),
-                      ]
-                    ]),
+                    body: TabBarView(
+                      children: [
+                        for (final filePath in instructionTable.keys) ...[
+                          Editor(
+                            instructions: instructionTable[filePath]!,
+                            robiConfig: RobiConfigStorage.lastUsedConfig,
+                            instructionsChanged:
+                                (List<MissionInstruction> instructions) {
+                              instructionTable[filePath] = instructions;
+                            },
+                          ),
+                        ]
+                      ],
+                    ),
                   ),
                 ),
         ),

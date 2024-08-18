@@ -41,7 +41,7 @@ class Editor extends StatefulWidget {
   State<Editor> createState() => _EditorState();
 }
 
-class _EditorState extends State<Editor> {
+class _EditorState extends State<Editor> with AutomaticKeepAliveClientMixin {
 
   late List<MissionInstruction> instructions = widget.instructions;
   late Simulator simulator = Simulator(widget.robiConfig);
@@ -66,6 +66,7 @@ class _EditorState extends State<Editor> {
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
     return Row(
       children: [
         Flexible(
@@ -487,6 +488,9 @@ class _EditorState extends State<Editor> {
       ramerDouglasPeuckerTolerance,
     );
   }
+
+  @override
+  bool get wantKeepAlive => true;
 }
 
 double roundToDigits(double num, int digits) {
