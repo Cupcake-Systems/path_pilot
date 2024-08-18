@@ -37,7 +37,6 @@ class Visualizer extends StatefulWidget {
 }
 
 class _VisualizerState extends State<Visualizer> {
-  late var simulationResult = widget.simulationResult;
   late double scale = widget.scale;
   late Offset _offset = widget.offset;
   late Offset _previousOffset = widget.offset;
