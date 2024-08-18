@@ -8,8 +8,7 @@ import 'package:robi_line_drawer/file_browser.dart';
 late final PackageInfo packageInfo;
 
 Future<void> main() async {
-  LicenseRegistry.addLicense(() => Stream<LicenseEntry>.value(
-      const LicenseEntryWithLineBreaks(<String>["robi_line_drawer"], license)));
+  LicenseRegistry.addLicense(() => Stream<LicenseEntry>.value(const LicenseEntryWithLineBreaks(<String>["robi_line_drawer"], license)));
   await AppData.init();
   packageInfo = await PackageInfo.fromPlatform();
   runApp(const MyApp());
@@ -23,8 +22,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Robi Line Drawer',
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(
-            seedColor: Colors.cyan, brightness: Brightness.dark),
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.cyan, brightness: Brightness.dark),
         useMaterial3: true,
       ),
       home: const MyHomePage(),

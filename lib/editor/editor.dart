@@ -10,9 +10,9 @@ import 'package:robi_line_drawer/editor/instructions/rapid_turn.dart';
 import 'package:robi_line_drawer/editor/ir_line_approximation/path_to_instructions.dart';
 import 'package:robi_line_drawer/editor/painters/ir_read_painter.dart';
 import 'package:robi_line_drawer/editor/robi_config.dart';
+import 'package:robi_line_drawer/editor/visualizer.dart';
 import 'package:robi_line_drawer/robi_api/ir_read_api.dart';
 import 'package:robi_line_drawer/robi_api/robi_utils.dart';
-import 'package:robi_line_drawer/editor/visualizer.dart';
 import 'package:vector_math/vector_math.dart' show Vector2;
 
 import '../app_storage.dart';
@@ -22,9 +22,7 @@ import '../robi_api/simulator.dart';
 import 'instructions/drive.dart';
 import 'instructions/turn.dart';
 
-final inputFormatters = [
-  FilteringTextInputFormatter.allow(RegExp(r'^(\d+)?\.?\d{0,5}'))
-];
+final inputFormatters = [FilteringTextInputFormatter.allow(RegExp(r'^(\d+)?\.?\d{0,5}'))];
 
 class Editor extends StatefulWidget {
   final List<MissionInstruction> initailInstructions;
@@ -43,8 +41,7 @@ class Editor extends StatefulWidget {
 class _EditorState extends State<Editor> with AutomaticKeepAliveClientMixin {
   RobiConfig selectedRobiConfig = RobiConfigStorage.lastUsedConfig;
 
-  late List<MissionInstruction> instructions =
-      List.from(widget.initailInstructions);
+  late List<MissionInstruction> instructions = List.from(widget.initailInstructions);
   late Simulator simulator = Simulator(selectedRobiConfig);
 
   // Visualizer
@@ -124,8 +121,7 @@ class _EditorState extends State<Editor> with AutomaticKeepAliveClientMixin {
                           MenuItemButton(
                             leadingIcon: const Icon(Icons.save),
                             onPressed: () {
-                              RobiPathSerializer.saveToFile(
-                                  widget.file, instructions);
+                              RobiPathSerializer.saveToFile(widget.file, instructions);
                               ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(content: Text('Saved')),
                               );
@@ -142,13 +138,11 @@ class _EditorState extends State<Editor> with AutomaticKeepAliveClientMixin {
                                   builder: (context) => RobiConfigurator(
                                     addedConfig: (config) {
                                       RobiConfigStorage.add(config);
-                                      RobiConfigStorage.lastUsedConfigIndex =
-                                          RobiConfigStorage.length - 1;
+                                      RobiConfigStorage.lastUsedConfigIndex = RobiConfigStorage.length - 1;
                                       setState(() {
                                         selectedRobiConfig = config;
                                         rerunSimulationAndUpdate();
-                                        irCalculatorResult = irCalculator!
-                                            .calculate(selectedRobiConfig);
+                                        irCalculatorResult = irCalculator!.calculate(selectedRobiConfig);
                                         approximateIrPath();
                                       });
                                     },
@@ -160,27 +154,19 @@ class _EditorState extends State<Editor> with AutomaticKeepAliveClientMixin {
                               const Divider(height: 0),
                               SubmenuButton(
                                 menuChildren: [
-                                  for (int i = 0;
-                                      i < RobiConfigStorage.length;
-                                      ++i)
+                                  for (int i = 0; i < RobiConfigStorage.length; ++i)
                                     RadioMenuButton(
-                                      trailingIcon: RobiConfigStorage.length <=
-                                              1
+                                      trailingIcon: RobiConfigStorage.length <= 1
                                           ? null
                                           : IconButton(
                                               icon: const Icon(Icons.delete),
                                               onPressed: () {
-                                                RobiConfigStorage.remove(
-                                                    RobiConfigStorage.get(i));
-                                                RobiConfigStorage
-                                                    .lastUsedConfigIndex = 0;
+                                                RobiConfigStorage.remove(RobiConfigStorage.get(i));
+                                                RobiConfigStorage.lastUsedConfigIndex = 0;
                                                 setState(() {
-                                                  selectedRobiConfig =
-                                                      RobiConfigStorage.get(0);
+                                                  selectedRobiConfig = RobiConfigStorage.get(0);
                                                   rerunSimulationAndUpdate();
-                                                  irCalculatorResult =
-                                                      irCalculator!.calculate(
-                                                          selectedRobiConfig);
+                                                  irCalculatorResult = irCalculator!.calculate(selectedRobiConfig);
                                                   approximateIrPath();
                                                 });
                                               },
@@ -188,19 +174,15 @@ class _EditorState extends State<Editor> with AutomaticKeepAliveClientMixin {
                                       value: RobiConfigStorage.get(i),
                                       groupValue: selectedRobiConfig,
                                       onChanged: (value) {
-                                        RobiConfigStorage.lastUsedConfigIndex =
-                                            RobiConfigStorage.indexOf(value!);
+                                        RobiConfigStorage.lastUsedConfigIndex = RobiConfigStorage.indexOf(value!);
                                         setState(() {
                                           selectedRobiConfig = value;
                                           rerunSimulationAndUpdate();
-                                          irCalculatorResult = irCalculator!
-                                              .calculate(selectedRobiConfig);
+                                          irCalculatorResult = irCalculator!.calculate(selectedRobiConfig);
                                           approximateIrPath();
                                         });
                                       },
-                                      child: MenuAcceleratorLabel(
-                                          RobiConfigStorage.get(i).name ??
-                                              '&Config ${i + 1}'),
+                                      child: MenuAcceleratorLabel(RobiConfigStorage.get(i).name ?? '&Config ${i + 1}'),
                                     )
                                 ],
                                 child: const MenuAcceleratorLabel('&Select'),
@@ -210,12 +192,8 @@ class _EditorState extends State<Editor> with AutomaticKeepAliveClientMixin {
                           ),
                           const VerticalDivider(width: 0),
                           MenuItemButton(
-                            onPressed:
-                                simulationResult.instructionResults.isEmpty
-                                    ? null
-                                    : exportClick,
-                            trailingIcon:
-                                const Icon(Icons.file_upload_outlined),
+                            onPressed: simulationResult.instructionResults.isEmpty ? null : exportClick,
+                            trailingIcon: const Icon(Icons.file_upload_outlined),
                             child: const MenuAcceleratorLabel("&Export"),
                           ),
                         ],
@@ -235,17 +213,13 @@ class _EditorState extends State<Editor> with AutomaticKeepAliveClientMixin {
                                       borderRadius: BorderRadius.circular(10),
                                     ),
                                   ),
-                                  padding:
-                                      const EdgeInsets.symmetric(vertical: 20),
+                                  padding: const EdgeInsets.symmetric(vertical: 20),
                                   icon: const Icon(Icons.add),
                                   onPressed: () => showDialog(
                                     context: context,
-                                    builder: (BuildContext context) =>
-                                        AddInstructionDialog(
-                                      instructionAdded:
-                                          (MissionInstruction instruction) {
-                                        instructions.insert(
-                                            instructions.length, instruction);
+                                    builder: (BuildContext context) => AddInstructionDialog(
+                                      instructionAdded: (MissionInstruction instruction) {
+                                        instructions.insert(instructions.length, instruction);
                                         rerunSimulationAndUpdate();
                                       },
                                       robiConfig: selectedRobiConfig,
@@ -262,8 +236,7 @@ class _EditorState extends State<Editor> with AutomaticKeepAliveClientMixin {
                                     borderRadius: BorderRadius.circular(10),
                                   ),
                                 ),
-                                padding: const EdgeInsets.symmetric(
-                                    vertical: 20, horizontal: 30),
+                                padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 30),
                                 onPressed: () {
                                   instructions.clear();
                                   rerunSimulationAndUpdate();
@@ -278,16 +251,14 @@ class _EditorState extends State<Editor> with AutomaticKeepAliveClientMixin {
                     itemBuilder: (context, i) => instructionToEditor(i),
                     onReorder: (int oldIndex, int newIndex) {
                       if (oldIndex < newIndex) --newIndex;
-                      instructions.insert(
-                          newIndex, instructions.removeAt(oldIndex));
+                      instructions.insert(newIndex, instructions.removeAt(oldIndex));
                       rerunSimulationAndUpdate();
                     },
                   ),
                   if (irCalculatorResult != null) ...[
                     Scaffold(
                       floatingActionButton: ElevatedButton.icon(
-                        onPressed: () =>
-                            setState(() => irCalculatorResult = null),
+                        onPressed: () => setState(() => irCalculatorResult = null),
                         label: const Text("Remove"),
                         icon: const Icon(Icons.delete),
                       ),
@@ -306,8 +277,7 @@ class _EditorState extends State<Editor> with AutomaticKeepAliveClientMixin {
                                   0: FlexColumnWidth(1),
                                   1: FlexColumnWidth(2),
                                 },
-                                defaultVerticalAlignment:
-                                    TableCellVerticalAlignment.middle,
+                                defaultVerticalAlignment: TableCellVerticalAlignment.middle,
                                 children: [
                                   TableRow(
                                     children: [
@@ -315,25 +285,19 @@ class _EditorState extends State<Editor> with AutomaticKeepAliveClientMixin {
                                       Checkbox(
                                         value: irReadPainterSettings.showTracks,
                                         onChanged: (value) => setState(
-                                          () => irReadPainterSettings
-                                              .showTracks = value!,
+                                          () => irReadPainterSettings.showTracks = value!,
                                         ),
                                       ),
                                     ],
                                   ),
                                   TableRow(
                                     children: [
-                                      Text(
-                                          "Show only IR readings < ${irReadPainterSettings.irReadingsThreshold}"),
+                                      Text("Show only IR readings < ${irReadPainterSettings.irReadingsThreshold}"),
                                       Slider(
-                                        value: irReadPainterSettings
-                                            .irReadingsThreshold
-                                            .toDouble(),
+                                        value: irReadPainterSettings.irReadingsThreshold.toDouble(),
                                         onChanged: (value) {
                                           setState(() {
-                                            irReadPainterSettings
-                                                    .irReadingsThreshold =
-                                                value.round();
+                                            irReadPainterSettings.irReadingsThreshold = value.round();
                                           });
                                         },
                                         max: 1024,
@@ -345,11 +309,8 @@ class _EditorState extends State<Editor> with AutomaticKeepAliveClientMixin {
                                     children: [
                                       const Text("Show calculated path"),
                                       Checkbox(
-                                        value: irReadPainterSettings
-                                            .showCalculatedPath,
-                                        onChanged: (value) => setState(() =>
-                                            irReadPainterSettings
-                                                .showCalculatedPath = value!),
+                                        value: irReadPainterSettings.showCalculatedPath,
+                                        onChanged: (value) => setState(() => irReadPainterSettings.showCalculatedPath = value!),
                                       ),
                                     ],
                                   ),
@@ -370,8 +331,7 @@ class _EditorState extends State<Editor> with AutomaticKeepAliveClientMixin {
                                 children: [
                                   TableRow(
                                     children: [
-                                      const Text(
-                                          "Ramer Douglas Peucker tolerance"),
+                                      const Text("Ramer Douglas Peucker tolerance"),
                                       Slider(
                                         value: ramerDouglasPeuckerTolerance,
                                         onChanged: (value) => setState(() {
@@ -384,8 +344,7 @@ class _EditorState extends State<Editor> with AutomaticKeepAliveClientMixin {
                                   ),
                                   TableRow(
                                     children: [
-                                      Text(
-                                          "IR inclusion threshold: < $irInclusionThreshold"),
+                                      Text("IR inclusion threshold: < $irInclusionThreshold"),
                                       Slider(
                                         value: irInclusionThreshold.toDouble(),
                                         onChanged: (value) => setState(() {
@@ -402,12 +361,8 @@ class _EditorState extends State<Editor> with AutomaticKeepAliveClientMixin {
                                       const Text("Convert to Path"),
                                       ElevatedButton(
                                         onPressed: () {
-                                          PathToInstructions c =
-                                              PathToInstructions(
-                                                  irPathApproximation:
-                                                      irPathApproximation!);
-                                          setState(() =>
-                                              instructions = c.calculate());
+                                          PathToInstructions c = PathToInstructions(irPathApproximation: irPathApproximation!);
+                                          setState(() => instructions = c.calculate());
                                           rerunSimulationAndUpdate();
                                         },
                                         child: const Text("To Path"),
@@ -431,13 +386,10 @@ class _EditorState extends State<Editor> with AutomaticKeepAliveClientMixin {
                           );
                           if (result == null) return;
                           final file = File(result.files.single.path!);
-                          final importedIrReadResult =
-                              IrReadResult.fromFile(file);
-                          irCalculator =
-                              IrCalculator(irReadResult: importedIrReadResult);
+                          final importedIrReadResult = IrReadResult.fromFile(file);
+                          irCalculator = IrCalculator(irReadResult: importedIrReadResult);
                           setState(() {
-                            irCalculatorResult =
-                                irCalculator!.calculate(selectedRobiConfig);
+                            irCalculatorResult = irCalculator!.calculate(selectedRobiConfig);
                             approximateIrPath();
                           });
                         },
@@ -552,8 +504,7 @@ class _EditorState extends State<Editor> with AutomaticKeepAliveClientMixin {
       if (i > 0) {
         // Ensure the initial velocity for the next instruction is always <= than the target velocity
         // because an instruction cannot decelerate to target velocity, only accelerate.
-        if (calcRes.instructionResults.last.finalOuterVelocity >
-            nextInstruction.targetVelocity) {
+        if (calcRes.instructionResults.last.finalOuterVelocity > nextInstruction.targetVelocity) {
           setState(() {
             instruction.acceleration = 1; // TODO: Calculate the value
           });

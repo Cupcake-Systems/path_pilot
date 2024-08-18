@@ -35,19 +35,15 @@ abstract class AbstractEditor extends StatelessWidget {
     this.exited,
   }) : _warning = warning {
     instructionResult = simulationResult.instructionResults[instructionIndex];
-    isLastInstruction =
-        instructionIndex == simulationResult.instructionResults.length - 1;
+    isLastInstruction = instructionIndex == simulationResult.instructionResults.length - 1;
   }
 
   String? _generateWarning() {
     if (_warning != null) return _warning;
-    if (isLastInstruction &&
-        instructionResult.finalOuterVelocity.abs() > 0.00001) {
+    if (isLastInstruction && instructionResult.finalOuterVelocity.abs() > 0.00001) {
       return "Robi will not stop at the end";
     }
-    if ((instructionResult.maxOuterVelocity - instruction.targetVelocity)
-            .abs() >
-        0.000001) {
+    if ((instructionResult.maxOuterVelocity - instruction.targetVelocity).abs() > 0.000001) {
       return "Robi will only reach ${roundToDigits(instructionResult.maxOuterVelocity * 100, 2)}cm/s";
     }
     return null;
@@ -99,8 +95,7 @@ class RemovableWarningCard extends StatefulWidget {
 
     const resolution = 100;
 
-    double dd =
-        ((accelerationDistance + decelerationDistance) / totalDistance) * 0.01;
+    double dd = ((accelerationDistance + decelerationDistance) / totalDistance) * 0.01;
     if (dd <= 0) dd = 0.01;
 
     // Acceleration phase
@@ -115,11 +110,8 @@ class RemovableWarningCard extends StatefulWidget {
 
     // Deceleration phase
     for (int i = 0; i < resolution; ++i) {
-      final d = i / resolution * decelerationDistance +
-          totalDistance -
-          decelerationDistance;
-      double velocity =
-          sqrt(-2 * acceleration * (d - totalDistance) + pow(finalVelocity, 2));
+      final d = i / resolution * decelerationDistance + totalDistance - decelerationDistance;
+      double velocity = sqrt(-2 * acceleration * (d - totalDistance) + pow(finalVelocity, 2));
       dataPoints.add(FlSpot(d * scaleX, velocity * scaleY));
     }
 
@@ -128,8 +120,7 @@ class RemovableWarningCard extends StatefulWidget {
     return dataPoints;
   }
 
-  static String vecToString(Vector2 vec, int decimalPlaces) =>
-      "(${vec.x.toStringAsFixed(decimalPlaces)}, ${vec.y.toStringAsFixed(decimalPlaces)})";
+  static String vecToString(Vector2 vec, int decimalPlaces) => "(${vec.x.toStringAsFixed(decimalPlaces)}, ${vec.y.toStringAsFixed(decimalPlaces)})";
 }
 
 class _RemovableWarningCardState extends State<RemovableWarningCard> {
@@ -149,8 +140,7 @@ class _RemovableWarningCardState extends State<RemovableWarningCard> {
         data = _generateDataDrive(inst);
         xAxisTitle = "cm driven";
         yAxisTitle = "Velocity in cm/s";
-      } else if (widget.instructionResult is TurnResult ||
-          widget.instructionResult is RapidTurnResult) {
+      } else if (widget.instructionResult is TurnResult || widget.instructionResult is RapidTurnResult) {
         xAxisTitle = "Degrees turned";
         yAxisTitle = "Velocity in °/s";
         if (widget.instructionResult is TurnResult) {
@@ -186,8 +176,7 @@ class _RemovableWarningCardState extends State<RemovableWarningCard> {
               collapsedShape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(10),
               ),
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10)),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
               childrenPadding: const EdgeInsets.all(8),
               title: widget.header,
               trailing: Padding(
@@ -203,9 +192,7 @@ class _RemovableWarningCardState extends State<RemovableWarningCard> {
                   : Container(
                       padding: const EdgeInsets.all(10),
                       margin: const EdgeInsets.symmetric(horizontal: 4),
-                      decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(10),
-                          color: Colors.yellow.withAlpha(50)),
+                      decoration: BoxDecoration(borderRadius: BorderRadius.circular(10), color: Colors.yellow.withAlpha(50)),
                       child: Row(
                         children: [
                           const Icon(Icons.warning),
@@ -222,8 +209,7 @@ class _RemovableWarningCardState extends State<RemovableWarningCard> {
                           1: FlexColumnWidth(),
                           2: IntrinsicColumnWidth(),
                         },
-                        defaultVerticalAlignment:
-                            TableCellVerticalAlignment.middle,
+                        defaultVerticalAlignment: TableCellVerticalAlignment.middle,
                         children: [
                           TableRow(
                             children: [
@@ -231,13 +217,11 @@ class _RemovableWarningCardState extends State<RemovableWarningCard> {
                               Slider(
                                 value: widget.instruction.acceleration,
                                 onChanged: (value) {
-                                  widget.instruction.acceleration =
-                                      roundToDigits(value, 3);
+                                  widget.instruction.acceleration = roundToDigits(value, 3);
                                   widget.change(widget.instruction);
                                 },
                               ),
-                              Text(
-                                  "${roundToDigits(widget.instruction.acceleration * 100, 2)}cm/s²"),
+                              Text("${roundToDigits(widget.instruction.acceleration * 100, 2)}cm/s²"),
                             ],
                           ),
                           TableRow(
@@ -246,14 +230,12 @@ class _RemovableWarningCardState extends State<RemovableWarningCard> {
                               Slider(
                                 value: widget.instruction.targetVelocity,
                                 onChanged: (value) {
-                                  widget.instruction.targetVelocity =
-                                      roundToDigits(value, 3);
+                                  widget.instruction.targetVelocity = roundToDigits(value, 3);
                                   widget.change(widget.instruction);
                                 },
                                 min: 0.001,
                               ),
-                              Text(
-                                  "${roundToDigits(widget.instruction.targetVelocity * 100, 2)}cm/s"),
+                              Text("${roundToDigits(widget.instruction.targetVelocity * 100, 2)}cm/s"),
                             ],
                           ),
                           ...widget.children,
@@ -275,14 +257,12 @@ class _RemovableWarningCardState extends State<RemovableWarningCard> {
                                 rightTitles: const AxisTitles(),
                                 leftTitles: AxisTitles(
                                   axisNameWidget: Text(yAxisTitle),
-                                  sideTitles: const SideTitles(
-                                      showTitles: true, reservedSize: 40),
+                                  sideTitles: const SideTitles(showTitles: true, reservedSize: 40),
                                 ),
                                 bottomTitles: AxisTitles(
                                   axisNameWidget: Text(xAxisTitle),
                                   axisNameSize: 20,
-                                  sideTitles: const SideTitles(
-                                      showTitles: true, reservedSize: 30),
+                                  sideTitles: const SideTitles(showTitles: true, reservedSize: 30),
                                 ),
                               ),
                               lineBarsData: [

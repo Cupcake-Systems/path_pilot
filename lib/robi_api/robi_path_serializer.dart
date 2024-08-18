@@ -15,8 +15,7 @@ class InstructionContainer {
     throw UnsupportedError("");
   }
 
-  InstructionContainer(this.instruction)
-      : type = instructionToType(instruction);
+  InstructionContainer(this.instruction) : type = instructionToType(instruction);
 
   static UserInstruction instructionToType(MissionInstruction instruction) {
     if (instruction is DriveInstruction) {
@@ -54,9 +53,7 @@ class InstructionContainer {
 }
 
 class RobiPathSerializer {
-  static Future<File> saveToFile(
-          File file, List<MissionInstruction> instructions) =>
-      file.writeAsString(encode(instructions));
+  static Future<File> saveToFile(File file, List<MissionInstruction> instructions) => file.writeAsString(encode(instructions));
 
   static String encode(List<MissionInstruction> instructions) {
     final List<InstructionContainer> containers = [];
@@ -69,8 +66,7 @@ class RobiPathSerializer {
   static Iterable<MissionInstruction>? decode(String json) {
     try {
       final List<dynamic> decoded = jsonDecode(json);
-      final parsed =
-          decoded.map((e) => InstructionContainer.fromJson(e).instruction);
+      final parsed = decoded.map((e) => InstructionContainer.fromJson(e).instruction);
       return parsed;
     } on Exception {
       return null;

@@ -48,12 +48,10 @@ class RobiConfigStorage {
 
   static int _loadLastUsedConfig() => AppData._prefs.getInt(_lastUsedKey) ?? 0;
 
-  static void _saveLastUsedConfig() =>
-      AppData._prefs.setInt(_lastUsedKey, _lastUsedConfigIndex);
+  static void _saveLastUsedConfig() => AppData._prefs.setInt(_lastUsedKey, _lastUsedConfigIndex);
 
   static void _saveConfigs() {
-    final jsonString =
-        jsonEncode(_storedConfigs.map((e) => e.toJson()).toList());
+    final jsonString = jsonEncode(_storedConfigs.map((e) => e.toJson()).toList());
     AppData._prefs.setString(_storageKey, jsonString);
   }
 

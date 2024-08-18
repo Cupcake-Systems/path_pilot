@@ -26,9 +26,7 @@ class PathToInstructions {
 
       double alpha = acos(a.dot(b) / (a.length * b.length)) * 180 / pi;
 
-      if (point.distanceTo(
-              polarToCartesian(alpha + rotation, distance) + prevPoint) >
-          0.0001) {
+      if (point.distanceTo(polarToCartesian(alpha + rotation, distance) + prevPoint) > 0.0001) {
         alpha *= -1;
       }
 

@@ -18,8 +18,7 @@ class FileBrowser extends StatefulWidget {
   State<FileBrowser> createState() => _FileBrowserState();
 }
 
-class _FileBrowserState extends State<FileBrowser>
-    with TickerProviderStateMixin {
+class _FileBrowserState extends State<FileBrowser> with TickerProviderStateMixin {
   List<Editor> openTabs = [];
 
   @override
@@ -76,8 +75,7 @@ class _FileBrowserState extends State<FileBrowser>
                       ),
                       MenuItemButton(
                         leadingIcon: const Icon(Icons.check_circle),
-                        onPressed: () =>
-                            launchUrlString("$repoUrl/issues?q=is%3Aissue"),
+                        onPressed: () => launchUrlString("$repoUrl/issues?q=is%3Aissue"),
                         child: const MenuAcceleratorLabel('&Known Issues'),
                       ),
                       MenuItemButton(
@@ -87,8 +85,7 @@ class _FileBrowserState extends State<FileBrowser>
                             context: context,
                             applicationName: "Robi Line Drawer",
                             applicationVersion: packageInfo.version,
-                            applicationLegalese:
-                                "© Copyright Finn Drünert 2024",
+                            applicationLegalese: "© Copyright Finn Drünert 2024",
                             children: [
                               Card(
                                 child: InkWell(
@@ -133,8 +130,7 @@ class _FileBrowserState extends State<FileBrowser>
                           children: [
                             SizedBox(
                               child: TabBar(
-                                labelPadding:
-                                    const EdgeInsets.symmetric(horizontal: 5),
+                                labelPadding: const EdgeInsets.symmetric(horizontal: 5),
                                 tabAlignment: TabAlignment.start,
                                 isScrollable: true,
                                 labelColor: Colors.white,
@@ -164,8 +160,7 @@ class _FileBrowserState extends State<FileBrowser>
               children: [
                 const Icon(Icons.edit_document, size: 15),
                 const SizedBox(width: 10),
-                Text(basename(editor.file.path).split(".robi_script.json")[0],
-                    textAlign: TextAlign.center),
+                Text(basename(editor.file.path).split(".robi_script.json")[0], textAlign: TextAlign.center),
                 const SizedBox(width: 10),
                 SizedBox(
                   width: 20,
@@ -220,9 +215,7 @@ class _FileBrowserState extends State<FileBrowser>
   }
 
   Future<void> newFile() async {
-    final result = await FilePicker.platform.saveFile(
-        dialogTitle: "Please select an output file:",
-        fileName: "new.robi_script.json");
+    final result = await FilePicker.platform.saveFile(dialogTitle: "Please select an output file:", fileName: "new.robi_script.json");
 
     if (result == null) return;
 
@@ -245,5 +238,4 @@ class _FileBrowserState extends State<FileBrowser>
   }
 }
 
-const defaultRobiConfig =
-    RobiConfig(0.032, 0.147, 0.06, 0.025, name: "Default");
+const defaultRobiConfig = RobiConfig(0.032, 0.147, 0.06, 0.025, name: "Default");

@@ -46,8 +46,7 @@ class _AddInstructionDialogState extends State<AddInstructionDialog> {
           children: [
             for (final groupName in groupedUserInstructions.keys) ...[
               Text(groupName, style: const TextStyle(fontSize: 20)),
-              for (final userInstruction
-                  in groupedUserInstructions[groupName]!) ...[
+              for (final userInstruction in groupedUserInstructions[groupName]!) ...[
                 createRadioButtonForAdd(userInstruction),
               ],
               const Divider(height: 5),
@@ -79,8 +78,7 @@ enum UserInstruction {
   rapidTurn,
 }
 
-MissionInstruction addInstruction(
-    UserInstruction instruction, RobiConfig robiConfig) {
+MissionInstruction addInstruction(UserInstruction instruction, RobiConfig robiConfig) {
   switch (instruction) {
     case UserInstruction.drive:
       double targetVel = 0.5;
@@ -112,11 +110,7 @@ MissionInstruction addInstruction(
 }
 
 const Map<String, List<UserInstruction>> groupedUserInstructions = {
-  "Basic": [
-    UserInstruction.drive,
-    UserInstruction.turn,
-    UserInstruction.rapidTurn
-  ],
+  "Basic": [UserInstruction.drive, UserInstruction.turn, UserInstruction.rapidTurn],
 };
 
 const Map<UserInstruction, IconData> userInstructionToIcon = {
@@ -125,6 +119,4 @@ const Map<UserInstruction, IconData> userInstructionToIcon = {
   UserInstruction.rapidTurn: Icons.turn_right,
 };
 
-String camelToSentence(String text) => text.replaceAllMapped(
-    RegExp(r'^([a-z])|[A-Z]'),
-    (Match m) => m[1] == null ? " ${m[0]}" : m[1]!.toUpperCase());
+String camelToSentence(String text) => text.replaceAllMapped(RegExp(r'^([a-z])|[A-Z]'), (Match m) => m[1] == null ? " ${m[0]}" : m[1]!.toUpperCase());

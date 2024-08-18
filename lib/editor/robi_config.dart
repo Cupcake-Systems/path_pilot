@@ -7,21 +7,16 @@ class RobiConfigurator extends StatelessWidget {
   final void Function(RobiConfig config) addedConfig;
   final int index;
 
-  const RobiConfigurator(
-      {super.key, required this.addedConfig, required this.index});
+  const RobiConfigurator({super.key, required this.addedConfig, required this.index});
 
   @override
   Widget build(BuildContext context) {
     return StatefulBuilder(builder: (context, setState) {
       final formKey = GlobalKey<FormState>();
-      final radiusController = TextEditingController(
-          text: "${defaultRobiConfig.wheelRadius * 100}");
-      final trackController = TextEditingController(
-          text: "${defaultRobiConfig.trackWidth * 100}");
-      final distanceWheelIRController = TextEditingController(
-          text: "${defaultRobiConfig.distanceWheelIr * 100}");
-      final wheelWidthController = TextEditingController(
-          text: "${defaultRobiConfig.wheelWidth * 100}");
+      final radiusController = TextEditingController(text: "${defaultRobiConfig.wheelRadius * 100}");
+      final trackController = TextEditingController(text: "${defaultRobiConfig.trackWidth * 100}");
+      final distanceWheelIRController = TextEditingController(text: "${defaultRobiConfig.distanceWheelIr * 100}");
+      final wheelWidthController = TextEditingController(text: "${defaultRobiConfig.wheelWidth * 100}");
       final nameController = TextEditingController(text: "Config ${index + 1}");
 
       return AlertDialog(
@@ -33,8 +28,7 @@ class RobiConfigurator extends StatelessWidget {
             children: [
               TextFormField(
                 controller: nameController,
-                decoration:
-                    const InputDecoration(label: Text("Configuration Name")),
+                decoration: const InputDecoration(label: Text("Configuration Name")),
                 validator: (value) {
                   if (value == null || value.isEmpty) return "Enter a value";
                   return null;
@@ -47,12 +41,8 @@ class RobiConfigurator extends StatelessWidget {
                     Expanded(
                       child: TextFormField(
                         controller: radiusController,
-                        keyboardType: const TextInputType.numberWithOptions(
-                            decimal: true),
-                        inputFormatters: <TextInputFormatter>[
-                          FilteringTextInputFormatter.allow(
-                              RegExp(r'^(\d+)?\.?\d{0,4}'))
-                        ],
+                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                        inputFormatters: <TextInputFormatter>[FilteringTextInputFormatter.allow(RegExp(r'^(\d+)?\.?\d{0,4}'))],
                         validator: (value) {
                           if (value == null || value.isEmpty) {
                             return "Enter a value";
@@ -74,12 +64,8 @@ class RobiConfigurator extends StatelessWidget {
                     Expanded(
                       child: TextFormField(
                         controller: trackController,
-                        keyboardType: const TextInputType.numberWithOptions(
-                            decimal: true),
-                        inputFormatters: <TextInputFormatter>[
-                          FilteringTextInputFormatter.allow(
-                              RegExp(r'^(\d+)?\.?\d{0,4}'))
-                        ],
+                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                        inputFormatters: <TextInputFormatter>[FilteringTextInputFormatter.allow(RegExp(r'^(\d+)?\.?\d{0,4}'))],
                         validator: (value) {
                           if (value == null || value.isEmpty) {
                             return "Enter a value";
@@ -101,12 +87,8 @@ class RobiConfigurator extends StatelessWidget {
                     Expanded(
                       child: TextFormField(
                         controller: distanceWheelIRController,
-                        keyboardType: const TextInputType.numberWithOptions(
-                            decimal: true),
-                        inputFormatters: <TextInputFormatter>[
-                          FilteringTextInputFormatter.allow(
-                              RegExp(r'^(\d+)?\.?\d{0,4}'))
-                        ],
+                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                        inputFormatters: <TextInputFormatter>[FilteringTextInputFormatter.allow(RegExp(r'^(\d+)?\.?\d{0,4}'))],
                         validator: (value) {
                           if (value == null || value.isEmpty) {
                             return "Enter a value";
@@ -128,12 +110,8 @@ class RobiConfigurator extends StatelessWidget {
                     Expanded(
                       child: TextFormField(
                         controller: wheelWidthController,
-                        keyboardType: const TextInputType.numberWithOptions(
-                            decimal: true),
-                        inputFormatters: <TextInputFormatter>[
-                          FilteringTextInputFormatter.allow(
-                              RegExp(r'^(\d+)?\.?\d{0,4}'))
-                        ],
+                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                        inputFormatters: <TextInputFormatter>[FilteringTextInputFormatter.allow(RegExp(r'^(\d+)?\.?\d{0,4}'))],
                         validator: (value) {
                           if (value == null || value.isEmpty) {
                             return "Enter a value";

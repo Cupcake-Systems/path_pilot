@@ -14,8 +14,7 @@ class Exported {
         "config": config.toJson(),
         "instructions": instructionResults.map((e) {
           final exported = e.export();
-          return exported.toJson()
-            ..addAll({"type": exportedObjectMapper(exported)});
+          return exported.toJson()..addAll({"type": exportedObjectMapper(exported)});
         }).toList(),
       };
 
@@ -28,14 +27,11 @@ class Exported {
 }
 
 class Exporter {
-  static String encode(
-      RobiConfig config, List<InstructionResult> instructions) {
+  static String encode(RobiConfig config, List<InstructionResult> instructions) {
     final exported = Exported(config, instructions).toJson();
 
     return jsonEncode(exported);
   }
 
-  static Future<File> saveToFile(File file, RobiConfig config,
-          List<InstructionResult> instructions) =>
-      file.writeAsString(encode(config, instructions));
+  static Future<File> saveToFile(File file, RobiConfig config, List<InstructionResult> instructions) => file.writeAsString(encode(config, instructions));
 }

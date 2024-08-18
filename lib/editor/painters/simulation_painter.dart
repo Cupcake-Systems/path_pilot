@@ -42,17 +42,11 @@ class SimulationPainter extends MyPainter {
     }
   }
 
-  static Alignment polarToAlignment(double deg) =>
-      Alignment(cosD(deg), -sinD(deg));
+  static Alignment polarToAlignment(double deg) => Alignment(cosD(deg), -sinD(deg));
 
   void drawDrive(DriveResult instructionResult) {
-    final accelerationEndPoint = polarToCartesian(
-            instructionResult.startRotation,
-            instructionResult.accelerationDistance) +
-        instructionResult.startPosition;
-    final decelerationStartPoint = instructionResult.endPosition +
-        polarToCartesian(instructionResult.endRotation - 180,
-            instructionResult.decelerationDistance);
+    final accelerationEndPoint = polarToCartesian(instructionResult.startRotation, instructionResult.accelerationDistance) + instructionResult.startPosition;
+    final decelerationStartPoint = instructionResult.endPosition + polarToCartesian(instructionResult.endRotation - 180, instructionResult.decelerationDistance);
 
     final accelerationPaint = Paint()
       ..shader = CurvedGradient(
@@ -64,9 +58,7 @@ class SimulationPainter extends MyPainter {
         end: polarToAlignment(instructionResult.startRotation),
         granularity: 10,
         curveGenerator: (x) => sqrt(x),
-      ).createShader(Rect.fromCircle(
-          center: vecToOffset(instructionResult.startPosition),
-          radius: instructionResult.accelerationDistance))
+      ).createShader(Rect.fromCircle(center: vecToOffset(instructionResult.startPosition), radius: instructionResult.accelerationDistance))
       ..strokeWidth = strokeWidth;
 
     final decelerationPaint = Paint()
@@ -79,14 +71,11 @@ class SimulationPainter extends MyPainter {
         end: polarToAlignment(instructionResult.startRotation),
         granularity: 10,
         curveGenerator: (x) => sqrt(1 - x),
-      ).createShader(Rect.fromCircle(
-          center: vecToOffset(decelerationStartPoint),
-          radius: instructionResult.decelerationDistance))
+      ).createShader(Rect.fromCircle(center: vecToOffset(decelerationStartPoint), radius: instructionResult.decelerationDistance))
       ..strokeWidth = strokeWidth;
 
     if (instructionResult == highlightedInstruction) {
-      canvas.drawLine(vecToOffset(instructionResult.startPosition),
-          vecToOffset(instructionResult.endPosition), highlightPaint);
+      canvas.drawLine(vecToOffset(instructionResult.startPosition), vecToOffset(instructionResult.endPosition), highlightPaint);
     }
 
     // Draw the original line
@@ -129,9 +118,7 @@ class SimulationPainter extends MyPainter {
       radius: radius,
       left: instruction.left,
       lineStart: vecToOffset(instruction.startPosition),
-      sweepAngle: instruction.totalTurnDegree -
-          instruction.accelerationDegree -
-          instruction.decelerationDegree,
+      sweepAngle: instruction.totalTurnDegree - instruction.accelerationDegree - instruction.decelerationDegree,
       robiRotation: instruction.startRotation,
       highlight: highlight,
       degreeOffset: instruction.accelerationDegree,
@@ -146,8 +133,7 @@ class SimulationPainter extends MyPainter {
       sweepAngle: instruction.decelerationDegree,
       robiRotation: instruction.startRotation,
       highlight: highlight,
-      degreeOffset:
-          instruction.totalTurnDegree - instruction.decelerationDegree,
+      degreeOffset: instruction.totalTurnDegree - instruction.decelerationDegree,
       initialVelocity: instruction.maxOuterVelocity,
       endVelocity: instruction.finalInnerVelocity,
     );
@@ -210,8 +196,7 @@ class SimulationPainter extends MyPainter {
     );
   }
 
-  Color velocityToColor(double velocity) =>
-      velToColor(velocity, simulationResult.maxTargetedVelocity);
+  Color velocityToColor(double velocity) => velToColor(velocity, simulationResult.maxTargetedVelocity);
 
   Offset vecToOffset(Vector2 vec) => Offset(vec.x, -vec.y);
 }

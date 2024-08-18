@@ -35,13 +35,9 @@ class LinePainter extends CustomPainter {
 
   static void paintText(String text, Offset offset, Canvas canvas, Size size) {
     final textSpan = TextSpan(text: text);
-    final textPainter =
-        TextPainter(text: textSpan, textDirection: TextDirection.ltr);
+    final textPainter = TextPainter(text: textSpan, textDirection: TextDirection.ltr);
     textPainter.layout(minWidth: 0, maxWidth: size.width);
-    textPainter.paint(
-        canvas,
-        Offset(
-            offset.dx - textPainter.width / 2, offset.dy - textPainter.height));
+    textPainter.paint(canvas, Offset(offset.dx - textPainter.width / 2, offset.dy - textPainter.height));
   }
 
   void paintGrid(Canvas canvas, Size size) {
@@ -52,35 +48,21 @@ class LinePainter extends CustomPainter {
     final int xLineCount = size.width ~/ scale + 1;
     final int yLineCount = size.height ~/ scale + 1;
 
-    for (double xo = size.width / 2 + offset.dx % scale - scale * xLineCount;
-        xo < xLineCount * scale;
-        xo += scale) {
+    for (double xo = size.width / 2 + offset.dx % scale - scale * xLineCount; xo < xLineCount * scale; xo += scale) {
       canvas.drawLine(Offset(xo, 0), Offset(xo, size.height), paint);
     }
 
-    for (double yo = size.height / 2 + offset.dy % scale - scale * yLineCount;
-        yo < yLineCount * scale;
-        yo += scale) {
+    for (double yo = size.height / 2 + offset.dy % scale - scale * yLineCount; yo < yLineCount * scale; yo += scale) {
       canvas.drawLine(Offset(0, yo), Offset(size.width, yo), paint);
     }
 
     paint.color = white.withAlpha(50);
 
-    for (double xo = size.width / 2 +
-            offset.dx % scale -
-            scale * xLineCount +
-            0.5 * scale;
-        xo < xLineCount * scale;
-        xo += scale) {
+    for (double xo = size.width / 2 + offset.dx % scale - scale * xLineCount + 0.5 * scale; xo < xLineCount * scale; xo += scale) {
       canvas.drawLine(Offset(xo, 0), Offset(xo, size.height), paint);
     }
 
-    for (double yo = size.height / 2 +
-            offset.dy % scale -
-            scale * yLineCount +
-            0.5 * scale;
-        yo < yLineCount * scale;
-        yo += scale) {
+    for (double yo = size.height / 2 + offset.dy % scale - scale * yLineCount + 0.5 * scale; yo < yLineCount * scale; yo += scale) {
       canvas.drawLine(Offset(0, yo), Offset(size.width, yo), paint);
     }
   }
@@ -90,25 +72,17 @@ class LinePainter extends CustomPainter {
       ..strokeWidth = 1
       ..color = white;
 
-    canvas.drawLine(Offset(size.width / 2 - 49, size.height - 20),
-        Offset(size.width / 2 + 49, size.height - 20), paint);
-    canvas.drawLine(Offset(size.width / 2 - 50, size.height - 25),
-        Offset(size.width / 2 - 50, size.height - 15), paint);
-    canvas.drawLine(Offset(size.width / 2 + 50, size.height - 25),
-        Offset(size.width / 2 + 50, size.height - 15), paint);
+    canvas.drawLine(Offset(size.width / 2 - 49, size.height - 20), Offset(size.width / 2 + 49, size.height - 20), paint);
+    canvas.drawLine(Offset(size.width / 2 - 50, size.height - 25), Offset(size.width / 2 - 50, size.height - 15), paint);
+    canvas.drawLine(Offset(size.width / 2 + 50, size.height - 25), Offset(size.width / 2 + 50, size.height - 15), paint);
 
-    LinePainter.paintText("${(100.0 / scale).toStringAsFixed(2)}m",
-        Offset(size.width / 2, size.height - 22), canvas, size);
+    LinePainter.paintText("${(100.0 / scale).toStringAsFixed(2)}m", Offset(size.width / 2, size.height - 22), canvas, size);
   }
 
   void paintVelocityScale(Canvas canvas, Size size) {
     if (simulationResult.maxTargetedVelocity <= 0) return;
 
-    List<Color> colors = [
-      velToColor(0, simulationResult.maxTargetedVelocity),
-      velToColor(simulationResult.maxTargetedVelocity,
-          simulationResult.maxTargetedVelocity)
-    ];
+    List<Color> colors = [velToColor(0, simulationResult.maxTargetedVelocity), velToColor(simulationResult.maxTargetedVelocity, simulationResult.maxTargetedVelocity)];
 
     final lineStart = Offset(size.width - 130, size.height - 20);
     final lineEnd = Offset(size.width - 30, size.height - 20);
@@ -117,8 +91,7 @@ class LinePainter extends CustomPainter {
       ..shader = RadialGradient(
         colors: colors,
         radius: 0.5 / sqrt2,
-      ).createShader(
-          Rect.fromCircle(center: lineStart, radius: lineEnd.dx - lineStart.dx))
+      ).createShader(Rect.fromCircle(center: lineStart, radius: lineEnd.dx - lineStart.dx))
       ..strokeWidth = 10;
 
     canvas.drawLine(lineStart, lineEnd, accelerationPaint);
@@ -135,11 +108,7 @@ class LinePainter extends CustomPainter {
           ..color = white
           ..strokeWidth = 1);
     LinePainter.paintText("0m/s", lineStart.translate(0, -7), canvas, size);
-    LinePainter.paintText(
-        "${simulationResult.maxTargetedVelocity.toStringAsFixed(2)}m/s",
-        lineEnd.translate(0, -7),
-        canvas,
-        size);
+    LinePainter.paintText("${simulationResult.maxTargetedVelocity.toStringAsFixed(2)}m/s", lineEnd.translate(0, -7), canvas, size);
   }
 
   @override
