@@ -37,7 +37,8 @@ class TurnInstructionEditor extends AbstractEditor {
               Icon(instruction.left ? Icons.turn_left : Icons.turn_right,
                   size: 18),
               const SizedBox(width: 8),
-              Text("${instruction.left ? "Left" : "Right"} Turn"),
+              Text(
+                  "${instruction.left ? "Left" : "Right"} Turn ${instruction.turnDegree.round()}°"),
             ],
           ),
         ),
@@ -81,7 +82,7 @@ class TurnInstructionEditor extends AbstractEditor {
                 change(instruction);
               },
             ),
-            Text(instruction.left? "Left" : "Right"),
+            Text(instruction.left ? "Left" : "Right"),
           ],
         ),
       ],

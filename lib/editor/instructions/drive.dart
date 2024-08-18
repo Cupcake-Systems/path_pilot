@@ -37,7 +37,7 @@ class DriveInstructionEditor extends AbstractEditor {
             children: [
               Icon(userInstructionToIcon[UserInstruction.drive], size: 18),
               const SizedBox(width: 8),
-              const Text("Drive"),
+              Text("Drive ${(instruction.targetDistance * 100).round()}cm"),
             ],
           ),
         ),
