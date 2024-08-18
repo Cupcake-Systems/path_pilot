@@ -46,58 +46,52 @@ class _VisualizerState extends State<Visualizer> {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(8),
-      child: Column(
-        children: [
-          Expanded(
-            child: Container(
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: Colors.grey),
-              ),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(10),
-                child: Listener(
-                  onPointerSignal: (event) {
-                    if (event is PointerScrollEvent) {
-                      double newScale = scale - event.scrollDelta.dy / 100;
-                      if (newScale > maxScale) {
-                        newScale = maxScale;
-                      } else if (newScale < minScale) {
-                        newScale = minScale;
-                      }
-                      setState(() => scale = newScale);
-                    }
-                  },
-                  child: GestureDetector(
-                    onHorizontalDragStart: (details) {
-                      _previousOffset = details.localPosition - _offset;
-                      widget.transformChanged(scale, _offset);
-                    },
-                    onHorizontalDragUpdate: (details) => setState(() {
-                      _offset = details.localPosition - _previousOffset;
-                      widget.transformChanged(scale, _offset);
-                    }),
-                    child: CustomPaint(
-                      painter: LinePainter(
-                        scale: pow(2, scale) - 1,
-                        robiConfig: widget.robiConfig,
-                        simulationResult: widget.simulationResult,
-                        irReadPainterSettings: widget.irReadPainterSettings,
-                        highlightedInstruction: widget.highlightedInstruction,
-                        irCalculatorResult: widget.irCalculatorResult,
-                        irPathApproximation: widget.irPathApproximation,
-                        offset: _offset,
-                      ),
-                      child: Container(),
-                    ),
+    return Column(
+      children: [
+        Expanded(
+          child: ClipRect(
+            child: Listener(
+              onPointerSignal: (event) {
+                if (event is PointerScrollEvent) {
+                  double newScale = scale - event.scrollDelta.dy / 100;
+                  if (newScale > maxScale) {
+                    newScale = maxScale;
+                  } else if (newScale < minScale) {
+                    newScale = minScale;
+                  }
+                  setState(() => scale = newScale);
+                }
+              },
+              child: GestureDetector(
+                onHorizontalDragStart: (details) {
+                  _previousOffset = details.localPosition - _offset;
+                  widget.transformChanged(scale, _offset);
+                },
+                onHorizontalDragUpdate: (details) => setState(() {
+                  _offset = details.localPosition - _previousOffset;
+                  widget.transformChanged(scale, _offset);
+                }),
+                child: CustomPaint(
+                  painter: LinePainter(
+                    scale: pow(2, scale) - 1,
+                    robiConfig: widget.robiConfig,
+                    simulationResult: widget.simulationResult,
+                    irReadPainterSettings: widget.irReadPainterSettings,
+                    highlightedInstruction: widget.highlightedInstruction,
+                    irCalculatorResult: widget.irCalculatorResult,
+                    irPathApproximation: widget.irPathApproximation,
+                    offset: _offset,
                   ),
+                  child: Container(),
                 ),
               ),
             ),
           ),
-          Row(
+        ),
+        const Divider(height: 1),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8),
+          child: Row(
             children: [
               const Text("Zoom: "),
               Expanded(
@@ -111,17 +105,18 @@ class _VisualizerState extends State<Visualizer> {
                   },
                 ),
               ),
-              ElevatedButton(
+              ElevatedButton.icon(
                 onPressed: () {
                   setState(() => _offset = Offset.zero);
                   widget.transformChanged(scale, _offset);
                 },
-                child: const Text("Center"),
+                label: const Text("Center"),
+                icon: const Icon(Icons.center_focus_weak),
               )
             ],
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }
