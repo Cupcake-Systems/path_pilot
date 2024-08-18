@@ -43,15 +43,16 @@ class DriveInstructionEditor extends AbstractEditor {
         ),
       ),
       children: [
-        Row(
+        TableRow(
           children: [
             const Text("Distance to drive"),
             Slider(
               value: instruction.targetDistance,
               onChanged: (value) {
-                instruction.targetDistance = value;
+                instruction.targetDistance = roundToDigits(value, 3);
                 change(instruction);
               },
+              max: 5,
             ),
             Text("${roundToDigits(instruction.targetDistance * 100, 2)}cm"),
           ],

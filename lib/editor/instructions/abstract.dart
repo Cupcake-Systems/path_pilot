@@ -61,7 +61,7 @@ class RemovableWarningCard extends StatefulWidget {
   final Function(MissionInstruction instruction) change;
 
   final Widget header;
-  final List<Widget> children;
+  final List<TableRow> children;
 
   final InstructionResult instructionResult;
   final MissionInstruction instruction;
@@ -210,36 +210,49 @@ class _RemovableWarningCardState extends State<RemovableWarningCard> {
                     ),
               children: isExpanded
                   ? [
-                      Row(
+                      Table(
+                        columnWidths: const {
+                          0: IntrinsicColumnWidth(),
+                          1: FlexColumnWidth(),
+                          2: IntrinsicColumnWidth(),
+                        },
+                        defaultVerticalAlignment:
+                            TableCellVerticalAlignment.middle,
                         children: [
-                          const Text("Acceleration"),
-                          Slider(
-                            value: widget.instruction.acceleration,
-                            onChanged: (value) {
-                              widget.instruction.acceleration = value;
-                              widget.change(widget.instruction);
-                            },
+                          TableRow(
+                            children: [
+                              const Text("Acceleration"),
+                              Slider(
+                                value: widget.instruction.acceleration,
+                                onChanged: (value) {
+                                  widget.instruction.acceleration =
+                                      roundToDigits(value, 3);
+                                  widget.change(widget.instruction);
+                                },
+                              ),
+                              Text(
+                                  "${roundToDigits(widget.instruction.acceleration * 100, 2)}cm/s²"),
+                            ],
                           ),
-                          Text(
-                              "${roundToDigits(widget.instruction.acceleration * 100, 2)}cm/s²"),
+                          TableRow(
+                            children: [
+                              const Text("Target Velocity"),
+                              Slider(
+                                value: widget.instruction.targetVelocity,
+                                onChanged: (value) {
+                                  widget.instruction.targetVelocity =
+                                      roundToDigits(value, 3);
+                                  widget.change(widget.instruction);
+                                },
+                                min: 0.001,
+                              ),
+                              Text(
+                                  "${roundToDigits(widget.instruction.targetVelocity * 100, 2)}cm/s"),
+                            ],
+                          ),
+                          ...widget.children,
                         ],
                       ),
-                      Row(
-                        children: [
-                          const Text("Target Velocity"),
-                          Slider(
-                            value: widget.instruction.targetVelocity,
-                            onChanged: (value) {
-                              widget.instruction.targetVelocity = value;
-                              widget.change(widget.instruction);
-                            },
-                            min: 0.001,
-                          ),
-                          Text(
-                              "${roundToDigits(widget.instruction.targetVelocity * 100, 2)}cm/s"),
-                        ],
-                      ),
-                      ...widget.children,
                       const SizedBox(height: 20),
                       SizedBox(
                         height: 300,

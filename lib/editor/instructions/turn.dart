@@ -43,44 +43,45 @@ class TurnInstructionEditor extends AbstractEditor {
         ),
       ),
       children: [
-        Row(
+        TableRow(
           children: [
             const Text("Turn Degree"),
             Slider(
               value: instruction.turnDegree,
               onChanged: (value) {
-                instruction.turnDegree = value;
+                instruction.turnDegree = value.roundToDouble();
                 change(instruction);
               },
               min: 0,
               max: 720,
             ),
-            Text("${roundToDigits(instruction.turnDegree, 2)}°"),
+            Text("${instruction.turnDegree.round()}°"),
           ],
         ),
-        Row(
+        TableRow(
           children: [
             const Text("Inner Radius"),
             Slider(
               value: instruction.innerRadius,
               onChanged: (value) {
-                instruction.innerRadius = value;
+                instruction.innerRadius = roundToDigits(value, 3);
                 change(instruction);
               },
             ),
             Text("${roundToDigits(instruction.innerRadius * 100, 2)}cm"),
           ],
         ),
-        Row(
+        TableRow(
           children: [
-            const Text("Turn Left "),
-            Checkbox(
-              value: instruction.left,
+            const Text("Turn"),
+            Switch(
+              value: !instruction.left,
               onChanged: (value) {
-                instruction.left = value!;
+                instruction.left = !value;
                 change(instruction);
               },
             ),
+            Text(instruction.left? "Left" : "Right"),
           ],
         ),
       ],
