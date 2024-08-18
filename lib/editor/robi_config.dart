@@ -15,13 +15,13 @@ class RobiConfigurator extends StatelessWidget {
     return StatefulBuilder(builder: (context, setState) {
       final formKey = GlobalKey<FormState>();
       final radiusController = TextEditingController(
-          text: "${defaultRobiConfig().wheelRadius * 100}");
+          text: "${defaultRobiConfig.wheelRadius * 100}");
       final trackController = TextEditingController(
-          text: "${defaultRobiConfig().trackWidth * 100}");
+          text: "${defaultRobiConfig.trackWidth * 100}");
       final distanceWheelIRController = TextEditingController(
-          text: "${defaultRobiConfig().distanceWheelIr * 100}");
+          text: "${defaultRobiConfig.distanceWheelIr * 100}");
       final wheelWidthController = TextEditingController(
-          text: "${defaultRobiConfig().wheelWidth * 100}");
+          text: "${defaultRobiConfig.wheelWidth * 100}");
       final nameController = TextEditingController(text: "Config ${index + 1}");
 
       return AlertDialog(

@@ -38,11 +38,11 @@ class RobiConfigStorage {
   static List<RobiConfig> _loadConfigs() {
     try {
       final storedString = AppData._prefs.getString(_storageKey);
-      if (storedString == null) return [defaultRobiConfig()];
+      if (storedString == null) return [defaultRobiConfig];
       final List jsonList = jsonDecode(storedString) as List;
       return jsonList.map((e) => RobiConfig.fromJson(e)).toList();
     } catch (e) {
-      return [defaultRobiConfig()];
+      return [defaultRobiConfig];
     }
   }
 

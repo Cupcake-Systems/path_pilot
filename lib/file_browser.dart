@@ -290,5 +290,5 @@ class _FileBrowserState extends State<FileBrowser>
   }
 }
 
-RobiConfig defaultRobiConfig() =>
+const defaultRobiConfig =
     RobiConfig(0.032, 0.147, 0.06, 0.025, name: "Default");

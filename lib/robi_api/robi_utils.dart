@@ -448,7 +448,7 @@ class RobiConfig {
   final double wheelRadius, trackWidth, distanceWheelIr, wheelWidth;
   final String? name;
 
-  RobiConfig(
+  const RobiConfig(
       this.wheelRadius, this.trackWidth, this.distanceWheelIr, this.wheelWidth,
       {this.name});
 
