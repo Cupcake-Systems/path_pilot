@@ -136,7 +136,7 @@ class _EditorState extends State<Editor> with AutomaticKeepAliveClientMixin {
                             onPressed: simulationResult.instructionResults.isEmpty
                                 ? null
                                 : exportClick,
-                            trailingIcon: const Icon(Icons.chevron_right),
+                            trailingIcon: const Icon(Icons.file_upload_outlined),
                             child: const MenuAcceleratorLabel("&Export"),
                           ),
                         ],
@@ -362,7 +362,7 @@ class _EditorState extends State<Editor> with AutomaticKeepAliveClientMixin {
                             approximateIrPath();
                           });
                         },
-                        icon: const Icon(Icons.import_export),
+                        icon: const Icon(Icons.file_download_outlined),
                         label: const Text("Import IR Reading"),
                       ),
                     ),
