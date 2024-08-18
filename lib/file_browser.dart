@@ -22,8 +22,7 @@ class FileBrowser extends StatefulWidget {
 
 class _FileBrowserState extends State<FileBrowser>
     with TickerProviderStateMixin {
-  File? focusedFile;
-  final Map<String, List<MissionInstruction>> instructionTable = {};
+  List<Editor> openTabs = [];
 
   @override
   Widget build(BuildContext context) {
@@ -54,27 +53,6 @@ class _FileBrowserState extends State<FileBrowser>
                           if (context.mounted) openTab(context, file);
                         },
                         child: const MenuAcceleratorLabel('&Open'),
-                      ),
-                      const Divider(height: 0),
-                      MenuItemButton(
-                        leadingIcon: const Icon(Icons.save),
-                        onPressed: focusedFile == null
-                            ? null
-                            : () {
-                                RobiPathSerializer.saveToFile(
-                                    focusedFile!,
-                                    instructionTable[
-                                        focusedFile!.absolute.path]!);
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(content: Text('Saved')),
-                                );
-                              },
-                        child: const MenuAcceleratorLabel('&Save'),
-                      ),
-                      MenuItemButton(
-                        leadingIcon: const Icon(Icons.save_as),
-                        onPressed: focusedFile == null ? null : saveAs,
-                        child: const MenuAcceleratorLabel('&Save as...'),
                       ),
                       const Divider(height: 0),
                       MenuItemButton(
@@ -184,10 +162,10 @@ class _FileBrowserState extends State<FileBrowser>
           ],
         ),
         Expanded(
-          child: instructionTable.isEmpty
+          child: openTabs.isEmpty
               ? const Center()
               : DefaultTabController(
-                  length: instructionTable.length,
+                  length: openTabs.length,
                   child: Scaffold(
                     appBar: PreferredSize(
                       preferredSize: const Size.fromHeight(32),
@@ -210,20 +188,7 @@ class _FileBrowserState extends State<FileBrowser>
                         ),
                       ),
                     ),
-                    body: TabBarView(
-                      children: [
-                        for (final filePath in instructionTable.keys) ...[
-                          Editor(
-                            instructions: instructionTable[filePath]!,
-                            robiConfig: RobiConfigStorage.lastUsedConfig,
-                            instructionsChanged:
-                                (List<MissionInstruction> instructions) {
-                              instructionTable[filePath] = instructions;
-                            },
-                          ),
-                        ]
-                      ],
-                    ),
+                    body: TabBarView(children: openTabs),
                   ),
                 ),
         ),
@@ -232,9 +197,9 @@ class _FileBrowserState extends State<FileBrowser>
   }
 
   List<Widget> buildTabs() {
-    return instructionTable.keys
+    return openTabs
         .map(
-          (file) => SizedBox(
+          (editor) => SizedBox(
             height: 30,
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -242,17 +207,17 @@ class _FileBrowserState extends State<FileBrowser>
               children: [
                 const Icon(Icons.edit_document, size: 15),
                 const SizedBox(width: 10),
-                Text(basename(file).split(".")[0], textAlign: TextAlign.center),
+                Text(basename(editor.file.path).split(".robi_script.json")[0],
+                    textAlign: TextAlign.center),
                 const SizedBox(width: 10),
                 SizedBox(
                   width: 20,
                   height: 20,
                   child: IconButton(
                     padding: EdgeInsets.zero,
-                    onPressed: () => setState(() {
-                      instructionTable.remove(file);
-                      if (instructionTable.isEmpty) focusedFile = null;
-                    }),
+                    onPressed: () {
+                      setState(() => openTabs.remove(editor));
+                    },
                     iconSize: 17,
                     icon: const Icon(Icons.close),
                   ),
@@ -265,46 +230,37 @@ class _FileBrowserState extends State<FileBrowser>
   }
 
   Future<void> openTab(BuildContext context, File tab) async {
-    final Iterable<MissionInstruction>? newInstructions;
-
-    if (!instructionTable.containsKey(tab.absolute.path)) {
-      final data = await tab.readAsString();
-      newInstructions = RobiPathSerializer.decode(data);
-
-      if (newInstructions == null) {
-        if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Failed to decode content!'),
-            ),
-          );
-        }
+    for (int i = 0; i < openTabs.length; ++i) {
+      if (openTabs[i].file.absolute.path == tab.absolute.path) {
+        // TODO: Focus editor
         return;
       }
-
-      setState(() {
-        List<MissionInstruction> insts = newInstructions!.toList();
-        instructionTable[tab.absolute.path] = insts;
-        focusedFile = tab;
-      });
-    } else {
-      setState(() => focusedFile = tab);
     }
-  }
 
-  Future<void> saveAs() async {
-    final result = await FilePicker.platform.saveFile(
-        dialogTitle: "Please select an output file:",
-        fileName: "path.robi_script.json");
+    final data = await tab.readAsString();
+    final newInstructions = RobiPathSerializer.decode(data);
 
-    if (result == null) return;
+    if (newInstructions == null) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Failed to decode content!'),
+        ),
+      );
+      return;
+    }
 
-    final file = File(result);
+    setState(() {
+      openTabs.add(
+        Editor(
+          initailInstructions: newInstructions.toList(),
+          robiConfig: RobiConfigStorage.lastUsedConfig,
+          file: tab,
+        ),
+      );
+    });
 
-    RobiPathSerializer.saveToFile(
-        file, instructionTable[focusedFile!.absolute.path]!);
-
-    setState(() => focusedFile = file);
+    // TODO: Focus editor
   }
 
   Future<void> newFile() async {
@@ -316,11 +272,21 @@ class _FileBrowserState extends State<FileBrowser>
 
     final file = File(result);
 
-    instructionTable[file.absolute.path] = [];
+    for (final t in openTabs) {
+      if (t.file.absolute.path == file.absolute.path) return;
+    }
 
     RobiPathSerializer.saveToFile(file, []);
 
-    setState(() => focusedFile = file);
+    setState(
+      () => openTabs.add(
+        Editor(
+          initailInstructions: const [],
+          robiConfig: RobiConfigStorage.lastUsedConfig,
+          file: file,
+        ),
+      ),
+    );
   }
 }
 
