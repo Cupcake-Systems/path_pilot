@@ -10,18 +10,15 @@ class Exported {
 
   Exported(this.config, this.instructionResults);
 
-  Map<String, dynamic> toJson() => {
-        "config": config.toJson(),
-        "instructions": instructionResults.map((e) {
-          final exported = e.export();
-          return exported.toJson()..addAll({"type": exportedObjectMapper(exported)});
-        }).toList(),
-      };
+  List<Map<String, dynamic>> toJson() => instructionResults.map((e) {
+        final exported = e.export();
+        return exported.toJson()..addAll({"ty": exportedObjectMapper(exported)});
+      }).toList();
 
   static String exportedObjectMapper(ExportedMissionInstruction instruction) {
-    if (instruction is ExportedDriveInstruction) return "drive";
-    if (instruction is ExportedRapidTurnInstruction) return "rapid_turn";
-    if (instruction is ExportedTurnInstruction) return "turn";
+    if (instruction is ExportedDriveInstruction) return "d";
+    if (instruction is ExportedRapidTurnInstruction) return "rt";
+    if (instruction is ExportedTurnInstruction) return "t";
     throw UnsupportedError("");
   }
 }

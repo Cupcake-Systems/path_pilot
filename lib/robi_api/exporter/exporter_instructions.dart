@@ -1,3 +1,5 @@
+import 'package:robi_line_drawer/editor/editor.dart';
+
 abstract class ExportedMissionInstruction {
   ExportedMissionInstruction({
     required this.acceleration,
@@ -33,11 +35,11 @@ class ExportedDriveInstruction extends ExportedMissionInstruction {
   // .abs() to convert -0.0 to 0
   @override
   Map<String, dynamic> toJson() => {
-        'acceleration': acceleration.abs(),
-        'initial_velocity': initialVelocity.abs(),
-        'acceleration_time': accelerationTime.abs(),
-        'deceleration_time': decelerationTime.abs(),
-        'constant_speed_time': constantSpeedTime.abs(),
+        'a': roundToDigits(acceleration.abs(), 4),
+        'vi': roundToDigits(initialVelocity.abs(), 4),
+        'ta': roundToDigits(accelerationTime.abs(), 4),
+        'td': roundToDigits(decelerationTime.abs(), 4),
+        'tc': roundToDigits(constantSpeedTime.abs(), 4),
       };
 }
 
@@ -66,13 +68,13 @@ class ExportedTurnInstruction extends ExportedMissionInstruction {
   // .abs() to convert -0.0 to 0
   @override
   Map<String, dynamic> toJson() => {
-        'acceleration': acceleration.abs(),
-        'initial_velocity': initialVelocity.abs(),
-        'left': left,
-        'total_turn_degree': totalTurnDegree.abs(),
-        'inner_radius': innerRadius.abs(),
-        'acceleration_degree': accelerationDegree.abs(),
-        'deceleration_degree': decelerationDegree.abs(),
+        'a': roundToDigits(acceleration.abs(), 2),
+        'vi': roundToDigits(initialVelocity.abs(), 2),
+        'l': left ? 1 : 0,
+        'dt': roundToDigits(totalTurnDegree.abs(), 2),
+        'ri': roundToDigits(innerRadius.abs(), 2),
+        'da': roundToDigits(accelerationDegree.abs(), 2),
+        'dd': roundToDigits(decelerationDegree.abs(), 2),
       };
 }
 
@@ -94,10 +96,9 @@ class ExportedRapidTurnInstruction extends ExportedTurnInstruction {
   // .abs() to convert -0.0 to 0
   @override
   Map<String, dynamic> toJson() => {
-        'acceleration': acceleration.abs(),
-        'initial_velocity': initialVelocity.abs(),
-        'left': left,
-        'total_turn_degree': totalTurnDegree.abs(),
-        'acceleration_degree': accelerationDegree.abs(),
+        'a': roundToDigits(acceleration.abs(), 2),
+        'l': left ? 1 : 0,
+        'dt': roundToDigits(totalTurnDegree.abs(), 2),
+        'da': roundToDigits(accelerationDegree.abs(), 2),
       };
 }
