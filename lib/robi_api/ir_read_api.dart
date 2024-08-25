@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'dart:math';
+import 'dart:typed_data';
 
 import 'package:robi_line_drawer/editor/ir_line_approximation/ramers_douglas.dart';
 import 'package:robi_line_drawer/robi_api/robi_utils.dart';
@@ -19,20 +20,16 @@ class Measurement {
     required this.rightFwd,
   });
 
-  factory Measurement.fromLine(String line) {
-    line = line.trim();
-    final s = line.split(" : ");
-    final motorSplit = s[0].split(" ");
-    final fwdSplit = s[1].split(" ");
-    final irSplit = s[2].split(", ");
+  factory Measurement.fromLine(ByteData line) {
+    final readAndFwdByte = line.getUint32(4);
     return Measurement(
-      motorLeftFreq: int.parse(motorSplit[0]),
-      motorRightFreq: int.parse(motorSplit[1]),
-      leftIr: int.parse(irSplit[0]),
-      middleIr: int.parse(irSplit[1]),
-      rightIr: int.parse(irSplit[2]),
-      leftFwd: bool.parse(fwdSplit[0], caseSensitive: false),
-      rightFwd: bool.parse(fwdSplit[1], caseSensitive: false),
+      motorLeftFreq: line.getUint16(0),
+      motorRightFreq: line.getUint16(2),
+      leftIr: (readAndFwdByte >> 20) & 0x3FF,
+      middleIr: (readAndFwdByte >> 10) & 0x3FF,
+      rightIr: readAndFwdByte & 0x3FF,
+      leftFwd: (readAndFwdByte & (1 << 31)) != 0,
+      rightFwd: (readAndFwdByte & (1 << 30)) != 0,
     );
   }
 }
@@ -43,15 +40,16 @@ class IrReadResult {
 
   const IrReadResult({required this.resolution, required this.measurements});
 
-  factory IrReadResult.fromData(String data) {
-    final lines = data.trim().split("\n");
+  factory IrReadResult.fromData(ByteBuffer data) {
+    final dataLineCount = data.asByteData(2).lengthInBytes ~/ 8;
+
     return IrReadResult(
-      resolution: double.parse(lines[0].trim()),
-      measurements: lines.sublist(1).map((e) => Measurement.fromLine(e)).toList(),
+      resolution: data.asByteData(0, 2).getUint16(0) / 1000,
+      measurements: [for (int i = 0; i < dataLineCount; ++i) Measurement.fromLine(data.asByteData(2 + i * 8, 8))],
     );
   }
 
-  factory IrReadResult.fromFile(File file) => IrReadResult.fromData(file.readAsStringSync());
+  factory IrReadResult.fromFile(File file) => IrReadResult.fromData(file.readAsBytesSync().buffer);
 }
 
 class IrReading {

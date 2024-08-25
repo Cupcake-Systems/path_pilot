@@ -382,7 +382,7 @@ class _EditorState extends State<Editor> with AutomaticKeepAliveClientMixin {
                         onPressed: () async {
                           final result = await FilePicker.platform.pickFiles(
                             type: FileType.custom,
-                            allowedExtensions: ["txt"],
+                            allowedExtensions: ["bin"],
                           );
                           if (result == null) return;
                           final file = File(result.files.single.path!);
