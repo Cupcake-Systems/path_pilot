@@ -20,8 +20,8 @@ class Exported {
 
   static String exportedObjectMapper(ExportedMissionInstruction instruction) {
     if (instruction is ExportedDriveInstruction) return "drive";
-    if (instruction is ExportedTurnInstruction) return "turn";
     if (instruction is ExportedRapidTurnInstruction) return "rapid_turn";
+    if (instruction is ExportedTurnInstruction) return "turn";
     throw UnsupportedError("");
   }
 }
