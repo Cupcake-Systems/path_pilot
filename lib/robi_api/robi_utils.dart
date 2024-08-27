@@ -351,8 +351,12 @@ class RapidTurnResult extends InstructionResult {
         );
 
   @override
-  ExportedRapidTurnInstruction export() =>
-      ExportedRapidTurnInstruction(acceleration: angularAcceleration, left: endRotation > startRotation, totalTurnDegree: totalTurnDegree, accelerationDegree: accelerationDegree);
+  ExportedRapidTurnInstruction export() => ExportedRapidTurnInstruction(
+        acceleration: outerAcceleration,
+        left: endRotation > startRotation,
+        totalTurnDegree: totalTurnDegree,
+        accelerationDegree: accelerationDegree,
+      );
 
   @override
   String toString() {
