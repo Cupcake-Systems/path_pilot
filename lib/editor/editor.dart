@@ -410,7 +410,7 @@ class _EditorState extends State<Editor> with AutomaticKeepAliveClientMixin {
   void exportClick() async {
     final path = await FilePicker.platform.saveFile(
       dialogTitle: "Please select an output file:",
-      fileName: "exported.json",
+      fileName: "exported.json.gz",
     );
     if (path == null) return;
     Exporter.saveToFile(

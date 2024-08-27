@@ -24,11 +24,22 @@ class Exported {
 }
 
 class Exporter {
+  static final GZipCodec gzipCompressor = GZipCodec(
+    level: ZLibOption.maxLevel,
+    windowBits: 8,
+    memLevel: ZLibOption.maxMemLevel,
+  );
+
   static String encode(RobiConfig config, List<InstructionResult> instructions) {
     final exported = Exported(config, instructions).toJson();
-
     return jsonEncode(exported);
   }
 
-  static Future<File> saveToFile(File file, RobiConfig config, List<InstructionResult> instructions) => file.writeAsString(encode(config, instructions));
+  static List<int> encodeAndCompress(RobiConfig config, List<InstructionResult> instructions) {
+    final enCodedJson = ascii.encode(encode(config, instructions));
+    final gZipJson = gzipCompressor.encode(enCodedJson);
+    return gZipJson;
+  }
+
+  static Future<File> saveToFile(File file, RobiConfig config, List<InstructionResult> instructions) => file.writeAsBytes(encodeAndCompress(config, instructions));
 }
