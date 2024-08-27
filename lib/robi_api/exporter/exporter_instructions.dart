@@ -35,7 +35,7 @@ class ExportedDriveInstruction extends ExportedMissionInstruction {
   // .abs() to convert -0.0 to 0
   @override
   Map<String, dynamic> toJson() => {
-        'a': roundToDigits(acceleration.abs(), 4),
+        'a': roundToDigits(acceleration.abs(), 3),
         'vi': roundToDigits(initialVelocity.abs(), 4),
         'ta': roundToDigits(accelerationTime.abs(), 4),
         'td': roundToDigits(decelerationTime.abs(), 4),
@@ -68,11 +68,11 @@ class ExportedTurnInstruction extends ExportedMissionInstruction {
   // .abs() to convert -0.0 to 0
   @override
   Map<String, dynamic> toJson() => {
-        'a': roundToDigits(acceleration.abs(), 2),
-        'vi': roundToDigits(initialVelocity.abs(), 2),
+        'a': roundToDigits(acceleration.abs(), 3),
+        'vi': roundToDigits(initialVelocity.abs(), 4),
         'l': left ? 1 : 0,
-        'dt': roundToDigits(totalTurnDegree.abs(), 2),
-        'ri': roundToDigits(innerRadius.abs(), 2),
+        'dt': totalTurnDegree.abs().toInt(),
+        'ri': roundToDigits(innerRadius.abs(), 3),
         'da': roundToDigits(accelerationDegree.abs(), 2),
         'dd': roundToDigits(decelerationDegree.abs(), 2),
       };
@@ -96,9 +96,9 @@ class ExportedRapidTurnInstruction extends ExportedTurnInstruction {
   // .abs() to convert -0.0 to 0
   @override
   Map<String, dynamic> toJson() => {
-        'a': roundToDigits(acceleration.abs(), 2),
+        'a': roundToDigits(acceleration.abs(), 3),
         'l': left ? 1 : 0,
-        'dt': roundToDigits(totalTurnDegree.abs(), 2),
+        'dt': totalTurnDegree.abs().toInt(),
         'da': roundToDigits(accelerationDegree.abs(), 2),
       };
 }
