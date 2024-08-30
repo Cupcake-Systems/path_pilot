@@ -5,14 +5,17 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:robi_line_drawer/editor/add_instruction_dialog.dart';
+import 'package:robi_line_drawer/editor/bluetooth/connect_widget.dart';
 import 'package:robi_line_drawer/editor/instructions/abstract.dart';
 import 'package:robi_line_drawer/editor/instructions/rapid_turn.dart';
 import 'package:robi_line_drawer/editor/ir_line_approximation/path_to_instructions.dart';
 import 'package:robi_line_drawer/editor/painters/ir_read_painter.dart';
 import 'package:robi_line_drawer/editor/robi_config.dart';
 import 'package:robi_line_drawer/editor/visualizer.dart';
+import 'package:robi_line_drawer/main.dart';
 import 'package:robi_line_drawer/robi_api/ir_read_api.dart';
 import 'package:robi_line_drawer/robi_api/robi_utils.dart';
+import 'package:universal_ble/universal_ble.dart';
 import 'package:vector_math/vector_math.dart' show Vector2;
 
 import '../app_storage.dart';
@@ -62,6 +65,43 @@ class _EditorState extends State<Editor> with AutomaticKeepAliveClientMixin {
   IrCalculator? irCalculator;
   int irInclusionThreshold = 100;
 
+  static bool readValues = true;
+
+  @override
+  void initState() {
+    super.initState();
+    bleConnectionChange["editor"] = (deviceId, connected) async {
+      readValues = true;
+      if (!connected) {
+        readValues = false;
+        return;
+      }
+
+      IrReadResult bluetoothReadResult = const IrReadResult(resolution: 0.1, measurements: []);
+
+      while (readValues) {
+        late final Uint8List data;
+        try {
+          data = await UniversalBle.readValue(deviceId, serviceUuid, "00005678-0000-1000-8000-00805f9b34fb");
+        } on Exception {
+          await Future.delayed(const Duration(milliseconds: 500));
+          continue;
+        }
+
+        bluetoothReadResult = IrReadResult(resolution: bluetoothReadResult.resolution, measurements: [
+          ...bluetoothReadResult.measurements,
+          Measurement.fromLine(data.buffer.asByteData()),
+        ]);
+
+        irCalculator = IrCalculator(irReadResult: bluetoothReadResult);
+        setState(() {
+          irCalculatorResult = irCalculator!.calculate(selectedRobiConfig);
+          approximateIrPath();
+        });
+      }
+    };
+  }
+
   @override
   Widget build(BuildContext context) {
     super.build(context);
@@ -87,7 +127,7 @@ class _EditorState extends State<Editor> with AutomaticKeepAliveClientMixin {
         const VerticalDivider(width: 1),
         Flexible(
           child: DefaultTabController(
-            length: 2,
+            length: 3,
             child: Scaffold(
               appBar: PreferredSize(
                 preferredSize: const Size.fromHeight(32),
@@ -96,6 +136,7 @@ class _EditorState extends State<Editor> with AutomaticKeepAliveClientMixin {
                     tabs: [
                       Tab(child: Text("Instructions")),
                       Tab(child: Text("IR Readings")),
+                      Tab(child: Text("IR Bluetooth")),
                     ],
                   ),
                 ),
@@ -398,6 +439,7 @@ class _EditorState extends State<Editor> with AutomaticKeepAliveClientMixin {
                       ),
                     ),
                   ],
+                  const BluetoothConnectWidget(),
                 ],
               ),
             ),
