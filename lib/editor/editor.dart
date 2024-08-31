@@ -63,6 +63,8 @@ class _EditorState extends State<Editor> with AutomaticKeepAliveClientMixin {
   IrCalculator? irCalculator;
   int irInclusionThreshold = 100;
 
+  IrReadResult? irReadResult;
+
   static bool readBluetoothValues = true;
 
   @override
@@ -75,8 +77,6 @@ class _EditorState extends State<Editor> with AutomaticKeepAliveClientMixin {
         return;
       }
 
-      IrReadResult bluetoothReadResult = const IrReadResult(resolution: 0.1, measurements: []);
-
       while (readBluetoothValues) {
         late final Uint8List data;
         try {
@@ -86,12 +86,16 @@ class _EditorState extends State<Editor> with AutomaticKeepAliveClientMixin {
           continue;
         }
 
-        bluetoothReadResult = IrReadResult(resolution: bluetoothReadResult.resolution, measurements: [
-          ...bluetoothReadResult.measurements,
-          Measurement.fromLine(data.buffer.asByteData()),
-        ]);
+        irReadResult ??= const IrReadResult(resolution: 0.1, measurements: []);
 
-        irCalculator = IrCalculator(irReadResult: bluetoothReadResult);
+        setState(() {
+          irReadResult = IrReadResult(resolution: irReadResult!.resolution, measurements: [
+            ...irReadResult!.measurements,
+            Measurement.fromLine(data.buffer.asByteData()),
+          ]);
+        });
+
+        irCalculator = IrCalculator(irReadResult: irReadResult!);
         setState(() {
           irCalculatorResult = irCalculator!.calculate(selectedRobiConfig);
           approximateIrPath();
@@ -295,47 +299,59 @@ class _EditorState extends State<Editor> with AutomaticKeepAliveClientMixin {
                     },
                   ),
                   Scaffold(
-                    floatingActionButton: irCalculatorResult == null
-                        ? ElevatedButton.icon(
-                            onPressed: () async {
-                              final result = await FilePicker.platform.pickFiles(
-                                type: FileType.custom,
-                                allowedExtensions: ["bin"],
-                              );
-                              if (result == null) return;
-                              final file = File(result.files.single.path!);
-                              final importedIrReadResult = IrReadResult.fromFile(file);
-                              irCalculator = IrCalculator(irReadResult: importedIrReadResult);
-                              setState(() {
-                                irCalculatorResult = irCalculator!.calculate(selectedRobiConfig);
-                                approximateIrPath();
-                              });
-                            },
-                            icon: const Icon(Icons.file_download_outlined),
-                            label: const Text("Import IR Reading"),
-                          )
-                        : ElevatedButton.icon(
-                            onPressed: () => setState(() => irCalculatorResult = null),
-                            label: const Text("Remove"),
-                            icon: const Icon(Icons.delete),
+                    body: ListView(
+                      children: [
+                        IrPathApproximationSettingsWidget(
+                          onPathCreation: () {
+                            setState(() => instructions = PathToInstructions.calculate(irPathApproximation!));
+                            rerunSimulationAndUpdate();
+                          },
+                          onSettingsChange: (
+                            settings,
+                            irInclusionThreshold,
+                            ramerDouglasPeuckerTolerance,
+                          ) {
+                            setState(() {
+                              irReadPainterSettings = settings;
+                              this.irInclusionThreshold = irInclusionThreshold;
+                              this.ramerDouglasPeuckerTolerance = ramerDouglasPeuckerTolerance;
+                              if (irCalculatorResult != null) approximateIrPath();
+                            });
+                          },
+                        ),
+                        if (irReadResult == null || irCalculatorResult == null) ...[
+                          Padding(
+                            padding: const EdgeInsets.all(4),
+                            child: ElevatedButton.icon(
+                              onPressed: () async {
+                                final result = await FilePicker.platform.pickFiles(
+                                  type: FileType.custom,
+                                  allowedExtensions: ["bin"],
+                                );
+                                if (result == null) return;
+                                final file = File(result.files.single.path!);
+                                setState(() {
+                                  irReadResult = IrReadResult.fromFile(file);
+                                  irCalculator = IrCalculator(irReadResult: irReadResult!);
+                                  irCalculatorResult = irCalculator!.calculate(selectedRobiConfig);
+                                  approximateIrPath();
+                                });
+                              },
+                              icon: const Icon(Icons.file_download_outlined),
+                              label: const Text("Import IR Reading"),
+                            ),
                           ),
-                    body: IrPathApproximationSettingsWidget(
-                      onPathCreation: () {
-                        setState(() => instructions = PathToInstructions.calculate(irPathApproximation!));
-                        rerunSimulationAndUpdate();
-                      },
-                      onSettingsChange: (
-                        settings,
-                        irInclusionThreshold,
-                        ramerDouglasPeuckerTolerance,
-                      ) {
-                        setState(() {
-                          irReadPainterSettings = settings;
-                          this.irInclusionThreshold = irInclusionThreshold;
-                          this.ramerDouglasPeuckerTolerance = ramerDouglasPeuckerTolerance;
-                          approximateIrPath();
-                        });
-                      },
+                        ] else ...[
+                          IrReadingInfoWidget(
+                            irReadResult: irReadResult!,
+                            irCalculatorResult: irCalculatorResult!,
+                            onRemoveClick: () => setState(() {
+                              irCalculatorResult = null;
+                              irReadResult = null;
+                            }),
+                          ),
+                        ],
+                      ],
                     ),
                   ),
                   const BluetoothConnectWidget(),

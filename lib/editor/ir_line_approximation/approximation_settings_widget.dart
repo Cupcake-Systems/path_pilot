@@ -26,14 +26,16 @@ class IrPathApproximationSettingsWidget extends StatefulWidget {
   State<IrPathApproximationSettingsWidget> createState() => _IrPathApproximationSettingsWidgetState();
 }
 
-class _IrPathApproximationSettingsWidgetState extends State<IrPathApproximationSettingsWidget> {
+class _IrPathApproximationSettingsWidgetState extends State<IrPathApproximationSettingsWidget> with AutomaticKeepAliveClientMixin {
   IrReadPainterSettings settings = defaultIrReadPainterSettings();
   int irInclusionThreshold = 100;
   double ramerDouglasPeuckerTolerance = 0.5;
 
   @override
   Widget build(BuildContext context) {
-    return ListView(
+    super.build(context);
+    return Column(
+      mainAxisSize: MainAxisSize.min,
       children: [
         Card(
           child: Padding(
@@ -164,4 +166,7 @@ class _IrPathApproximationSettingsWidgetState extends State<IrPathApproximationS
   }
 
   void settingsChange() => widget.onSettingsChange(settings, irInclusionThreshold, ramerDouglasPeuckerTolerance);
+
+  @override
+  bool get wantKeepAlive => true;
 }
