@@ -24,27 +24,43 @@ class _BluetoothConnectWidgetState extends State<BluetoothConnectWidget> {
     hashCode: (p0) => p0.deviceId.hashCode,
   );
   bool isScanning = true;
+  AvailabilityState bluetoothState = AvailabilityState.unknown;
 
   @override
   void initState() {
     super.initState();
     bleConnectionChange["connect_widget"] = (deviceId, connected) {
       if (connected) {
-        final d = disconnectedRobiDevices.firstWhere((element) => element.deviceId == deviceId);
+        final d = disconnectedRobiDevices.where((element) => element.deviceId == deviceId);
+        if (d.isEmpty) return;
         setState(() {
-          connectedRobiDevices.add(d);
-          disconnectedRobiDevices.remove(d);
+          connectedRobiDevices.add(d.first);
+          disconnectedRobiDevices.remove(d.first);
         });
       } else {
-        final d = connectedRobiDevices.firstWhere((element) => element.deviceId == deviceId);
+        final d = connectedRobiDevices.where((element) => element.deviceId == deviceId);
+        if (d.isEmpty) return;
         setState(() {
-          connectedRobiDevices.remove(d);
-          disconnectedRobiDevices.add(d);
+          connectedRobiDevices.remove(d.first);
+          disconnectedRobiDevices.add(d.first);
         });
       }
     };
+    UniversalBle.onAvailabilityChange = (state) {
+      if (!mounted) return;
+      setState(() => bluetoothState = state);
+      if (state == AvailabilityState.poweredOn) {
+        startScan();
+      } else {
+        stopScan();
+      }
+    };
+  }
 
-    startScan();
+  @override
+  void dispose() {
+    super.dispose();
+    stopScan();
   }
 
   Future<void> startScan() async {
@@ -72,12 +88,18 @@ class _BluetoothConnectWidgetState extends State<BluetoothConnectWidget> {
   }
 
   Future<void> stopScan() async {
+    if (!isScanning) return;
     await UniversalBle.stopScan();
-    setState(() => isScanning = false);
+    if (mounted) setState(() => isScanning = false);
   }
 
   @override
   Widget build(BuildContext context) {
+
+    if (bluetoothState != AvailabilityState.poweredOn) {
+      return const ListTile(title: Text("Bluetooth not active"));
+    }
+
     return Column(
       children: [
         ListView(
@@ -186,7 +208,7 @@ class _DisconnectedBluetoothDeviceWidgetState extends State<DisconnectedBluetoot
                   const SizedBox(width: 20, height: 20, child: CircularProgressIndicator()),
                   const SizedBox(width: 10),
                 ],
-                Text(connectionFailure? "Retry" : "Connect"),
+                Text(connectionFailure ? "Retry" : "Connect"),
               ],
             ),
           ),
