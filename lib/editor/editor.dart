@@ -8,7 +8,8 @@ import 'package:robi_line_drawer/editor/add_instruction_dialog.dart';
 import 'package:robi_line_drawer/editor/bluetooth/connect_widget.dart';
 import 'package:robi_line_drawer/editor/instructions/abstract.dart';
 import 'package:robi_line_drawer/editor/instructions/rapid_turn.dart';
-import 'package:robi_line_drawer/editor/ir_line_approximation/path_to_instructions.dart';
+import 'package:robi_line_drawer/editor/ir_line_approximation/approximation_settings_widget.dart';
+import 'package:robi_line_drawer/editor/ir_line_approximation/ir_reading_info.dart';
 import 'package:robi_line_drawer/editor/painters/ir_read_painter.dart';
 import 'package:robi_line_drawer/editor/robi_config.dart';
 import 'package:robi_line_drawer/editor/visualizer.dart';
@@ -24,6 +25,7 @@ import '../robi_api/robi_path_serializer.dart';
 import '../robi_api/simulator.dart';
 import 'instructions/drive.dart';
 import 'instructions/turn.dart';
+import 'ir_line_approximation/path_to_instructions.dart';
 
 final inputFormatters = [FilteringTextInputFormatter.allow(RegExp(r'^(\d+)?\.?\d{0,5}'))];
 
@@ -57,29 +59,25 @@ class _EditorState extends State<Editor> with AutomaticKeepAliveClientMixin {
 
   // IR readings settings
   double ramerDouglasPeuckerTolerance = 0.5;
-  IrReadPainterSettings irReadPainterSettings = IrReadPainterSettings(
-    irReadingsThreshold: 1024,
-    showCalculatedPath: true,
-    showTracks: false,
-  );
+  IrReadPainterSettings irReadPainterSettings = defaultIrReadPainterSettings();
   IrCalculator? irCalculator;
   int irInclusionThreshold = 100;
 
-  static bool readValues = true;
+  static bool readBluetoothValues = true;
 
   @override
   void initState() {
     super.initState();
     bleConnectionChange["editor"] = (deviceId, connected) async {
-      readValues = true;
+      readBluetoothValues = true;
       if (!connected) {
-        readValues = false;
+        readBluetoothValues = false;
         return;
       }
 
       IrReadResult bluetoothReadResult = const IrReadResult(resolution: 0.1, measurements: []);
 
-      while (readValues) {
+      while (readBluetoothValues) {
         late final Uint8List data;
         try {
           data = await UniversalBle.readValue(deviceId, serviceUuid, "00005678-0000-1000-8000-00805f9b34fb");
@@ -296,149 +294,50 @@ class _EditorState extends State<Editor> with AutomaticKeepAliveClientMixin {
                       rerunSimulationAndUpdate();
                     },
                   ),
-                  if (irCalculatorResult != null) ...[
-                    Scaffold(
-                      floatingActionButton: ElevatedButton.icon(
-                        onPressed: () => setState(() => irCalculatorResult = null),
-                        label: const Text("Remove"),
-                        icon: const Icon(Icons.delete),
-                      ),
-                      body: Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: ListView(
-                          children: [
-                            const Text(
-                              "Visibility",
-                              style: TextStyle(fontWeight: FontWeight.bold),
-                            ),
-                            Padding(
-                              padding: const EdgeInsets.all(8.0),
-                              child: Table(
-                                columnWidths: const {
-                                  0: FlexColumnWidth(1),
-                                  1: FlexColumnWidth(2),
-                                },
-                                defaultVerticalAlignment: TableCellVerticalAlignment.middle,
-                                children: [
-                                  TableRow(
-                                    children: [
-                                      const Text("Show wheel track"),
-                                      Checkbox(
-                                        value: irReadPainterSettings.showTracks,
-                                        onChanged: (value) => setState(
-                                          () => irReadPainterSettings.showTracks = value!,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  TableRow(
-                                    children: [
-                                      Text("Show only IR readings < ${irReadPainterSettings.irReadingsThreshold}"),
-                                      Slider(
-                                        value: irReadPainterSettings.irReadingsThreshold.toDouble(),
-                                        onChanged: (value) {
-                                          setState(() {
-                                            irReadPainterSettings.irReadingsThreshold = value.round();
-                                          });
-                                        },
-                                        max: 1024,
-                                        divisions: 1024,
-                                      ),
-                                    ],
-                                  ),
-                                  TableRow(
-                                    children: [
-                                      const Text("Show calculated path"),
-                                      Checkbox(
-                                        value: irReadPainterSettings.showCalculatedPath,
-                                        onChanged: (value) => setState(() => irReadPainterSettings.showCalculatedPath = value!),
-                                      ),
-                                    ],
-                                  ),
-                                ],
-                              ),
-                            ),
-                            const Text(
-                              "Path Approximation",
-                              style: TextStyle(fontWeight: FontWeight.bold),
-                            ),
-                            Padding(
-                              padding: const EdgeInsets.all(8.0),
-                              child: Table(
-                                columnWidths: const {
-                                  0: FlexColumnWidth(1),
-                                  1: FlexColumnWidth(2),
-                                },
-                                children: [
-                                  TableRow(
-                                    children: [
-                                      const Text("Ramer Douglas Peucker tolerance"),
-                                      Slider(
-                                        value: ramerDouglasPeuckerTolerance,
-                                        onChanged: (value) => setState(() {
-                                          ramerDouglasPeuckerTolerance = value;
-                                          approximateIrPath();
-                                        }),
-                                        max: 5,
-                                      ),
-                                    ],
-                                  ),
-                                  TableRow(
-                                    children: [
-                                      Text("IR inclusion threshold: < $irInclusionThreshold"),
-                                      Slider(
-                                        value: irInclusionThreshold.toDouble(),
-                                        onChanged: (value) => setState(() {
-                                          irInclusionThreshold = value.round();
-                                          approximateIrPath();
-                                        }),
-                                        divisions: 1024,
-                                        max: 1024,
-                                      ),
-                                    ],
-                                  ),
-                                  TableRow(
-                                    children: [
-                                      const Text("Convert to Path"),
-                                      ElevatedButton(
-                                        onPressed: () {
-                                          PathToInstructions c = PathToInstructions(irPathApproximation: irPathApproximation!);
-                                          setState(() => instructions = c.calculate());
-                                          rerunSimulationAndUpdate();
-                                        },
-                                        child: const Text("To Path"),
-                                      ),
-                                    ],
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
+                  Scaffold(
+                    floatingActionButton: irCalculatorResult == null
+                        ? ElevatedButton.icon(
+                            onPressed: () async {
+                              final result = await FilePicker.platform.pickFiles(
+                                type: FileType.custom,
+                                allowedExtensions: ["bin"],
+                              );
+                              if (result == null) return;
+                              final file = File(result.files.single.path!);
+                              final importedIrReadResult = IrReadResult.fromFile(file);
+                              irCalculator = IrCalculator(irReadResult: importedIrReadResult);
+                              setState(() {
+                                irCalculatorResult = irCalculator!.calculate(selectedRobiConfig);
+                                approximateIrPath();
+                              });
+                            },
+                            icon: const Icon(Icons.file_download_outlined),
+                            label: const Text("Import IR Reading"),
+                          )
+                        : ElevatedButton.icon(
+                            onPressed: () => setState(() => irCalculatorResult = null),
+                            label: const Text("Remove"),
+                            icon: const Icon(Icons.delete),
+                          ),
+                    body: IrPathApproximationSettingsWidget(
+                      onPathCreation: () {
+                        setState(() => instructions = PathToInstructions.calculate(irPathApproximation!));
+                        rerunSimulationAndUpdate();
+                      },
+                      onSettingsChange: (
+                        settings,
+                        irInclusionThreshold,
+                        ramerDouglasPeuckerTolerance,
+                      ) {
+                        setState(() {
+                          irReadPainterSettings = settings;
+                          this.irInclusionThreshold = irInclusionThreshold;
+                          this.ramerDouglasPeuckerTolerance = ramerDouglasPeuckerTolerance;
+                          approximateIrPath();
+                        });
+                      },
                     ),
-                  ] else ...[
-                    Center(
-                      child: ElevatedButton.icon(
-                        onPressed: () async {
-                          final result = await FilePicker.platform.pickFiles(
-                            type: FileType.custom,
-                            allowedExtensions: ["bin"],
-                          );
-                          if (result == null) return;
-                          final file = File(result.files.single.path!);
-                          final importedIrReadResult = IrReadResult.fromFile(file);
-                          irCalculator = IrCalculator(irReadResult: importedIrReadResult);
-                          setState(() {
-                            irCalculatorResult = irCalculator!.calculate(selectedRobiConfig);
-                            approximateIrPath();
-                          });
-                        },
-                        icon: const Icon(Icons.file_download_outlined),
-                        label: const Text("Import IR Reading"),
-                      ),
-                    ),
-                  ],
+                  ),
                   const BluetoothConnectWidget(),
                 ],
               ),
@@ -563,7 +462,7 @@ class _EditorState extends State<Editor> with AutomaticKeepAliveClientMixin {
   }
 
   void approximateIrPath() {
-    irPathApproximation = irCalculator!.pathApproximation(
+    irPathApproximation = IrCalculator.pathApproximation(
       irCalculatorResult!,
       irInclusionThreshold,
       ramerDouglasPeuckerTolerance,

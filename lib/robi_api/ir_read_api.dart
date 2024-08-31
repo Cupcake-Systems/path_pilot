@@ -72,7 +72,7 @@ class IrCalculatorResult {
 class IrCalculator {
   final IrReadResult irReadResult;
 
-  IrCalculator({required this.irReadResult});
+  const IrCalculator({required this.irReadResult});
 
   IrCalculatorResult calculate(RobiConfig robiConfig) {
     final mc = sqrt(pow(robiConfig.distanceWheelIr, 2) + pow(robiConfig.trackWidth / 2, 2));
@@ -122,7 +122,7 @@ class IrCalculator {
     return IrCalculatorResult(irData: irData, wheelPositions: wheelPositions);
   }
 
-  List<Vector2> pathApproximation(IrCalculatorResult irCalculatorResult, int minBlackLevel, double tolerance) {
+  static List<Vector2> pathApproximation(IrCalculatorResult irCalculatorResult, int minBlackLevel, double tolerance) {
     List<Vector2> blackPoints = [Vector2(0, 0)];
 
     for (final measurement in irCalculatorResult.irData) {

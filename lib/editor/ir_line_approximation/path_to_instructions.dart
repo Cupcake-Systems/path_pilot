@@ -6,11 +6,7 @@ import 'package:vector_math/vector_math.dart';
 import '../../robi_api/robi_utils.dart';
 
 class PathToInstructions {
-  List<Vector2> irPathApproximation;
-
-  PathToInstructions({required this.irPathApproximation});
-
-  List<MissionInstruction> calculate() {
+  static List<MissionInstruction> calculate(List<Vector2> irPathApproximation) {
     List<MissionInstruction> instructions = [];
     Vector2 a, b;
     a = Vector2(1, 0);
