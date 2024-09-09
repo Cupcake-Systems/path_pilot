@@ -102,6 +102,7 @@ class _FileBrowserState extends State<FileBrowser> with TickerProviderStateMixin
                             applicationLegalese: "© Copyright Finn Drünert 2024",
                             children: [
                               Card(
+                                clipBehavior: Clip.antiAlias,
                                 child: InkWell(
                                   onTap: () => launchUrlString(repoUrl),
                                   child: const Padding(
