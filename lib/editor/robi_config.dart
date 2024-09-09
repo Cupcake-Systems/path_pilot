@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:robi_line_drawer/file_browser.dart';
 import 'package:robi_line_drawer/robi_api/robi_utils.dart';
 
@@ -11,170 +10,110 @@ class RobiConfigurator extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return StatefulBuilder(builder: (context, setState) {
-      final formKey = GlobalKey<FormState>();
-      final radiusController = TextEditingController(text: "${defaultRobiConfig.wheelRadius * 100}");
-      final trackController = TextEditingController(text: "${defaultRobiConfig.trackWidth * 100}");
-      final distanceWheelIRController = TextEditingController(text: "${defaultRobiConfig.distanceWheelIr * 100}");
-      final wheelWidthController = TextEditingController(text: "${defaultRobiConfig.wheelWidth * 100}");
-      final irDistanceController = TextEditingController(text: "${defaultRobiConfig.irDistance * 100}");
-      final nameController = TextEditingController(text: "Config ${index + 1}");
+    final formKey = GlobalKey<FormState>();
+    final controllers = _initControllers(index);
 
-      return AlertDialog(
-        title: const Text("Add Robi Configuration"),
-        content: Form(
+    return AlertDialog(
+      title: const Text("Add Robi Configuration"),
+      content: SingleChildScrollView(
+        child: Form(
           key: formKey,
           child: Column(
-            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              TextFormField(
-                controller: nameController,
-                decoration: const InputDecoration(label: Text("Configuration Name")),
+              _buildTextField(
+                controller: controllers['name']!,
+                label: "Configuration Name",
                 validator: (value) {
                   if (value == null || value.isEmpty) return "Enter a value";
                   return null;
                 },
               ),
-              Flexible(
-                child: Row(
-                  children: [
-                    const Text("Wheel radius: "),
-                    Expanded(
-                      child: TextFormField(
-                        controller: radiusController,
-                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                        inputFormatters: <TextInputFormatter>[FilteringTextInputFormatter.allow(RegExp(r'^(\d+)?\.?\d{0,4}'))],
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return "Enter a value";
-                          } else if (double.tryParse(value) == null) {
-                            return "Enter a number";
-                          }
-                          return null;
-                        },
-                      ),
-                    ),
-                    const Text("cm")
-                  ],
-                ),
-              ),
-              Flexible(
-                child: Row(
-                  children: [
-                    const Text("Track width: "),
-                    Expanded(
-                      child: TextFormField(
-                        controller: trackController,
-                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                        inputFormatters: <TextInputFormatter>[FilteringTextInputFormatter.allow(RegExp(r'^(\d+)?\.?\d{0,4}'))],
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return "Enter a value";
-                          } else if (double.tryParse(value) == null) {
-                            return "Enter a number";
-                          }
-                          return null;
-                        },
-                      ),
-                    ),
-                    const Text("cm")
-                  ],
-                ),
-              ),
-              Flexible(
-                child: Row(
-                  children: [
-                    const Text("Vertical Distance Wheel to IR: "),
-                    Expanded(
-                      child: TextFormField(
-                        controller: distanceWheelIRController,
-                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                        inputFormatters: <TextInputFormatter>[FilteringTextInputFormatter.allow(RegExp(r'^(\d+)?\.?\d{0,4}'))],
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return "Enter a value";
-                          } else if (double.tryParse(value) == null) {
-                            return "Enter a number";
-                          }
-                          return null;
-                        },
-                      ),
-                    ),
-                    const Text("cm")
-                  ],
-                ),
-              ),
-              Flexible(
-                child: Row(
-                  children: [
-                    const Text("Distance between IR sensors"),
-                    Expanded(
-                      child: TextFormField(
-                        controller: irDistanceController,
-                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                        inputFormatters: <TextInputFormatter>[FilteringTextInputFormatter.allow(RegExp(r'^(\d+)?\.?\d{0,4}'))],
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return "Enter a value";
-                          } else if (double.tryParse(value) == null) {
-                            return "Enter a number";
-                          }
-                          return null;
-                        },
-                      ),
-                    ),
-                    const Text("cm")
-                  ],
-                ),
-              ),
-              Flexible(
-                child: Row(
-                  children: [
-                    const Text("Wheel width: "),
-                    Expanded(
-                      child: TextFormField(
-                        controller: wheelWidthController,
-                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                        inputFormatters: <TextInputFormatter>[FilteringTextInputFormatter.allow(RegExp(r'^(\d+)?\.?\d{0,4}'))],
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return "Enter a value";
-                          } else if (double.tryParse(value) == null) {
-                            return "Enter a number";
-                          }
-                          return null;
-                        },
-                      ),
-                    ),
-                    const Text("cm")
-                  ],
-                ),
-              ),
+              const SizedBox(height: 8),
+              ..._buildMeasurementFields(controllers),
             ],
           ),
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text("Cancel"),
-          ),
-          TextButton(
-            onPressed: () {
-              if (!formKey.currentState!.validate()) return;
-              addedConfig(RobiConfig(
-                double.parse(radiusController.text) / 100.0,
-                double.parse(trackController.text) / 100.0,
-                double.parse(distanceWheelIRController.text) / 100.0,
-                double.parse(wheelWidthController.text) / 100.0,
-                double.parse(irDistanceController.text) / 100.0,
-                name: nameController.text,
-              ));
-              Navigator.pop(context);
-            },
-            child: const Text("Add"),
-          ),
-        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text("Cancel"),
+        ),
+        TextButton(
+          onPressed: () {
+            if (!formKey.currentState!.validate()) return;
+            final config = RobiConfig(
+              double.parse(controllers['radius']!.text) / 100.0,
+              double.parse(controllers['track']!.text) / 100.0,
+              double.parse(controllers['distanceWheelIR']!.text) / 100.0,
+              double.parse(controllers['wheelWidth']!.text) / 100.0,
+              double.parse(controllers['irDistance']!.text) / 100.0,
+              name: controllers['name']!.text,
+            );
+            addedConfig(config);
+            Navigator.pop(context);
+          },
+          child: const Text("Add"),
+        ),
+      ],
+    );
+  }
+
+  Map<String, TextEditingController> _initControllers(int index) {
+    return {
+      'radius': TextEditingController(text: "${defaultRobiConfig.wheelRadius * 100}"),
+      'track': TextEditingController(text: "${defaultRobiConfig.trackWidth * 100}"),
+      'distanceWheelIR': TextEditingController(text: "${defaultRobiConfig.distanceWheelIr * 100}"),
+      'wheelWidth': TextEditingController(text: "${defaultRobiConfig.wheelWidth * 100}"),
+      'irDistance': TextEditingController(text: "${defaultRobiConfig.irDistance * 100}"),
+      'name': TextEditingController(text: "Config ${index + 1}"),
+    };
+  }
+
+  Widget _buildTextField({
+    required TextEditingController controller,
+    required String label,
+    required FormFieldValidator<String> validator,
+  }) {
+    return TextFormField(
+      controller: controller,
+      decoration: InputDecoration(labelText: label),
+      validator: validator,
+    );
+  }
+
+  List<Widget> _buildMeasurementFields(Map<String, TextEditingController> controllers) {
+    const fields = [
+      {"label": "Wheel radius", "key": "radius"},
+      {"label": "Track width", "key": "track"},
+      {"label": "Vertical Distance Wheel to IR", "key": "distanceWheelIR"},
+      {"label": "Distance between IR sensors", "key": "irDistance"},
+      {"label": "Wheel width", "key": "wheelWidth"},
+    ];
+
+    return fields.map((field) {
+      final key = field['key']!;
+      final label = field['label']!;
+
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 4.0),
+        child: Row(
+          children: [
+            Expanded(
+              child: _buildTextField(
+                controller: controllers[key]!,
+                label: "$label (cm)",
+                validator: (value) {
+                  if (value == null || value.isEmpty) return "Enter a value";
+                  if (double.tryParse(value) == null) return "Enter a number";
+                  return null;
+                },
+              ),
+            ),
+          ],
+        ),
       );
-    });
+    }).toList();
   }
 }
