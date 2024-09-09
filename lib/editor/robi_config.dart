@@ -17,6 +17,7 @@ class RobiConfigurator extends StatelessWidget {
       final trackController = TextEditingController(text: "${defaultRobiConfig.trackWidth * 100}");
       final distanceWheelIRController = TextEditingController(text: "${defaultRobiConfig.distanceWheelIr * 100}");
       final wheelWidthController = TextEditingController(text: "${defaultRobiConfig.wheelWidth * 100}");
+      final irDistanceController = TextEditingController(text: "${defaultRobiConfig.irDistance * 100}");
       final nameController = TextEditingController(text: "Config ${index + 1}");
 
       return AlertDialog(
@@ -106,6 +107,29 @@ class RobiConfigurator extends StatelessWidget {
               Flexible(
                 child: Row(
                   children: [
+                    const Text("Distance between IR sensors"),
+                    Expanded(
+                      child: TextFormField(
+                        controller: irDistanceController,
+                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                        inputFormatters: <TextInputFormatter>[FilteringTextInputFormatter.allow(RegExp(r'^(\d+)?\.?\d{0,4}'))],
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return "Enter a value";
+                          } else if (double.tryParse(value) == null) {
+                            return "Enter a number";
+                          }
+                          return null;
+                        },
+                      ),
+                    ),
+                    const Text("cm")
+                  ],
+                ),
+              ),
+              Flexible(
+                child: Row(
+                  children: [
                     const Text("Wheel width: "),
                     Expanded(
                       child: TextFormField(
@@ -142,6 +166,7 @@ class RobiConfigurator extends StatelessWidget {
                 double.parse(trackController.text) / 100.0,
                 double.parse(distanceWheelIRController.text) / 100.0,
                 double.parse(wheelWidthController.text) / 100.0,
+                double.parse(irDistanceController.text) / 100.0,
                 name: nameController.text,
               ));
               Navigator.pop(context);

@@ -80,8 +80,8 @@ class IrCalculator {
 
   IrCalculatorResult calculate(RobiConfig robiConfig) {
     final mc = sqrt(pow(robiConfig.distanceWheelIr, 2) + pow(robiConfig.trackWidth / 2, 2));
-    final rc = sqrt(pow(robiConfig.distanceWheelIr, 2) + pow(robiConfig.trackWidth / 2 - 0.01, 2));
-    final lc = sqrt(pow(robiConfig.distanceWheelIr, 2) + pow(robiConfig.trackWidth / 2 + 0.01, 2));
+    final rc = sqrt(pow(robiConfig.distanceWheelIr, 2) + pow(robiConfig.trackWidth / 2 - robiConfig.irDistance, 2));
+    final lc = sqrt(pow(robiConfig.distanceWheelIr, 2) + pow(robiConfig.trackWidth / 2 + robiConfig.irDistance, 2));
 
     Vector2 lastRightOffset = Vector2(0, -robiConfig.trackWidth / 2);
     Vector2 lastLeftOffset = Vector2(0, robiConfig.trackWidth / 2);
@@ -110,8 +110,8 @@ class IrCalculator {
       // IR Stuff
 
       double mAlpha = rotationRad + pi / 2 - atan(robiConfig.distanceWheelIr / (robiConfig.trackWidth / 2));
-      double rAlpha = rotationRad + pi / 2 - atan(robiConfig.distanceWheelIr / (robiConfig.trackWidth / 2 - 0.01));
-      double lAlpha = rotationRad + pi / 2 - atan(robiConfig.distanceWheelIr / (robiConfig.trackWidth / 2 + 0.01));
+      double rAlpha = rotationRad + pi / 2 - atan(robiConfig.distanceWheelIr / (robiConfig.trackWidth / 2 - robiConfig.irDistance));
+      double lAlpha = rotationRad + pi / 2 - atan(robiConfig.distanceWheelIr / (robiConfig.trackWidth / 2 + robiConfig.irDistance));
 
       Vector2 mIrPosition = newRightOffset + Vector2(cos(mAlpha) * mc, sin(mAlpha) * mc);
       Vector2 rIrPosition = newRightOffset + Vector2(cos(rAlpha) * rc, sin(rAlpha) * rc);
