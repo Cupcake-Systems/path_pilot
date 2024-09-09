@@ -185,8 +185,10 @@ class _EditorState extends State<Editor> with AutomaticKeepAliveClientMixin {
                                       setState(() {
                                         selectedRobiConfig = config;
                                         rerunSimulationAndUpdate();
-                                        irCalculatorResult = irCalculator!.calculate(selectedRobiConfig);
-                                        approximateIrPath();
+                                        if (irCalculator != null) {
+                                          irCalculatorResult = irCalculator!.calculate(selectedRobiConfig);
+                                          approximateIrPath();
+                                        }
                                       });
                                     },
                                     index: RobiConfigStorage.length,
@@ -209,8 +211,10 @@ class _EditorState extends State<Editor> with AutomaticKeepAliveClientMixin {
                                                 setState(() {
                                                   selectedRobiConfig = RobiConfigStorage.get(0);
                                                   rerunSimulationAndUpdate();
-                                                  irCalculatorResult = irCalculator!.calculate(selectedRobiConfig);
-                                                  approximateIrPath();
+                                                  if (irCalculator != null) {
+                                                    irCalculatorResult = irCalculator!.calculate(selectedRobiConfig);
+                                                    approximateIrPath();
+                                                  }
                                                 });
                                               },
                                             ),
