@@ -8,6 +8,7 @@ import 'package:robi_line_drawer/editor/editor.dart';
 import 'package:robi_line_drawer/main.dart';
 import 'package:robi_line_drawer/robi_api/robi_path_serializer.dart';
 import 'package:robi_line_drawer/robi_api/robi_utils.dart';
+import 'package:robi_line_drawer/settings/robi_config_settings.dart';
 import 'package:robi_line_drawer/settings/settings.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 
@@ -50,6 +51,19 @@ class _FileBrowserState extends State<FileBrowser> with TickerProviderStateMixin
                           if (context.mounted) openTab(context, file);
                         },
                         child: const MenuAcceleratorLabel('&Open'),
+                      ),
+                      const Divider(height: 0),
+                      MenuItemButton(
+                        leadingIcon: const Icon(Icons.build_circle),
+                        onPressed: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (context) => const RobiConfigSettingsPage(),
+                            ),
+                          );
+                          setState(() {});
+                        },
+                        child: const MenuAcceleratorLabel('&Robi Configs'),
                       ),
                       const Divider(height: 0),
                       MenuItemButton(
@@ -238,4 +252,4 @@ class _FileBrowserState extends State<FileBrowser> with TickerProviderStateMixin
   }
 }
 
-const defaultRobiConfig = RobiConfig(0.032, 0.147, 0.06, 0.025, 0.01, name: "Default");
+const defaultRobiConfig = RobiConfig(0.032, 0.147, 0.06, 0.025, 0.01, "Default");

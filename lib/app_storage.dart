@@ -1,6 +1,5 @@
 import 'dart:convert';
 
-import 'package:robi_line_drawer/file_browser.dart';
 import 'package:robi_line_drawer/robi_api/robi_utils.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -20,7 +19,7 @@ class RobiConfigStorage {
   static late final List<RobiConfig> _storedConfigs;
   static late int _lastUsedConfigIndex;
 
-  static RobiConfig get lastUsedConfig => _storedConfigs[_lastUsedConfigIndex];
+  static RobiConfig? get lastUsedConfig => _storedConfigs.elementAtOrNull(_lastUsedConfigIndex);
 
   static set lastUsedConfigIndex(int i) {
     _lastUsedConfigIndex = i;
@@ -28,6 +27,8 @@ class RobiConfigStorage {
   }
 
   static int get length => _storedConfigs.length;
+
+  static List<RobiConfig> get configs => _storedConfigs;
 
   static void init() {
     _storedConfigs = _loadConfigs();
@@ -38,11 +39,11 @@ class RobiConfigStorage {
   static List<RobiConfig> _loadConfigs() {
     try {
       final storedString = AppData._prefs.getString(_storageKey);
-      if (storedString == null) return [defaultRobiConfig];
+      if (storedString == null) return [];
       final List jsonList = jsonDecode(storedString) as List;
       return jsonList.map((e) => RobiConfig.fromJson(e)).toList();
     } catch (e) {
-      return [defaultRobiConfig];
+      return [];
     }
   }
 

@@ -1,17 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:robi_line_drawer/app_storage.dart';
 import 'package:robi_line_drawer/file_browser.dart';
 import 'package:robi_line_drawer/robi_api/robi_utils.dart';
 
 class RobiConfigurator extends StatelessWidget {
   final void Function(RobiConfig config) addedConfig;
-  final int index;
+  final RobiConfig? initialConfig;
 
-  const RobiConfigurator({super.key, required this.addedConfig, required this.index});
+  const RobiConfigurator({super.key, required this.addedConfig, this.initialConfig});
 
   @override
   Widget build(BuildContext context) {
     final formKey = GlobalKey<FormState>();
-    final controllers = _initControllers(index);
+    final controllers = _initControllers();
 
     return AlertDialog(
       title: const Text("Add Robi Configuration"),
@@ -49,25 +50,30 @@ class RobiConfigurator extends StatelessWidget {
               double.parse(controllers['distanceWheelIR']!.text) / 100.0,
               double.parse(controllers['wheelWidth']!.text) / 100.0,
               double.parse(controllers['irDistance']!.text) / 100.0,
-              name: controllers['name']!.text,
+              controllers['name']!.text,
             );
             addedConfig(config);
             Navigator.pop(context);
           },
-          child: const Text("Add"),
+          child: const Text("Done"),
         ),
       ],
     );
   }
 
-  Map<String, TextEditingController> _initControllers(int index) {
+  Map<String, TextEditingController> _initControllers() {
+
+    final initialConfig = this.initialConfig ?? defaultRobiConfig;
+
+    final name = this.initialConfig == null? "Config ${RobiConfigStorage.length + 1}" : initialConfig.name;
+
     return {
-      'radius': TextEditingController(text: "${defaultRobiConfig.wheelRadius * 100}"),
-      'track': TextEditingController(text: "${defaultRobiConfig.trackWidth * 100}"),
-      'distanceWheelIR': TextEditingController(text: "${defaultRobiConfig.distanceWheelIr * 100}"),
-      'wheelWidth': TextEditingController(text: "${defaultRobiConfig.wheelWidth * 100}"),
-      'irDistance': TextEditingController(text: "${defaultRobiConfig.irDistance * 100}"),
-      'name': TextEditingController(text: "Config ${index + 1}"),
+      'radius': TextEditingController(text: "${initialConfig.wheelRadius * 100}"),
+      'track': TextEditingController(text: "${initialConfig.trackWidth * 100}"),
+      'distanceWheelIR': TextEditingController(text: "${initialConfig.distanceWheelIr * 100}"),
+      'wheelWidth': TextEditingController(text: "${initialConfig.wheelWidth * 100}"),
+      'irDistance': TextEditingController(text: "${initialConfig.irDistance * 100}"),
+      'name': TextEditingController(text: name),
     };
   }
 

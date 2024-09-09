@@ -11,8 +11,8 @@ import 'package:robi_line_drawer/editor/instructions/rapid_turn.dart';
 import 'package:robi_line_drawer/editor/ir_line_approximation/approximation_settings_widget.dart';
 import 'package:robi_line_drawer/editor/ir_line_approximation/ir_reading_info.dart';
 import 'package:robi_line_drawer/editor/painters/ir_read_painter.dart';
-import 'package:robi_line_drawer/editor/robi_config.dart';
 import 'package:robi_line_drawer/editor/visualizer.dart';
+import 'package:robi_line_drawer/file_browser.dart';
 import 'package:robi_line_drawer/main.dart';
 import 'package:robi_line_drawer/robi_api/ir_read_api.dart';
 import 'package:robi_line_drawer/robi_api/robi_utils.dart';
@@ -44,7 +44,7 @@ class Editor extends StatefulWidget {
 }
 
 class _EditorState extends State<Editor> with AutomaticKeepAliveClientMixin {
-  RobiConfig selectedRobiConfig = RobiConfigStorage.lastUsedConfig;
+  RobiConfig selectedRobiConfig = RobiConfigStorage.lastUsedConfig ?? defaultRobiConfig;
 
   late List<MissionInstruction> instructions = List.from(widget.initailInstructions);
   late Simulator simulator = Simulator(selectedRobiConfig);
@@ -128,240 +128,209 @@ class _EditorState extends State<Editor> with AutomaticKeepAliveClientMixin {
         ),
         const VerticalDivider(width: 1),
         Flexible(
-          child: DefaultTabController(
-            length: 3,
-            child: Scaffold(
-              appBar: PreferredSize(
-                preferredSize: const Size.fromHeight(32),
-                child: AppBar(
-                  flexibleSpace: const TabBar(
-                    tabs: [
-                      Tab(child: Text("Instructions")),
-                      Tab(child: Text("IR Readings")),
-                      Tab(child: Text("IR Bluetooth")),
-                    ],
+          child: Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Row(
+                  children: [
+                    const Text("Robi Config: "),
+                    DropdownMenu(
+                      inputDecorationTheme: const InputDecorationTheme(),
+                      textStyle: const TextStyle(fontSize: 14),
+                      menuStyle: const MenuStyle(),
+                      dropdownMenuEntries: [defaultRobiConfig, ...RobiConfigStorage.configs]
+                          .map(
+                            (config) => DropdownMenuEntry(value: config, label: config.name),
+                          )
+                          .toList(),
+                      initialSelection: selectedRobiConfig,
+                      onSelected: (value) {
+                        RobiConfigStorage.lastUsedConfigIndex = RobiConfigStorage.indexOf(value!);
+                        setState(() {
+                          selectedRobiConfig = value;
+                          rerunSimulationAndUpdate();
+                          irCalculatorResult = irCalculator!.calculate(selectedRobiConfig);
+                          approximateIrPath();
+                        });
+                      },
+                    ),
+                  ],
+                ),
+              ),
+              const Divider(height: 1),
+              Expanded(
+                child: DefaultTabController(
+                  length: 3,
+                  child: Scaffold(
+                    appBar: PreferredSize(
+                      preferredSize: const Size.fromHeight(32),
+                      child: AppBar(
+                        flexibleSpace: const TabBar(
+                          tabs: [
+                            Tab(child: Text("Instructions")),
+                            Tab(child: Text("IR Readings")),
+                            Tab(child: Text("IR Bluetooth")),
+                          ],
+                        ),
+                      ),
+                    ),
+                    body: TabBarView(
+                      children: [
+                        ReorderableListView.builder(
+                          itemCount: instructions.length,
+                          header: Padding(
+                            padding: const EdgeInsets.only(bottom: 5),
+                            child: MenuBar(
+                              clipBehavior: Clip.hardEdge,
+                              style: const MenuStyle(
+                                shape: WidgetStatePropertyAll(
+                                  RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.vertical(
+                                      bottom: Radius.circular(10),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              children: [
+                                MenuItemButton(
+                                  leadingIcon: const Icon(Icons.save),
+                                  onPressed: () {
+                                    RobiPathSerializer.saveToFile(widget.file, instructions);
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(content: Text('Saved')),
+                                    );
+                                  },
+                                  child: const MenuAcceleratorLabel('&Save'),
+                                ),
+                                const VerticalDivider(width: 0),
+                                MenuItemButton(
+                                  onPressed: simulationResult.instructionResults.isEmpty ? null : exportClick,
+                                  trailingIcon: const Icon(Icons.file_upload_outlined),
+                                  child: const MenuAcceleratorLabel("&Export"),
+                                ),
+                              ],
+                            ),
+                          ),
+                          footer: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: Card.outlined(
+                                      child: IconButton(
+                                        style: IconButton.styleFrom(
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(10),
+                                          ),
+                                        ),
+                                        padding: const EdgeInsets.symmetric(vertical: 20),
+                                        icon: const Icon(Icons.add),
+                                        onPressed: () => showDialog(
+                                          context: context,
+                                          builder: (BuildContext context) => AddInstructionDialog(
+                                            instructionAdded: (MissionInstruction instruction) {
+                                              instructions.insert(instructions.length, instruction);
+                                              rerunSimulationAndUpdate();
+                                            },
+                                            robiConfig: selectedRobiConfig,
+                                            simulationResult: simulationResult,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  Card.outlined(
+                                    child: IconButton(
+                                      style: IconButton.styleFrom(
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(10),
+                                        ),
+                                      ),
+                                      padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 30),
+                                      onPressed: () {
+                                        instructions.clear();
+                                        rerunSimulationAndUpdate();
+                                      },
+                                      icon: const Icon(Icons.close),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                          itemBuilder: (context, i) => instructionToEditor(i),
+                          onReorder: (int oldIndex, int newIndex) {
+                            if (oldIndex < newIndex) --newIndex;
+                            instructions.insert(newIndex, instructions.removeAt(oldIndex));
+                            rerunSimulationAndUpdate();
+                          },
+                        ),
+                        Scaffold(
+                          body: ListView(
+                            children: [
+                              IrPathApproximationSettingsWidget(
+                                onPathCreation: () {
+                                  setState(() => instructions = PathToInstructions.calculate(irPathApproximation!));
+                                  rerunSimulationAndUpdate();
+                                },
+                                onSettingsChange: (
+                                  settings,
+                                  irInclusionThreshold,
+                                  ramerDouglasPeuckerTolerance,
+                                ) {
+                                  setState(() {
+                                    irReadPainterSettings = settings;
+                                    this.irInclusionThreshold = irInclusionThreshold;
+                                    this.ramerDouglasPeuckerTolerance = ramerDouglasPeuckerTolerance;
+                                    if (irCalculatorResult != null) approximateIrPath();
+                                  });
+                                },
+                              ),
+                              if (irReadResult == null || irCalculatorResult == null) ...[
+                                Padding(
+                                  padding: const EdgeInsets.all(4),
+                                  child: ElevatedButton.icon(
+                                    onPressed: () async {
+                                      final result = await FilePicker.platform.pickFiles(
+                                        type: FileType.custom,
+                                        allowedExtensions: ["bin"],
+                                      );
+                                      if (result == null) return;
+                                      final file = File(result.files.single.path!);
+                                      setState(() {
+                                        irReadResult = IrReadResult.fromFile(file);
+                                        irCalculator = IrCalculator(irReadResult: irReadResult!);
+                                        irCalculatorResult = irCalculator!.calculate(selectedRobiConfig);
+                                        approximateIrPath();
+                                      });
+                                    },
+                                    icon: const Icon(Icons.file_download_outlined),
+                                    label: const Text("Import IR Reading"),
+                                  ),
+                                ),
+                              ] else ...[
+                                IrReadingInfoWidget(
+                                  irReadResult: irReadResult!,
+                                  irCalculatorResult: irCalculatorResult!,
+                                  onRemoveClick: () => setState(() {
+                                    irCalculatorResult = null;
+                                    irReadResult = null;
+                                  }),
+                                ),
+                              ],
+                            ],
+                          ),
+                        ),
+                        const BluetoothConnectWidget(),
+                      ],
+                    ),
                   ),
                 ),
               ),
-              body: TabBarView(
-                children: [
-                  ReorderableListView.builder(
-                    itemCount: instructions.length,
-                    header: Padding(
-                      padding: const EdgeInsets.only(bottom: 5),
-                      child: MenuBar(
-                        clipBehavior: Clip.hardEdge,
-                        style: const MenuStyle(
-                          shape: WidgetStatePropertyAll(
-                            RoundedRectangleBorder(
-                              borderRadius: BorderRadius.vertical(
-                                bottom: Radius.circular(10),
-                              ),
-                            ),
-                          ),
-                        ),
-                        children: [
-                          MenuItemButton(
-                            leadingIcon: const Icon(Icons.save),
-                            onPressed: () {
-                              RobiPathSerializer.saveToFile(widget.file, instructions);
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text('Saved')),
-                              );
-                            },
-                            child: const MenuAcceleratorLabel('&Save'),
-                          ),
-                          const VerticalDivider(width: 0),
-                          SubmenuButton(
-                            menuChildren: [
-                              MenuItemButton(
-                                leadingIcon: const Icon(Icons.add),
-                                onPressed: () => showDialog(
-                                  context: context,
-                                  builder: (context) => RobiConfigurator(
-                                    addedConfig: (config) {
-                                      RobiConfigStorage.add(config);
-                                      RobiConfigStorage.lastUsedConfigIndex = RobiConfigStorage.length - 1;
-                                      setState(() {
-                                        selectedRobiConfig = config;
-                                        rerunSimulationAndUpdate();
-                                        if (irCalculator != null) {
-                                          irCalculatorResult = irCalculator!.calculate(selectedRobiConfig);
-                                          approximateIrPath();
-                                        }
-                                      });
-                                    },
-                                    index: RobiConfigStorage.length,
-                                  ),
-                                ),
-                                child: const MenuAcceleratorLabel('&New'),
-                              ),
-                              const Divider(height: 0),
-                              SubmenuButton(
-                                menuChildren: [
-                                  for (int i = 0; i < RobiConfigStorage.length; ++i)
-                                    RadioMenuButton(
-                                      trailingIcon: RobiConfigStorage.length <= 1
-                                          ? null
-                                          : IconButton(
-                                              icon: const Icon(Icons.delete),
-                                              onPressed: () {
-                                                RobiConfigStorage.remove(RobiConfigStorage.get(i));
-                                                RobiConfigStorage.lastUsedConfigIndex = 0;
-                                                setState(() {
-                                                  selectedRobiConfig = RobiConfigStorage.get(0);
-                                                  rerunSimulationAndUpdate();
-                                                  if (irCalculator != null) {
-                                                    irCalculatorResult = irCalculator!.calculate(selectedRobiConfig);
-                                                    approximateIrPath();
-                                                  }
-                                                });
-                                              },
-                                            ),
-                                      value: RobiConfigStorage.get(i),
-                                      groupValue: selectedRobiConfig,
-                                      onChanged: (value) {
-                                        RobiConfigStorage.lastUsedConfigIndex = RobiConfigStorage.indexOf(value!);
-                                        setState(() {
-                                          selectedRobiConfig = value;
-                                          rerunSimulationAndUpdate();
-                                          irCalculatorResult = irCalculator!.calculate(selectedRobiConfig);
-                                          approximateIrPath();
-                                        });
-                                      },
-                                      child: MenuAcceleratorLabel(RobiConfigStorage.get(i).name ?? '&Config ${i + 1}'),
-                                    )
-                                ],
-                                child: const MenuAcceleratorLabel('&Select'),
-                              ),
-                            ],
-                            child: const MenuAcceleratorLabel("&Robi Config"),
-                          ),
-                          const VerticalDivider(width: 0),
-                          MenuItemButton(
-                            onPressed: simulationResult.instructionResults.isEmpty ? null : exportClick,
-                            trailingIcon: const Icon(Icons.file_upload_outlined),
-                            child: const MenuAcceleratorLabel("&Export"),
-                          ),
-                        ],
-                      ),
-                    ),
-                    footer: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        Row(
-                          children: [
-                            Expanded(
-                              child: Card.outlined(
-                                child: IconButton(
-                                  style: IconButton.styleFrom(
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(10),
-                                    ),
-                                  ),
-                                  padding: const EdgeInsets.symmetric(vertical: 20),
-                                  icon: const Icon(Icons.add),
-                                  onPressed: () => showDialog(
-                                    context: context,
-                                    builder: (BuildContext context) => AddInstructionDialog(
-                                      instructionAdded: (MissionInstruction instruction) {
-                                        instructions.insert(instructions.length, instruction);
-                                        rerunSimulationAndUpdate();
-                                      },
-                                      robiConfig: selectedRobiConfig,
-                                      simulationResult: simulationResult,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                            Card.outlined(
-                              child: IconButton(
-                                style: IconButton.styleFrom(
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(10),
-                                  ),
-                                ),
-                                padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 30),
-                                onPressed: () {
-                                  instructions.clear();
-                                  rerunSimulationAndUpdate();
-                                },
-                                icon: const Icon(Icons.close),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                    itemBuilder: (context, i) => instructionToEditor(i),
-                    onReorder: (int oldIndex, int newIndex) {
-                      if (oldIndex < newIndex) --newIndex;
-                      instructions.insert(newIndex, instructions.removeAt(oldIndex));
-                      rerunSimulationAndUpdate();
-                    },
-                  ),
-                  Scaffold(
-                    body: ListView(
-                      children: [
-                        IrPathApproximationSettingsWidget(
-                          onPathCreation: () {
-                            setState(() => instructions = PathToInstructions.calculate(irPathApproximation!));
-                            rerunSimulationAndUpdate();
-                          },
-                          onSettingsChange: (
-                            settings,
-                            irInclusionThreshold,
-                            ramerDouglasPeuckerTolerance,
-                          ) {
-                            setState(() {
-                              irReadPainterSettings = settings;
-                              this.irInclusionThreshold = irInclusionThreshold;
-                              this.ramerDouglasPeuckerTolerance = ramerDouglasPeuckerTolerance;
-                              if (irCalculatorResult != null) approximateIrPath();
-                            });
-                          },
-                        ),
-                        if (irReadResult == null || irCalculatorResult == null) ...[
-                          Padding(
-                            padding: const EdgeInsets.all(4),
-                            child: ElevatedButton.icon(
-                              onPressed: () async {
-                                final result = await FilePicker.platform.pickFiles(
-                                  type: FileType.custom,
-                                  allowedExtensions: ["bin"],
-                                );
-                                if (result == null) return;
-                                final file = File(result.files.single.path!);
-                                setState(() {
-                                  irReadResult = IrReadResult.fromFile(file);
-                                  irCalculator = IrCalculator(irReadResult: irReadResult!);
-                                  irCalculatorResult = irCalculator!.calculate(selectedRobiConfig);
-                                  approximateIrPath();
-                                });
-                              },
-                              icon: const Icon(Icons.file_download_outlined),
-                              label: const Text("Import IR Reading"),
-                            ),
-                          ),
-                        ] else ...[
-                          IrReadingInfoWidget(
-                            irReadResult: irReadResult!,
-                            irCalculatorResult: irCalculatorResult!,
-                            onRemoveClick: () => setState(() {
-                              irCalculatorResult = null;
-                              irReadResult = null;
-                            }),
-                          ),
-                        ],
-                      ],
-                    ),
-                  ),
-                  const BluetoothConnectWidget(),
-                ],
-              ),
-            ),
+            ],
           ),
         ),
       ],
@@ -376,7 +345,7 @@ class _EditorState extends State<Editor> with AutomaticKeepAliveClientMixin {
     if (path == null) return;
     Exporter.saveToFile(
       File(path),
-      RobiConfigStorage.lastUsedConfig,
+      selectedRobiConfig,
       simulationResult.instructionResults,
     );
   }
