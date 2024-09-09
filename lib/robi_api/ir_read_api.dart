@@ -20,6 +20,8 @@ class Measurement {
     required this.rightFwd,
   });
 
+  /// Measurement binary structure documentation:
+  /// https://github.com/Finnomator/robi_line_drawer/wiki/IR-Read-Result-Binary-File-Definition#64-bit-measurement-format
   factory Measurement.fromLine(ByteData line) {
     final readAndFwdByte = line.getUint32(4);
     return Measurement(
@@ -40,6 +42,8 @@ class IrReadResult {
 
   const IrReadResult({required this.resolution, required this.measurements});
 
+  /// Binary file structure documentation:
+  /// https://github.com/Finnomator/robi_line_drawer/wiki/IR-Read-Result-Binary-File-Definition
   factory IrReadResult.fromData(ByteBuffer data) {
     final dataLineCount = data.asByteData(2).lengthInBytes ~/ 8;
 
