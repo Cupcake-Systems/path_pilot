@@ -43,7 +43,7 @@ class RobiPainter extends MyPainter {
     const s = 0.000263;
     canvas.scale(s, s);
 
-    canvas.drawImage(robiUiImage, const Offset(0, 0), Paint());
+    canvas.drawImage(robiUiImage, const Offset(0, 0), Paint()..filterQuality = FilterQuality.high);
   }
 }
 
