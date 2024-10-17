@@ -150,7 +150,7 @@ class _VisualizerState extends State<Visualizer> {
           padding: const EdgeInsets.symmetric(horizontal: 8),
           child: Row(
             children: [
-              const Text("Time"),
+              Text("Time: ${_printDuration(Duration(milliseconds: (t * 1000).toInt()))} / ${_printDuration(Duration(milliseconds: (widget.simulationResult.totalTime * 1000).toInt()))}"),
               Expanded(
                 child: Slider(
                   value: t,
@@ -185,4 +185,12 @@ class _VisualizerState extends State<Visualizer> {
       ],
     );
   }
+}
+
+String _printDuration(Duration duration) {
+  String twoDigits(int n) => n.toString().padLeft(2, "0").substring(0, 2);
+  String twoDigitMinutes = duration.inMinutes.remainder(60).abs().toString();
+  String twoDigitSeconds = twoDigits(duration.inSeconds.remainder(60).abs());
+  String twoDigitMilliseconds = twoDigits(duration.inMilliseconds.remainder(1000).abs());
+  return "$twoDigitMinutes:$twoDigitSeconds:$twoDigitMilliseconds";
 }
