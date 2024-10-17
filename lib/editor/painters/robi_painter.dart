@@ -15,6 +15,8 @@ class RobiPainter extends MyPainter {
   final double t;
 
   static late final ui.Image robiUiImage;
+  static late final s;
+
 
   RobiPainter({
     required this.canvas,
@@ -23,8 +25,9 @@ class RobiPainter extends MyPainter {
   });
 
   static Future<void> init() async {
-    final ByteData data = await rootBundle.load("assets/robi_illustration.png");
+    final ByteData data = await rootBundle.load("assets/robi_illustration.webp");
     robiUiImage = await decodeImageFromList(data.buffer.asUint8List());
+    s = 0.16 / robiUiImage.width;
   }
 
   @override
@@ -40,7 +43,6 @@ class RobiPainter extends MyPainter {
     canvas.translate(o.x, -o.y);
     canvas.rotate(degrees2Radians * (90 - rotation));
 
-    const s = 0.000263;
     canvas.scale(s, s);
 
     canvas.drawImage(robiUiImage, const Offset(0, 0), Paint()..filterQuality = FilterQuality.high);
