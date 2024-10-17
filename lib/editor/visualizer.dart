@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math';
 
 import 'package:flutter/gestures.dart';
@@ -37,12 +38,40 @@ class Visualizer extends StatefulWidget {
 }
 
 class _VisualizerState extends State<Visualizer> {
+  late final Timer _timer;
+
   late double scale = widget.scale;
   late Offset _offset = widget.offset;
   late Offset _previousOffset = widget.offset;
+  double t = 0;
+  bool updateRobi = false;
 
   static const double minScale = 6;
   static const double maxScale = 12;
+  static const double robiDrawerUpdateRate = 1 / 30;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _timer = Timer.periodic(Duration(milliseconds: (robiDrawerUpdateRate * 1000).round()), (timer) {
+      if (!mounted || !updateRobi) return;
+
+      setState(() {
+        t += robiDrawerUpdateRate;
+        if (t >= widget.simulationResult.totalTime) {
+          t = widget.simulationResult.totalTime;
+          updateRobi = false;
+        }
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+    _timer.cancel();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -73,6 +102,7 @@ class _VisualizerState extends State<Visualizer> {
                 }),
                 child: CustomPaint(
                   painter: LinePainter(
+                    t: t,
                     scale: pow(2, scale) - 1,
                     robiConfig: widget.robiConfig,
                     simulationResult: widget.simulationResult,
@@ -93,7 +123,7 @@ class _VisualizerState extends State<Visualizer> {
           padding: const EdgeInsets.symmetric(horizontal: 8),
           child: Row(
             children: [
-              const Text("Zoom: "),
+              const Text("Zoom"),
               Expanded(
                 child: Slider(
                   value: scale,
@@ -116,6 +146,42 @@ class _VisualizerState extends State<Visualizer> {
             ],
           ),
         ),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8),
+          child: Row(
+            children: [
+              const Text("Time"),
+              Expanded(
+                child: Slider(
+                  value: t,
+                  onChanged: (value) {
+                    setState(() {
+                      t = value;
+                      updateRobi = false;
+                    });
+                  },
+                  max: widget.simulationResult.totalTime,
+                  min: 0,
+                ),
+              ),
+              SizedBox(
+                width: 116,
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    setState(() {
+                      updateRobi = !updateRobi;
+                      if (updateRobi && t == widget.simulationResult.totalTime) {
+                        t = 0;
+                      }
+                    });
+                  },
+                  label: Text(updateRobi ? "Pause" : "Play"),
+                  icon: Icon(updateRobi ? Icons.pause : Icons.play_arrow),
+                ),
+              ),
+            ],
+          ),
+        )
       ],
     );
   }

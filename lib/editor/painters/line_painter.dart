@@ -2,6 +2,7 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:robi_line_drawer/editor/painters/ir_read_painter.dart';
+import 'package:robi_line_drawer/editor/painters/robi_painter.dart';
 import 'package:robi_line_drawer/editor/painters/simulation_painter.dart';
 import 'package:robi_line_drawer/robi_api/ir_read_api.dart';
 import 'package:robi_line_drawer/robi_api/robi_utils.dart';
@@ -12,7 +13,7 @@ import 'abstract_painter.dart';
 const Color white = Color(0xFFFFFFFF);
 
 class LinePainter extends CustomPainter {
-  final double scale;
+  final double scale, t;
   final Offset offset;
   final RobiConfig robiConfig;
   final SimulationResult simulationResult;
@@ -31,6 +32,7 @@ class LinePainter extends CustomPainter {
     this.irCalculatorResult,
     this.irPathApproximation,
     required this.offset,
+    required this.t,
   });
 
   static void paintText(String text, Offset offset, Canvas canvas, Size size) {
@@ -117,8 +119,6 @@ class LinePainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     paintGrid(canvas, size);
-    paintScale(canvas, size);
-    paintVelocityScale(canvas, size);
 
     canvas.save();
 
@@ -142,7 +142,12 @@ class LinePainter extends CustomPainter {
           size: size,
           irCalculatorResult: irCalculatorResult!,
           pathApproximation: irPathApproximation!,
-        )
+        ),
+      RobiPainter(
+        t: t,
+        canvas: canvas,
+        simulationResult: simulationResult,
+      ),
     ];
 
     for (final painter in painters) {
@@ -150,5 +155,8 @@ class LinePainter extends CustomPainter {
     }
 
     canvas.restore();
+
+    paintScale(canvas, size);
+    paintVelocityScale(canvas, size);
   }
 }

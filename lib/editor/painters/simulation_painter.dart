@@ -110,7 +110,7 @@ class SimulationPainter extends MyPainter {
       robiRotation: instruction.startRotation,
       highlight: highlight,
       degreeOffset: 0,
-      initialVelocity: instruction.initialOuterVelocity,
+      initialVelocity: instruction.outerInitialVelocity,
       endVelocity: instruction.maxOuterVelocity,
     );
 
@@ -205,4 +205,15 @@ Color velToColor(double velocity, double maxVelocity) {
   int r = ((1 - velocity / maxVelocity) * 255).round();
   int g = 255 - r;
   return Color.fromARGB(255, r, g, 0);
+}
+
+Vector2 centerOfCircle(double radius, double angle, bool left) {
+  Vector2 center = polarToCartesian(angle + 90, radius);
+
+  if (!left) {
+    center = polarToCartesian(-90 - angle, radius);
+    center = Vector2(-center.x, center.y);
+  }
+
+  return center;
 }
