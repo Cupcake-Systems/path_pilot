@@ -15,7 +15,7 @@ class RobiPainter extends MyPainter {
   final double t;
 
   static late final ui.Image robiUiImage;
-  static late final s;
+  static late final double s;
 
 
   RobiPainter({
