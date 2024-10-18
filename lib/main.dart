@@ -17,9 +17,10 @@ Future<void> main() async {
   packageInfo = await PackageInfo.fromPlatform();
   await RobiPainter.init();
 
-  UniversalBle.onConnectionChange = (deviceId, x) {
+  UniversalBle.onConnectionChange = (deviceId, isConnected, String? error) {
+    if (error != null) return;
     for (final element in bleConnectionChange.values) {
-      element(deviceId, x);
+      element(deviceId, isConnected);
     }
   };
 
