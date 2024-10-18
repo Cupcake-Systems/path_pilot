@@ -15,7 +15,36 @@ class RobiConfigurator extends StatelessWidget {
     final controllers = _initControllers();
 
     return AlertDialog(
-      title: const Text("Add Robi Configuration"),
+      title: AppBar(
+        titleSpacing: 0,
+        title: const Text("New Robi Config"),
+        automaticallyImplyLeading: false,
+        actions: [
+          IconButton(
+              icon: const Icon(Icons.help),
+              onPressed: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) {
+                      return Scaffold(
+                        appBar: AppBar(
+                          title: Text("Robi Config Help"),
+                        ),
+                        body: Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: Center(
+                            child: Image(
+                              image: AssetImage("assets/robi_illustration_bottom_labeled.webp"),
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                );
+              }),
+        ],
+      ),
       content: SingleChildScrollView(
         child: Form(
           key: formKey,
@@ -62,10 +91,9 @@ class RobiConfigurator extends StatelessWidget {
   }
 
   Map<String, TextEditingController> _initControllers() {
-
     final initialConfig = this.initialConfig ?? defaultRobiConfig;
 
-    final name = this.initialConfig == null? "Config ${RobiConfigStorage.length + 1}" : initialConfig.name;
+    final name = this.initialConfig == null ? "Config ${RobiConfigStorage.length + 1}" : initialConfig.name;
 
     return {
       'radius': TextEditingController(text: "${initialConfig.wheelRadius * 100}"),
