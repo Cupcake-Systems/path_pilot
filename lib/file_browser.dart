@@ -92,6 +92,13 @@ class _FileBrowserState extends State<FileBrowser> with TickerProviderStateMixin
                         onPressed: () => launchUrlString("$repoUrl/issues?q=is%3Aissue"),
                         child: const MenuAcceleratorLabel('&Known Issues'),
                       ),
+                      const Divider(height: 0),
+                      MenuItemButton(
+                        leadingIcon: const Icon(Icons.menu_book),
+                        onPressed: () => launchUrlString("$repoUrl/wiki"),
+                        child: const MenuAcceleratorLabel('&Wiki'),
+                      ),
+                      const Divider(height: 0),
                       MenuItemButton(
                         leadingIcon: const Icon(Icons.info),
                         onPressed: () {
