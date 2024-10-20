@@ -260,4 +260,4 @@ class _FileBrowserState extends State<FileBrowser> with TickerProviderStateMixin
   }
 }
 
-const defaultRobiConfig = RobiConfig(0.032, 0.147, 0.06, 0.025, 0.01, "Default");
+const defaultRobiConfig = RobiConfig(0.032, 0.135, 0.075, 0.025, 0.01, "Default");
