@@ -32,6 +32,11 @@ dev_dependencies:
 flutter:
   uses-material-design: true
 
+  fonts:
+    - family: RobotoMono
+      fonts:
+        - asset: assets/fonts/RobotoMono-Regular.ttf
+
   assets:
     - assets/robi_illustration.webp
     - assets/robi_illustration_bottom_labeled.webp

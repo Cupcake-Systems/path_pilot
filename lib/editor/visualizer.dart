@@ -5,6 +5,7 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:robi_line_drawer/editor/painters/ir_read_painter.dart';
 import 'package:robi_line_drawer/editor/painters/line_painter.dart';
+import 'package:robi_line_drawer/editor/painters/robi_painter.dart';
 import 'package:robi_line_drawer/robi_api/ir_read_api.dart';
 import 'package:robi_line_drawer/robi_api/robi_utils.dart';
 import 'package:vector_math/vector_math.dart' show Vector2;
@@ -45,6 +46,7 @@ class _VisualizerState extends State<Visualizer> {
   late Offset _previousOffset = widget.offset;
   double t = 0;
   bool updateRobi = false;
+  RobiState robiState = RobiState.zero();
 
   static const double minScale = 6;
   static const double maxScale = 12;
@@ -58,9 +60,9 @@ class _VisualizerState extends State<Visualizer> {
       if (!mounted || !updateRobi) return;
 
       setState(() {
-        t += robiDrawerUpdateRate;
+        setTime(t + robiDrawerUpdateRate);
         if (t >= widget.simulationResult.totalTime) {
-          t = widget.simulationResult.totalTime;
+          setTime(widget.simulationResult.totalTime);
           updateRobi = false;
         }
       });
@@ -102,7 +104,7 @@ class _VisualizerState extends State<Visualizer> {
                 }),
                 child: CustomPaint(
                   painter: LinePainter(
-                    t: t,
+                    robiState: robiState,
                     scale: pow(2, scale) - 1,
                     robiConfig: widget.robiConfig,
                     simulationResult: widget.simulationResult,
@@ -156,7 +158,7 @@ class _VisualizerState extends State<Visualizer> {
                   value: t,
                   onChanged: (value) {
                     setState(() {
-                      t = value;
+                      setTime(value);
                       updateRobi = false;
                     });
                   },
@@ -171,7 +173,7 @@ class _VisualizerState extends State<Visualizer> {
                     setState(() {
                       updateRobi = !updateRobi;
                       if (updateRobi && t == widget.simulationResult.totalTime) {
-                        t = 0;
+                        setTime(0);
                       }
                     });
                   },
@@ -184,6 +186,11 @@ class _VisualizerState extends State<Visualizer> {
         )
       ],
     );
+  }
+
+  void setTime(double newTime) {
+    t = newTime;
+    robiState = getRobiStateAtTime(widget.simulationResult, t);
   }
 }
 

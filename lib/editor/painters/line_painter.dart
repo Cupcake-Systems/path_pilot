@@ -13,7 +13,7 @@ import 'abstract_painter.dart';
 const Color white = Color(0xFFFFFFFF);
 
 class LinePainter extends CustomPainter {
-  final double scale, t;
+  final double scale;
   final Offset offset;
   final RobiConfig robiConfig;
   final SimulationResult simulationResult;
@@ -21,6 +21,7 @@ class LinePainter extends CustomPainter {
   final InstructionResult? highlightedInstruction;
   final IrCalculatorResult? irCalculatorResult;
   final List<Vector2>? irPathApproximation;
+  final RobiState robiState;
 
   LinePainter({
     super.repaint,
@@ -32,14 +33,18 @@ class LinePainter extends CustomPainter {
     this.irCalculatorResult,
     this.irPathApproximation,
     required this.offset,
-    required this.t,
+    required this.robiState,
   });
 
-  static void paintText(String text, Offset offset, Canvas canvas, Size size) {
-    final textSpan = TextSpan(text: text);
+  static void paintText(String text, Offset offset, Canvas canvas, Size size, {bool center = true, TextStyle? textStyle}) {
+    final textSpan = TextSpan(text: text, style: textStyle);
     final textPainter = TextPainter(text: textSpan, textDirection: TextDirection.ltr);
     textPainter.layout(minWidth: 0, maxWidth: size.width);
-    textPainter.paint(canvas, Offset(offset.dx - textPainter.width / 2, offset.dy - textPainter.height));
+    if (center) {
+      textPainter.paint(canvas, Offset(offset.dx - textPainter.width / 2, offset.dy - textPainter.height));
+    } else {
+      textPainter.paint(canvas, offset);
+    }
   }
 
   void paintGrid(Canvas canvas, Size size) {
@@ -79,6 +84,30 @@ class LinePainter extends CustomPainter {
     canvas.drawLine(Offset(size.width / 2 + 50, size.height - 25), Offset(size.width / 2 + 50, size.height - 15), paint);
 
     LinePainter.paintText("${(100.0 / scale).toStringAsFixed(2)}m", Offset(size.width / 2, size.height - 22), canvas, size);
+  }
+
+  void paintRobiState(Canvas canvas, Size size) {
+    final String xPosText = (robiState.position.x * 100).toStringAsFixed(0);
+    final String innerVelText = (robiState.innerVelocity * 100).toStringAsFixed(0);
+    final String innerAccelText = (robiState.innerAcceleration * 100).toStringAsFixed(0);
+    final String posSpace = " " * (8 - xPosText.length);
+    final String velSpace = " " * (6 - innerVelText.length);
+    final String accelSpace = " " * (5 - innerAccelText.length);
+
+    final String robiStateText = """
+Rot.: ${robiState.rotation.toStringAsFixed(2)}°
+Pos.: X ${xPosText}cm${posSpace}Y ${(robiState.position.y * 100).toInt()}cm
+Vel.: I ${innerVelText}cm/s${velSpace}O ${(robiState.outerVelocity * 100).toInt()}cm/s
+Acc.: I ${innerAccelText}cm/s²${accelSpace}O ${(robiState.outerAcceleration * 100).toInt()}cm/s²""";
+
+    paintText(
+      robiStateText,
+      Offset(5, size.height - 70),
+      canvas,
+      size,
+      center: false,
+      textStyle: const TextStyle(fontFamily: "RobotoMono", fontSize: 12),
+    );
   }
 
   void paintVelocityScale(Canvas canvas, Size size) {
@@ -144,7 +173,7 @@ class LinePainter extends CustomPainter {
           pathApproximation: irPathApproximation!,
         ),
       RobiPainter(
-        t: t,
+        robiState: robiState,
         canvas: canvas,
         simulationResult: simulationResult,
       ),
@@ -156,6 +185,7 @@ class LinePainter extends CustomPainter {
 
     canvas.restore();
 
+    paintRobiState(canvas, size);
     paintScale(canvas, size);
     paintVelocityScale(canvas, size);
   }

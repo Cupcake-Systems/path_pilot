@@ -12,7 +12,7 @@ import 'package:vector_math/vector_math.dart' show Vector2, degrees2Radians, rad
 class RobiPainter extends MyPainter {
   final Canvas canvas;
   final SimulationResult simulationResult;
-  final double t;
+  final RobiState robiState;
 
   static late final ui.Image robiUiImage;
   static late final double s;
@@ -20,7 +20,7 @@ class RobiPainter extends MyPainter {
   RobiPainter({
     required this.canvas,
     required this.simulationResult,
-    required this.t,
+    required this.robiState,
   });
 
   static Future<void> init() async {
@@ -31,8 +31,6 @@ class RobiPainter extends MyPainter {
 
   @override
   void paint() {
-    final robiState = getRobiStateAtTime(simulationResult, t);
-
     canvas.translate(robiState.position.x, -robiState.position.y);
 
     final b = Vector2(0.1045, 0.08);
