@@ -154,16 +154,64 @@ class _VisualizerState extends State<Visualizer> {
             children: [
               Text("Time: ${_printDuration(Duration(milliseconds: (t * 1000).toInt()))} / ${_printDuration(Duration(milliseconds: (widget.simulationResult.totalTime * 1000).toInt()))}"),
               Expanded(
-                child: Slider(
-                  value: t,
-                  onChanged: (value) {
-                    setState(() {
-                      setTime(value);
-                      updateRobi = false;
-                    });
-                  },
-                  max: widget.simulationResult.totalTime,
-                  min: 0,
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    SizedBox(
+                      height: 50,
+                      child: Row(
+                        children: [
+                          SizedBox(width: 22),
+                          Expanded(
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                for (final res in widget.simulationResult.instructionResults) ...[
+                                  Flexible(
+                                    flex: ((res.outerTotalTime / widget.simulationResult.totalTime) * 100).toInt(),
+                                    fit: FlexFit.tight,
+                                    child: Stack(
+                                      alignment: Alignment.center,
+                                      children: [
+                                        Container(
+                                          decoration: BoxDecoration(
+                                            borderRadius: BorderRadius.horizontal(
+                                              left: res == widget.simulationResult.instructionResults.first ? Radius.circular(10) : Radius.zero,
+                                              right: res == widget.simulationResult.instructionResults.last ? Radius.circular(10) : Radius.zero,
+                                            ),
+                                            color: res == widget.highlightedInstruction ? Colors.orangeAccent : null,
+                                          ),
+                                          height: 8,
+                                        ),
+                                        Container(
+                                          decoration: BoxDecoration(
+                                            border: res == widget.simulationResult.instructionResults.first ? null : Border(left: BorderSide(color: Colors.grey)),
+                                          ),
+                                          height: 15,
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ]
+                              ],
+                            ),
+                          ),
+                          SizedBox(width: 22),
+                        ],
+                      ),
+                    ),
+                    Slider(
+                      value: t,
+                      onChanged: (value) {
+                        setState(() {
+                          setTime(value);
+                          updateRobi = false;
+                        });
+                      },
+                      max: widget.simulationResult.totalTime,
+                      min: 0,
+                    ),
+                  ],
                 ),
               ),
               SizedBox(
