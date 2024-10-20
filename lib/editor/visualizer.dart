@@ -161,14 +161,14 @@ class _VisualizerState extends State<Visualizer> {
                       height: 50,
                       child: Row(
                         children: [
-                          SizedBox(width: 22),
+                          SizedBox(width: 24),
                           Expanded(
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
                                 for (final res in widget.simulationResult.instructionResults) ...[
                                   Flexible(
-                                    flex: ((res.outerTotalTime / widget.simulationResult.totalTime) * 100).toInt(),
+                                    flex: ((res.outerTotalTime / widget.simulationResult.totalTime) * 10000).toInt(),
                                     fit: FlexFit.tight,
                                     child: Stack(
                                       alignment: Alignment.center,
@@ -196,7 +196,7 @@ class _VisualizerState extends State<Visualizer> {
                               ],
                             ),
                           ),
-                          SizedBox(width: 22),
+                          SizedBox(width: 24),
                         ],
                       ),
                     ),
