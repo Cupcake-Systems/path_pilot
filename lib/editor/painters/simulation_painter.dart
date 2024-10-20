@@ -31,6 +31,12 @@ class SimulationPainter extends MyPainter {
   @override
   void paint() {
     for (InstructionResult result in simulationResult.instructionResults) {
+      if (result is RapidTurnResult) {
+        drawRapidTurn(result);
+      }
+    }
+
+    for (InstructionResult result in simulationResult.instructionResults) {
       if (result is DriveResult) {
         drawDrive(result);
       } else if (result is TurnResult) {
@@ -95,6 +101,23 @@ class SimulationPainter extends MyPainter {
       vecToOffset(decelerationStartPoint),
       vecToOffset(instructionResult.endPosition),
       decelerationPaint,
+    );
+  }
+
+  void drawRapidTurn(RapidTurnResult res) {
+
+    if (res == highlightedInstruction) {
+      canvas.drawCircle(
+        vecToOffset(res.startPosition),
+        strokeWidth / 2,
+        highlightPaint..strokeWidth = strokeWidth / 2,
+      );
+    }
+
+    canvas.drawCircle(
+      vecToOffset(res.startPosition),
+      strokeWidth / 2,
+      Paint()..color = velocityToColor(0),
     );
   }
 
