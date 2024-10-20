@@ -443,7 +443,7 @@ class SimulationResult {
   final List<InstructionResult> instructionResults;
   final double maxTargetedVelocity;
   final double maxReachedVelocity;
-  late final double totalTime = instructionResults.fold(0, (prev, element) => prev + element.innerTotalTime);
+  late final double totalTime = instructionResults.fold(0, (prev, element) => prev + element.outerTotalTime);
 
   SimulationResult(
     this.instructionResults,

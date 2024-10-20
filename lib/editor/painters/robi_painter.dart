@@ -17,7 +17,6 @@ class RobiPainter extends MyPainter {
   static late final ui.Image robiUiImage;
   static late final double s;
 
-
   RobiPainter({
     required this.canvas,
     required this.simulationResult,
@@ -54,17 +53,17 @@ class RobiPainter extends MyPainter {
 
   double ct = 0;
   for (final instResult in simulationResult.instructionResults) {
-    if (t < ct + instResult.innerTotalTime) {
+    if (t < ct + instResult.outerTotalTime) {
       currentDriveResult = instResult;
       break;
     }
 
-    ct += instResult.innerTotalTime;
+    ct += instResult.outerTotalTime;
   }
 
   if (currentDriveResult == null) return (Vector2.zero(), 0);
 
-  ct = simulationResult.instructionResults.takeWhile((instResult) => instResult != currentDriveResult).fold(0, (sum, instResult) => sum + instResult.innerTotalTime);
+  ct = simulationResult.instructionResults.takeWhile((instResult) => instResult != currentDriveResult).fold(0, (sum, instResult) => sum + instResult.outerTotalTime);
 
   double rotation = 0;
   Vector2 position;
@@ -98,14 +97,14 @@ class RobiPainter extends MyPainter {
     Vector2 cOfCircle = centerOfCircle(radius, rotation, res.left) + res.startPosition;
     double degreeTraveled;
 
-    if (dct < res.innerAccelerationTime) {
+    if (dct < res.outerAccelerationTime) {
       final dt = dct;
       degreeTraveled = 0.5 * res.angularAcceleration * (dt * dt) + res.initialAngularVelocity * dt;
-    } else if (dct < res.innerAccelerationTime + res.innerConstantSpeedTime) {
-      final dt = t - res.innerAccelerationTime - ct;
+    } else if (dct < res.outerAccelerationTime + res.outerConstantSpeedTime) {
+      final dt = t - res.outerAccelerationTime - ct;
       degreeTraveled = res.maxAngularVelocity * dt + res.accelerationDegree;
-    } else if (dct < res.innerTotalTime) {
-      final dt = t - res.innerAccelerationTime - res.innerConstantSpeedTime - ct;
+    } else if (dct < res.outerTotalTime) {
+      final dt = t - res.outerAccelerationTime - res.outerConstantSpeedTime - ct;
       degreeTraveled = -0.5 * res.angularAcceleration * (dt * dt) + res.maxAngularVelocity * dt + res.accelerationDegree + res.constantSpeedDegree;
     } else {
       degreeTraveled = res.totalTurnDegree;
