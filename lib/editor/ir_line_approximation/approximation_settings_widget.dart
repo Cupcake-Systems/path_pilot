@@ -14,7 +14,7 @@ class IrPathApproximationSettingsWidget extends StatefulWidget {
     int irInclusionThreshold,
     double ramerDouglasPeuckerTolerance,
   ) onSettingsChange;
-  final void Function() onPathCreation;
+  final void Function()? onPathCreation;
 
   const IrPathApproximationSettingsWidget({
     super.key,

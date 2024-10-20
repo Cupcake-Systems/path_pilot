@@ -272,10 +272,12 @@ class _EditorState extends State<Editor> with AutomaticKeepAliveClientMixin {
                           body: ListView(
                             children: [
                               IrPathApproximationSettingsWidget(
-                                onPathCreation: () {
-                                  setState(() => instructions = PathToInstructions.calculate(irPathApproximation!));
-                                  rerunSimulationAndUpdate();
-                                },
+                                onPathCreation: irPathApproximation == null
+                                    ? null
+                                    : () {
+                                        setState(() => instructions = PathToInstructions.calculate(irPathApproximation!));
+                                        rerunSimulationAndUpdate();
+                                      },
                                 onSettingsChange: (
                                   settings,
                                   irInclusionThreshold,
