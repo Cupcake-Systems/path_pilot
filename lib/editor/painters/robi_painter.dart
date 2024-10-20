@@ -50,7 +50,7 @@ class RobiState {
   final Vector2 position;
   final double rotation, innerVelocity, outerVelocity, innerAcceleration, outerAcceleration;
 
-  RobiState({
+  const RobiState({
     required this.position,
     required this.rotation,
     required this.innerVelocity,
@@ -68,24 +68,27 @@ class RobiState {
         outerAcceleration = 0;
 }
 
-RobiState getRobiStateAtTime(SimulationResult simulationResult, double t) {
-  if (simulationResult.instructionResults.isEmpty) return RobiState.zero();
+RobiState getRobiStateAtTime(List<InstructionResult> instructionResults, double t) {
+  if (instructionResults.isEmpty) return RobiState.zero();
 
-  InstructionResult currentDriveResult = simulationResult.instructionResults.last;
+  final currentDriveResult = getRobiInstructionResultAtTime(instructionResults, t);
 
+  final double ct = instructionResults.takeWhile((instResult) => instResult != currentDriveResult).fold(0, (sum, instResult) => sum + instResult.outerTotalTime);
+
+  return getRobiStateAtTimeInInstructionResult(currentDriveResult!, t - ct);
+}
+
+InstructionResult? getRobiInstructionResultAtTime(List<InstructionResult> results, double t) {
   double ct = 0;
-  for (final instResult in simulationResult.instructionResults) {
-    if (t < ct + instResult.outerTotalTime) {
-      currentDriveResult = instResult;
-      break;
-    }
-
+  for (final instResult in results) {
     ct += instResult.outerTotalTime;
+
+    if (t < ct) {
+      return instResult;
+    }
   }
 
-  ct = simulationResult.instructionResults.takeWhile((instResult) => instResult != currentDriveResult).fold(0, (sum, instResult) => sum + instResult.outerTotalTime);
-
-  return getRobiStateAtTimeInInstructionResult(currentDriveResult, t - ct);
+  return results.lastOrNull;
 }
 
 RobiState getRobiStateAtTimeInInstructionResult(InstructionResult res, double t) {

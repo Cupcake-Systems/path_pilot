@@ -190,7 +190,7 @@ class _VisualizerState extends State<Visualizer> {
 
   void setTime(double newTime) {
     t = newTime;
-    robiState = getRobiStateAtTime(widget.simulationResult, t);
+    robiState = getRobiStateAtTime(widget.simulationResult.instructionResults, t);
   }
 }
 
