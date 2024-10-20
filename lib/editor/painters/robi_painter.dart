@@ -31,16 +31,16 @@ class RobiPainter extends MyPainter {
 
   @override
   void paint() {
-    final (position, rotation) = getPositionAndRotationAtTime(simulationResult, t);
+    final robiState = getRobiStateAtTime(simulationResult, t);
 
-    canvas.translate(position.x, -position.y);
+    canvas.translate(robiState.position.x, -robiState.position.y);
 
     final b = Vector2(0.1045, 0.08);
     final a = atan(b.y / b.x) * radians2Degrees;
-    Vector2 o = polarToCartesian(a + rotation, b.length);
+    Vector2 o = polarToCartesian(a + robiState.rotation, b.length);
 
     canvas.translate(o.x, -o.y);
-    canvas.rotate(degrees2Radians * (90 - rotation));
+    canvas.rotate(degrees2Radians * (90 - robiState.rotation));
 
     canvas.scale(s, s);
 
@@ -48,8 +48,32 @@ class RobiPainter extends MyPainter {
   }
 }
 
-(Vector2 position, double rotation) getPositionAndRotationAtTime(SimulationResult simulationResult, double t) {
-  InstructionResult? currentDriveResult = simulationResult.instructionResults.lastOrNull;
+class RobiState {
+  final Vector2 position;
+  final double rotation, innerVelocity, outerVelocity, innerAcceleration, outerAcceleration;
+
+  RobiState({
+    required this.position,
+    required this.rotation,
+    required this.innerVelocity,
+    required this.outerVelocity,
+    required this.innerAcceleration,
+    required this.outerAcceleration,
+  });
+
+  RobiState.zero()
+      : position = Vector2.zero(),
+        rotation = 0,
+        innerVelocity = 0,
+        outerVelocity = 0,
+        innerAcceleration = 0,
+        outerAcceleration = 0;
+}
+
+RobiState getRobiStateAtTime(SimulationResult simulationResult, double t) {
+  if (simulationResult.instructionResults.isEmpty) return RobiState.zero();
+
+  InstructionResult currentDriveResult = simulationResult.instructionResults.last;
 
   double ct = 0;
   for (final instResult in simulationResult.instructionResults) {
@@ -61,88 +85,145 @@ class RobiPainter extends MyPainter {
     ct += instResult.outerTotalTime;
   }
 
-  if (currentDriveResult == null) return (Vector2.zero(), 0);
-
   ct = simulationResult.instructionResults.takeWhile((instResult) => instResult != currentDriveResult).fold(0, (sum, instResult) => sum + instResult.outerTotalTime);
 
-  double rotation = 0;
-  Vector2 position;
+  return getRobiStateAtTimeInInstructionResult(currentDriveResult, t - ct);
+}
 
-  final res = currentDriveResult;
-
-  rotation = res.startRotation;
-
-  final dct = t - ct;
-
+RobiState getRobiStateAtTimeInInstructionResult(InstructionResult res, double t) {
   if (res is DriveResult) {
-    double distanceTraveled;
+    return getRobiStateAtTimeInDriveResult(res, t);
+  }
+  if (res is TurnResult) {
+    return getRobiStateAtTimeInTurnResult(res, t);
+  }
+  if (res is RapidTurnResult) {
+    return getRobiStateAtTimeInRapidTurnResult(res, t);
+  }
+  throw UnsupportedError("");
+}
 
-    if (dct < res.accelerationTime) {
-      final dt = dct;
-      distanceTraveled = 0.5 * res.acceleration * (dt * dt) + res.initialVelocity * dt;
-    } else if (dct < res.accelerationTime + res.constantSpeedTime) {
-      final dt = t - res.accelerationTime - ct;
-      distanceTraveled = res.maxVelocity * dt + res.accelerationDistance;
-    } else if (dct < res.totalTime) {
-      final dt = t - res.accelerationTime - res.constantSpeedTime - ct;
-      distanceTraveled = -0.5 * res.acceleration * (dt * dt) + res.maxVelocity * dt + res.accelerationDistance + res.constantSpeedDistance;
-    } else {
-      distanceTraveled = res.totalDistance;
-    }
+RobiState getRobiStateAtTimeInDriveResult(DriveResult res, double t) {
+  late final double distanceTraveled, velocity, acceleration;
 
-    position = currentDriveResult.startPosition + polarToCartesian(res.startRotation, distanceTraveled);
-  } else if (res is TurnResult) {
-    double radius = (res.innerRadius + res.outerRadius) / 2;
-
-    Vector2 cOfCircle = centerOfCircle(radius, rotation, res.left) + res.startPosition;
-    double degreeTraveled;
-
-    if (dct < res.outerAccelerationTime) {
-      final dt = dct;
-      degreeTraveled = 0.5 * res.angularAcceleration * (dt * dt) + res.initialAngularVelocity * dt;
-    } else if (dct < res.outerAccelerationTime + res.outerConstantSpeedTime) {
-      final dt = t - res.outerAccelerationTime - ct;
-      degreeTraveled = res.maxAngularVelocity * dt + res.accelerationDegree;
-    } else if (dct < res.outerTotalTime) {
-      final dt = t - res.outerAccelerationTime - res.outerConstantSpeedTime - ct;
-      degreeTraveled = -0.5 * res.angularAcceleration * (dt * dt) + res.maxAngularVelocity * dt + res.accelerationDegree + res.constantSpeedDegree;
-    } else {
-      degreeTraveled = res.totalTurnDegree;
-    }
-
-    if (res.left) {
-      position = polarToCartesian(degreeTraveled - 90 + rotation, radius) + cOfCircle;
-      rotation = degreeTraveled + res.startRotation;
-    } else {
-      position = polarToCartesian(90 - degreeTraveled + rotation, radius) + cOfCircle;
-      rotation = res.startRotation - degreeTraveled;
-    }
-  } else if (res is RapidTurnResult) {
-    double degreeTraveled;
-
-    if (dct < res.innerAccelerationTime) {
-      final dt = dct;
-      degreeTraveled = 0.5 * res.angularAcceleration * (dt * dt);
-    } else if (dct < res.innerAccelerationTime + res.innerConstantSpeedTime) {
-      final dt = t - res.innerAccelerationTime - ct;
-      degreeTraveled = res.maxAngularVelocity * dt + res.accelerationDegree;
-    } else if (dct < res.innerTotalTime) {
-      final dt = t - res.innerAccelerationTime - res.innerConstantSpeedTime - ct;
-      degreeTraveled = -0.5 * res.angularAcceleration * (dt * dt) + res.maxAngularVelocity * dt + (res.totalTurnDegree - res.accelerationDegree);
-    } else {
-      degreeTraveled = res.totalTurnDegree;
-    }
-
-    if (res.left) {
-      rotation = degreeTraveled + res.startRotation;
-    } else {
-      rotation = res.startRotation - degreeTraveled;
-    }
-
-    position = res.startPosition;
+  if (t < res.accelerationTime) {
+    acceleration = res.acceleration;
+    velocity = res.acceleration * t + res.initialVelocity;
+    distanceTraveled = 0.5 * res.acceleration * (t * t) + res.initialVelocity * t;
+  } else if (t < res.accelerationTime + res.constantSpeedTime) {
+    final dt = t - res.accelerationTime;
+    acceleration = 0;
+    velocity = res.maxVelocity;
+    distanceTraveled = res.maxVelocity * dt + res.accelerationDistance;
+  } else if (t < res.totalTime) {
+    final dt = t - res.accelerationTime - res.constantSpeedTime;
+    acceleration = -res.acceleration;
+    velocity = res.maxVelocity - res.acceleration * dt;
+    distanceTraveled = -0.5 * res.acceleration * (dt * dt) + res.maxVelocity * dt + res.accelerationDistance + res.constantSpeedDistance;
   } else {
-    throw UnsupportedError("");
+    acceleration = 0;
+    velocity = res.finalVelocity;
+    distanceTraveled = res.totalDistance;
   }
 
-  return (position, rotation);
+  final position = res.startPosition + polarToCartesian(res.startRotation, distanceTraveled);
+
+  return RobiState(
+    position: position,
+    rotation: res.startRotation,
+    innerVelocity: velocity,
+    outerVelocity: velocity,
+    innerAcceleration: acceleration,
+    outerAcceleration: acceleration,
+  );
+}
+
+RobiState getRobiStateAtTimeInTurnResult(TurnResult res, double t) {
+  final radius = (res.innerRadius + res.outerRadius) / 2;
+  double rotation = res.startRotation;
+  final Vector2 cOfCircle = centerOfCircle(radius, rotation, res.left) + res.startPosition;
+
+  late final Vector2 position;
+  late final double innerVelocity, outerVelocity, innerAcceleration, outerAcceleration, degreeTraveled;
+
+  if (t < res.outerAccelerationTime) {
+    innerAcceleration = res.innerAcceleration;
+    outerAcceleration = res.outerAcceleration;
+    innerVelocity = res.innerAcceleration * t + res.innerInitialVelocity;
+    outerVelocity = res.outerAcceleration * t + res.outerInitialVelocity;
+    degreeTraveled = 0.5 * res.angularAcceleration * (t * t) + res.initialAngularVelocity * t;
+  } else if (t < res.outerAccelerationTime + res.outerConstantSpeedTime) {
+    final dt = t - res.outerAccelerationTime;
+    innerAcceleration = outerAcceleration = 0;
+    innerVelocity = res.maxInnerVelocity;
+    outerVelocity = res.maxOuterVelocity;
+    degreeTraveled = res.maxAngularVelocity * dt + res.accelerationDegree;
+  } else if (t < res.outerTotalTime) {
+    final dt = t - res.outerAccelerationTime - res.outerConstantSpeedTime;
+    innerAcceleration = -res.innerAcceleration;
+    outerAcceleration = -res.outerAcceleration;
+    innerVelocity = res.maxInnerVelocity - res.innerAcceleration * dt;
+    outerVelocity = res.maxOuterVelocity - res.outerAcceleration * dt;
+    degreeTraveled = -0.5 * res.angularAcceleration * (dt * dt) + res.maxAngularVelocity * dt + res.accelerationDegree + res.constantSpeedDegree;
+  } else {
+    innerAcceleration = outerAcceleration = 0;
+    innerVelocity = res.finalInnerVelocity;
+    outerVelocity = res.finalOuterVelocity;
+    degreeTraveled = res.totalTurnDegree;
+  }
+
+  if (res.left) {
+    position = polarToCartesian(degreeTraveled - 90 + rotation, radius) + cOfCircle;
+    rotation = degreeTraveled + res.startRotation;
+  } else {
+    position = polarToCartesian(90 - degreeTraveled + rotation, radius) + cOfCircle;
+    rotation = res.startRotation - degreeTraveled;
+  }
+
+  return RobiState(
+    position: position,
+    rotation: rotation,
+    innerVelocity: innerVelocity,
+    outerVelocity: outerVelocity,
+    innerAcceleration: innerAcceleration,
+    outerAcceleration: outerAcceleration,
+  );
+}
+
+RobiState getRobiStateAtTimeInRapidTurnResult(RapidTurnResult res, double t) {
+  late final double degreeTraveled, velocity, acceleration, rotation;
+
+  if (t < res.innerAccelerationTime) {
+    acceleration = res.innerAcceleration;
+    velocity = res.innerAcceleration * t;
+    degreeTraveled = 0.5 * res.angularAcceleration * (t * t);
+  } else if (t < res.innerAccelerationTime + res.innerConstantSpeedTime) {
+    final dt = t - res.innerAccelerationTime;
+    acceleration = 0;
+    velocity = res.maxInnerVelocity;
+    degreeTraveled = res.maxAngularVelocity * dt + res.accelerationDegree;
+  } else if (t < res.innerTotalTime) {
+    final dt = t - res.innerAccelerationTime - res.innerConstantSpeedTime;
+    acceleration = -res.innerAcceleration;
+    velocity = res.maxInnerVelocity - res.innerAcceleration * dt;
+    degreeTraveled = -0.5 * res.angularAcceleration * (dt * dt) + res.maxAngularVelocity * dt + (res.totalTurnDegree - res.accelerationDegree);
+  } else {
+    acceleration = velocity = 0;
+    degreeTraveled = res.totalTurnDegree;
+  }
+
+  if (res.left) {
+    rotation = degreeTraveled + res.startRotation;
+  } else {
+    rotation = res.startRotation - degreeTraveled;
+  }
+
+  return RobiState(
+    position: res.startPosition,
+    rotation: rotation,
+    innerVelocity: velocity,
+    outerVelocity: velocity,
+    innerAcceleration: acceleration,
+    outerAcceleration: acceleration,
+  );
 }
