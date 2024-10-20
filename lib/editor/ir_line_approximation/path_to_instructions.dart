@@ -12,15 +12,18 @@ class PathToInstructions {
     a = Vector2(1, 0);
     double rotation = 0;
 
-    for (int i = 1; i < irPathApproximation.length; ++i) {
-      final prevPoint = irPathApproximation[i - 1];
-      final point = irPathApproximation[i];
+    Vector2 prevPoint = irPathApproximation[0];
 
+    for (int i = 1; i < irPathApproximation.length; ++i) {
+      final point = irPathApproximation[i];
       final distance = point.distanceTo(prevPoint);
 
       b = point - prevPoint;
 
       double alpha = acos(a.dot(b) / (a.length * b.length)) * 180 / pi;
+      a = b;
+
+      if (alpha.abs() < 0.0001) continue;
 
       if (point.distanceTo(polarToCartesian(alpha + rotation, distance) + prevPoint) > 0.0001) {
         alpha *= -1;
@@ -34,6 +37,7 @@ class PathToInstructions {
         acceleration: 0.1,
         targetVelocity: 0.2,
       );
+
       final driveInstruction = DriveInstruction(
         targetVelocity: 0.2,
         acceleration: 0.3,
@@ -42,8 +46,7 @@ class PathToInstructions {
       );
 
       instructions += [turnInstruction, driveInstruction];
-
-      a = b;
+      prevPoint = point;
     }
 
     return instructions;
