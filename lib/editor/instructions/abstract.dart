@@ -119,9 +119,9 @@ class RemovableWarningCard extends StatefulWidget {
     dataPoints.add(FlSpot(totalDistance * scaleX, finalVelocity * scaleY));
     return dataPoints;
   }
-
-  static String vecToString(Vector2 vec, int decimalPlaces) => "(${vec.x.toStringAsFixed(decimalPlaces)}, ${vec.y.toStringAsFixed(decimalPlaces)})";
 }
+
+String vecToString(Vector2 vec, int decimalPlaces) => "(${vec.x.toStringAsFixed(decimalPlaces)}, ${vec.y.toStringAsFixed(decimalPlaces)})";
 
 class _RemovableWarningCardState extends State<RemovableWarningCard> {
   bool isExpanded = false;
