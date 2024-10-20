@@ -45,11 +45,15 @@ class _AddInstructionDialogState extends State<AddInstructionDialog> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             for (final groupName in groupedUserInstructions.keys) ...[
-              Text(groupName, style: const TextStyle(fontSize: 20)),
+              if (groupedUserInstructions.keys.length > 1) ...[
+                Text(groupName, style: const TextStyle(fontSize: 20)),
+              ],
               for (final userInstruction in groupedUserInstructions[groupName]!) ...[
                 createRadioButtonForAdd(userInstruction),
               ],
-              const Divider(height: 5),
+              if (groupName != groupedUserInstructions.keys.last) ...[
+                const Divider(height: 5),
+              ],
             ]
           ],
         ),
