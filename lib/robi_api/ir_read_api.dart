@@ -88,7 +88,7 @@ class IrCalculator {
 
     double rotationRad = 0;
     List<(IrReading, IrReading, IrReading)> irData = [];
-    List<(Vector2, Vector2)> wheelPositions = [];
+    List<(Vector2, Vector2)> wheelPositions = [(lastLeftOffset, lastRightOffset)];
 
     for (final measurement in irReadResult.measurements) {
       double leftVel = freqToVel(measurement.motorLeftFreq, robiConfig.wheelRadius);
@@ -123,6 +123,7 @@ class IrCalculator {
       lastLeftOffset = newLeftOffset;
     }
 
+    wheelPositions.removeLast();
     return IrCalculatorResult(irData: irData, wheelPositions: wheelPositions);
   }
 
