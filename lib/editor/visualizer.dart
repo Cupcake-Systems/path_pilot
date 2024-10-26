@@ -161,7 +161,7 @@ class _VisualizerState extends State<Visualizer> {
                       height: 50,
                       child: Row(
                         children: [
-                          SizedBox(width: 24),
+                          const SizedBox(width: 24),
                           Expanded(
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -176,8 +176,8 @@ class _VisualizerState extends State<Visualizer> {
                                         Container(
                                           decoration: BoxDecoration(
                                             borderRadius: BorderRadius.horizontal(
-                                              left: res == widget.simulationResult.instructionResults.first ? Radius.circular(10) : Radius.zero,
-                                              right: res == widget.simulationResult.instructionResults.last ? Radius.circular(10) : Radius.zero,
+                                              left: res == widget.simulationResult.instructionResults.first ? const Radius.circular(10) : Radius.zero,
+                                              right: res == widget.simulationResult.instructionResults.last ? const Radius.circular(10) : Radius.zero,
                                             ),
                                             color: res == widget.highlightedInstruction ? Colors.orangeAccent : null,
                                           ),
@@ -185,7 +185,7 @@ class _VisualizerState extends State<Visualizer> {
                                         ),
                                         Container(
                                           decoration: BoxDecoration(
-                                            border: res == widget.simulationResult.instructionResults.first ? null : Border(left: BorderSide(color: Colors.grey)),
+                                            border: res == widget.simulationResult.instructionResults.first ? null : const Border(left: BorderSide(color: Colors.grey)),
                                           ),
                                           height: 15,
                                         ),
@@ -196,7 +196,7 @@ class _VisualizerState extends State<Visualizer> {
                               ],
                             ),
                           ),
-                          SizedBox(width: 24),
+                          const SizedBox(width: 24),
                         ],
                       ),
                     ),

@@ -28,10 +28,10 @@ class RobiConfigurator extends StatelessWidget {
                     builder: (context) {
                       return Scaffold(
                         appBar: AppBar(
-                          title: Text("Robi Config Help"),
+                          title: const Text("Robi Config Help"),
                         ),
-                        body: Padding(
-                          padding: const EdgeInsets.all(8.0),
+                        body: const Padding(
+                          padding: EdgeInsets.all(8.0),
                           child: Center(
                             child: Image(
                               image: AssetImage("assets/robi_illustration_bottom_labeled.webp"),
