@@ -90,7 +90,7 @@ class _VisualizerState extends State<Visualizer> {
                   } else if (newScale < minScale) {
                     newScale = minScale;
                   }
-                  setState(() => scale = newScale);
+                  changeZoom(newScale);
                 }
               },
               child: GestureDetector(
@@ -131,10 +131,7 @@ class _VisualizerState extends State<Visualizer> {
                   value: scale,
                   min: minScale,
                   max: maxScale,
-                  onChanged: (double value) {
-                    setState(() => scale = value);
-                    widget.transformChanged(scale, _offset);
-                  },
+                  onChanged: (value) => changeZoom(value),
                 ),
               ),
               ElevatedButton.icon(
@@ -234,6 +231,15 @@ class _VisualizerState extends State<Visualizer> {
         )
       ],
     );
+  }
+
+  void changeZoom(double newZoom) {
+    setState(() {
+      _offset = _offset * pow(2, newZoom - scale).toDouble();
+      scale = newZoom;
+    });
+
+    widget.transformChanged(scale, _offset);
   }
 
   void setTime(double newTime) {
