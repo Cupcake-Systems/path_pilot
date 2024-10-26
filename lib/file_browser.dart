@@ -41,15 +41,7 @@ class _FileBrowserState extends State<FileBrowser> with TickerProviderStateMixin
                       ),
                       MenuItemButton(
                         leadingIcon: const Icon(Icons.folder),
-                        onPressed: () async {
-                          final result = await FilePicker.platform.pickFiles(
-                            type: FileType.custom,
-                            allowedExtensions: ["robi_script.json", ".json"],
-                          );
-                          if (result == null) return;
-                          final file = File(result.files.single.path!);
-                          if (context.mounted) openTab(context, file);
-                        },
+                        onPressed: () => openFile(context),
                         child: const MenuAcceleratorLabel('&Open'),
                       ),
                       const Divider(height: 0),
@@ -133,12 +125,38 @@ class _FileBrowserState extends State<FileBrowser> with TickerProviderStateMixin
         ),
         Expanded(
           child: openTabs.isEmpty
-              ? Center(
-                  child: ElevatedButton.icon(
-                    icon: const Icon(Icons.add),
-                    onPressed: newFile,
-                    label: const Text('Create'),
-                  ),
+              ? Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    ElevatedButton.icon(
+                      style: const ButtonStyle(
+                        shape: WidgetStatePropertyAll(
+                          RoundedRectangleBorder(
+                            borderRadius: BorderRadius.horizontal(left: Radius.circular(20)),
+                          ),
+                        ),
+                      ),
+                      icon: const Icon(Icons.add),
+                      onPressed: newFile,
+                      label: const Text('Create'),
+                    ),
+                    const SizedBox(
+                      height: 30,
+                      child: VerticalDivider(width: 1),
+                    ),
+                    ElevatedButton.icon(
+                      style: const ButtonStyle(
+                        shape: WidgetStatePropertyAll(
+                          RoundedRectangleBorder(
+                            borderRadius: BorderRadius.horizontal(right: Radius.circular(20)),
+                          ),
+                        ),
+                      ),
+                      icon: const Icon(Icons.folder),
+                      onPressed: () => openFile(context),
+                      label: const Text('Open'),
+                    ),
+                  ],
                 )
               : DefaultTabController(
                   length: openTabs.length,
@@ -257,6 +275,16 @@ class _FileBrowserState extends State<FileBrowser> with TickerProviderStateMixin
         ),
       ),
     );
+  }
+
+  Future<void> openFile(BuildContext context) async {
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: ["robi_script.json", ".json"],
+    );
+    if (result == null) return;
+    final file = File(result.files.single.path!);
+    if (context.mounted) openTab(context, file);
   }
 }
 
