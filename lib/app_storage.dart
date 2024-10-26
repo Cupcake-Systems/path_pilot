@@ -14,17 +14,8 @@ class AppData {
 
 class RobiConfigStorage {
   static const String _storageKey = "RobiConfigs";
-  static const String _lastUsedKey = "LastUsedConfig";
 
   static late final List<RobiConfig> _storedConfigs;
-  static late int _lastUsedConfigIndex;
-
-  static RobiConfig? get lastUsedConfig => _storedConfigs.elementAtOrNull(_lastUsedConfigIndex);
-
-  static set lastUsedConfigIndex(int i) {
-    _lastUsedConfigIndex = i;
-    _saveLastUsedConfig();
-  }
 
   static int get length => _storedConfigs.length;
 
@@ -32,8 +23,6 @@ class RobiConfigStorage {
 
   static void init() {
     _storedConfigs = _loadConfigs();
-    _lastUsedConfigIndex = _loadLastUsedConfig();
-    if (_lastUsedConfigIndex >= _storedConfigs.length) _lastUsedConfigIndex = 0;
   }
 
   static List<RobiConfig> _loadConfigs() {
@@ -46,10 +35,6 @@ class RobiConfigStorage {
       return [];
     }
   }
-
-  static int _loadLastUsedConfig() => AppData._prefs.getInt(_lastUsedKey) ?? 0;
-
-  static void _saveLastUsedConfig() => AppData._prefs.setInt(_lastUsedKey, _lastUsedConfigIndex);
 
   static void _saveConfigs() {
     final jsonString = jsonEncode(_storedConfigs.map((e) => e.toJson()).toList());

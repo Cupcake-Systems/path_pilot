@@ -44,7 +44,7 @@ class Editor extends StatefulWidget {
 }
 
 class _EditorState extends State<Editor> with AutomaticKeepAliveClientMixin {
-  RobiConfig selectedRobiConfig = RobiConfigStorage.lastUsedConfig ?? defaultRobiConfig;
+  RobiConfig selectedRobiConfig = defaultRobiConfig;
 
   late List<MissionInstruction> instructions = List.from(widget.initailInstructions);
   late Simulator simulator = Simulator(selectedRobiConfig);
@@ -146,7 +146,7 @@ class _EditorState extends State<Editor> with AutomaticKeepAliveClientMixin {
                           .toList(),
                       initialSelection: selectedRobiConfig,
                       onSelected: (value) {
-                        RobiConfigStorage.lastUsedConfigIndex = RobiConfigStorage.indexOf(value!);
+                        if (value == null) return;
                         setState(() {
                           selectedRobiConfig = value;
                           rerunSimulationAndUpdate();
