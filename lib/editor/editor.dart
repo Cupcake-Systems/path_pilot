@@ -320,6 +320,7 @@ class _EditorState extends State<Editor> with AutomaticKeepAliveClientMixin {
                                   onRemoveClick: () => setState(() {
                                     irCalculatorResult = null;
                                     irReadResult = null;
+                                    irPathApproximation = null;
                                   }),
                                 ),
                               ],
