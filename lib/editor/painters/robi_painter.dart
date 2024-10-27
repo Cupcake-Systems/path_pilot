@@ -17,6 +17,9 @@ class RobiPainter extends MyPainter {
   static late final ui.Image robiUiImage;
   static late final double s;
 
+  static final b = Vector2(0.1045, 0.08);
+  static final a = atan(b.y / b.x) * radians2Degrees;
+
   RobiPainter({
     required this.canvas,
     required this.simulationResult,
@@ -32,9 +35,6 @@ class RobiPainter extends MyPainter {
   @override
   void paint() {
     canvas.translate(robiState.position.x, -robiState.position.y);
-
-    final b = Vector2(0.1045, 0.08);
-    final a = atan(b.y / b.x) * radians2Degrees;
     Vector2 o = polarToCartesian(a + robiState.rotation, b.length);
 
     canvas.translate(o.x, -o.y);

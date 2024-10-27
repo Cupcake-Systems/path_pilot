@@ -23,7 +23,7 @@ class LinePainter extends CustomPainter {
   final List<Vector2>? irPathApproximation;
   final RobiState robiState;
 
-  LinePainter({
+  const LinePainter({
     super.repaint,
     required this.scale,
     required this.robiConfig,
