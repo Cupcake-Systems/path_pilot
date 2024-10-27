@@ -2,7 +2,6 @@ import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
-import 'package:path/path.dart';
 import 'package:robi_line_drawer/constants.dart';
 import 'package:robi_line_drawer/editor/editor.dart';
 import 'package:robi_line_drawer/main.dart';
@@ -20,10 +19,23 @@ class FileBrowser extends StatefulWidget {
 }
 
 class _FileBrowserState extends State<FileBrowser> with TickerProviderStateMixin {
-  List<Editor> openTabs = [];
+  File? openedFile;
 
   @override
   Widget build(BuildContext context) {
+    final loadedInstructions = openedFile == null ? null : getInstructionsFromFile(openedFile!);
+
+    if (loadedInstructions == null && openedFile != null) {
+      openedFile = null;
+      WidgetsBinding.instance.addPostFrameCallback(
+        (_) => ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Failed to decode content!'),
+          ),
+        ),
+      );
+    }
+
     return Column(
       children: [
         Row(
@@ -125,7 +137,7 @@ class _FileBrowserState extends State<FileBrowser> with TickerProviderStateMixin
           ],
         ),
         Expanded(
-          child: openTabs.isEmpty
+          child: openedFile == null || loadedInstructions == null
               ? Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
@@ -159,99 +171,32 @@ class _FileBrowserState extends State<FileBrowser> with TickerProviderStateMixin
                     ),
                   ],
                 )
-              : DefaultTabController(
-                  length: openTabs.length,
-                  child: Scaffold(
-                    appBar: PreferredSize(
-                      preferredSize: const Size.fromHeight(32),
-                      child: AppBar(
-                        flexibleSpace: Column(
-                          mainAxisAlignment: MainAxisAlignment.end,
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            SizedBox(
-                              child: TabBar(
-                                labelPadding: const EdgeInsets.symmetric(horizontal: 5),
-                                tabAlignment: TabAlignment.start,
-                                isScrollable: true,
-                                labelColor: Colors.white,
-                                tabs: buildTabs(),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    body: TabBarView(children: openTabs),
-                  ),
+              : Editor(
+                  file: openedFile!,
+                  initailInstructions: loadedInstructions.toList(growable: false),
                 ),
         ),
       ],
     );
   }
 
-  List<Widget> buildTabs() {
-    return openTabs
-        .map(
-          (editor) => SizedBox(
-            height: 30,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(Icons.edit_document, size: 15),
-                const SizedBox(width: 10),
-                Text(basename(editor.file.path).split(".robi_script.json")[0], textAlign: TextAlign.center),
-                const SizedBox(width: 10),
-                SizedBox(
-                  width: 20,
-                  height: 20,
-                  child: IconButton(
-                    padding: EdgeInsets.zero,
-                    onPressed: () {
-                      setState(() => openTabs.remove(editor));
-                    },
-                    iconSize: 17,
-                    icon: const Icon(Icons.close),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        )
-        .toList();
+  Iterable<MissionInstruction>? getInstructionsFromFile(File file) {
+    final data = file.readAsStringSync();
+    final newInstructions = RobiPathSerializer.decode(data);
+    return newInstructions;
   }
 
   Future<void> openTab(BuildContext context, File tab) async {
-    for (int i = 0; i < openTabs.length; ++i) {
-      if (openTabs[i].file.absolute.path == tab.absolute.path) {
-        // TODO: Focus editor
-        return;
-      }
-    }
-
-    final data = await tab.readAsString();
-    final newInstructions = RobiPathSerializer.decode(data);
-
-    if (newInstructions == null) {
-      if (!context.mounted) return;
+    if (openedFile != null && openedFile!.absolute.path == tab.absolute.path) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Failed to decode content!'),
+          content: Text('File already opened!'),
         ),
       );
+      // TODO: Focus editor
       return;
     }
-
-    setState(() {
-      openTabs.add(
-        Editor(
-          initailInstructions: newInstructions.toList(),
-          file: tab,
-        ),
-      );
-    });
-
+    setState(() => openedFile = tab);
     // TODO: Focus editor
   }
 
@@ -262,20 +207,11 @@ class _FileBrowserState extends State<FileBrowser> with TickerProviderStateMixin
 
     final file = File(result);
 
-    for (final t in openTabs) {
-      if (t.file.absolute.path == file.absolute.path) return;
-    }
+    if (openedFile != null && openedFile!.absolute.path == file.absolute.path) return;
 
     RobiPathSerializer.saveToFile(file, []);
 
-    setState(
-      () => openTabs.add(
-        Editor(
-          initailInstructions: const [],
-          file: file,
-        ),
-      ),
-    );
+    setState(() => openedFile = file);
   }
 
   Future<void> openFile(BuildContext context) async {
