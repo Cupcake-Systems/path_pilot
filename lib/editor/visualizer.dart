@@ -84,7 +84,7 @@ class _VisualizerState extends State<Visualizer> {
             child: Listener(
               onPointerSignal: (event) {
                 if (event is PointerScrollEvent) {
-                  double newScale = scale - event.scrollDelta.dy / 100;
+                  double newScale = scale - event.scrollDelta.dy / 500;
                   if (newScale > maxScale) {
                     newScale = maxScale;
                   } else if (newScale < minScale) {
