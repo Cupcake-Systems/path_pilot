@@ -67,6 +67,9 @@ class _EditorState extends State<Editor> with AutomaticKeepAliveClientMixin {
 
   static bool readBluetoothValues = true;
 
+  // Developer Options
+  int randomInstructionsGenerationLength = 100;
+
   @override
   void initState() {
     super.initState();
@@ -259,6 +262,40 @@ class _EditorState extends State<Editor> with AutomaticKeepAliveClientMixin {
                                   ),
                                 ],
                               ),
+                              if (SettingsStorage.developerMode)
+                                Card.outlined(
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                                    child: Row(
+                                      children: [
+                                        const Text("Generate Random Instructions"),
+                                        const SizedBox(width: 10),
+                                        Flexible(
+                                          child: TextFormField(
+                                            initialValue: randomInstructionsGenerationLength.toString(),
+                                            onChanged: (value) {
+                                              final parsed = int.tryParse(value);
+                                              if (parsed == null) return;
+                                              randomInstructionsGenerationLength = parsed;
+                                            },
+                                            decoration: const InputDecoration(labelText: "Generation Length"),
+                                            keyboardType: TextInputType.number,
+                                            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                                          ),
+                                        ),
+                                        IconButton(
+                                          onPressed: () {
+                                            for (int i = 0; i < randomInstructionsGenerationLength; i++) {
+                                              instructions.add(MissionInstruction.generateRandom());
+                                            }
+                                            rerunSimulationAndUpdate();
+                                          },
+                                          icon: const Icon(Icons.send),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
                             ],
                           ),
                           itemBuilder: (context, i) => instructionToEditor(i),

@@ -5,6 +5,8 @@ import 'package:robi_line_drawer/robi_api/exporter/exporter_instructions.dart';
 import 'package:robi_line_drawer/robi_api/simulator.dart';
 import 'package:vector_math/vector_math.dart';
 
+import '../main.dart';
+
 abstract class MissionInstruction {
   double targetVelocity, acceleration, targetFinalVelocity;
 
@@ -16,6 +18,22 @@ abstract class MissionInstruction {
     assert(targetVelocity >= 0);
     assert(acceleration >= 0);
     assert(targetFinalVelocity >= 0);
+  }
+
+  MissionInstruction.random()
+      : targetVelocity = rand.nextDouble(),
+        acceleration = rand.nextDouble(),
+        targetFinalVelocity = rand.nextDouble();
+
+  static MissionInstruction generateRandom() {
+    final random = rand.nextInt(3);
+    if (random == 0) {
+      return DriveInstruction.random();
+    } else if (random == 1) {
+      return TurnInstruction.random();
+    } else {
+      return RapidTurnInstruction.random();
+    }
   }
 
   Map<String, dynamic> toJson();
@@ -41,6 +59,10 @@ class DriveInstruction extends MissionInstruction {
           targetFinalVelocity: json["end_velocity"],
         );
 
+  DriveInstruction.random()
+      : targetDistance = rand.nextDouble(),
+        super.random();
+
   @override
   Map<String, double> toJson() => {
         "distance": targetDistance,
@@ -64,6 +86,12 @@ class TurnInstruction extends MissionInstruction {
   }) {
     assert(turnDegree >= 0);
   }
+
+  TurnInstruction.random()
+      : turnDegree = rand.nextDouble() * 360,
+        innerRadius = rand.nextDouble(),
+        left = rand.nextBool(),
+        super.random();
 
   @override
   TurnInstruction.fromJson(Map<String, dynamic> json)
@@ -99,6 +127,11 @@ class RapidTurnInstruction extends MissionInstruction {
   }) : super(targetFinalVelocity: 0.0) {
     assert(turnDegree > 0);
   }
+
+  RapidTurnInstruction.random()
+      : turnDegree = rand.nextDouble() * 360,
+        left = rand.nextBool(),
+        super.random();
 
   @override
   RapidTurnInstruction.fromJson(Map<String, dynamic> json)

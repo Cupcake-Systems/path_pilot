@@ -55,3 +55,10 @@ class RobiConfigStorage {
 
   static RobiConfig get(int index) => _storedConfigs[index];
 }
+
+
+class SettingsStorage {
+  static const String _developerModeKey = "developerMode";
+  static bool get developerMode => AppData._prefs.getBool(_developerModeKey) ?? false;
+  static set developerMode(bool value) => AppData._prefs.setBool(_developerModeKey, value);
+}

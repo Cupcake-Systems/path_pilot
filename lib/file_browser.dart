@@ -47,8 +47,8 @@ class _FileBrowserState extends State<FileBrowser> with TickerProviderStateMixin
                       const Divider(height: 0),
                       MenuItemButton(
                         leadingIcon: const Icon(Icons.build_circle),
-                        onPressed: () {
-                          Navigator.of(context).push(
+                        onPressed: () async {
+                          await Navigator.of(context).push(
                             MaterialPageRoute(
                               builder: (context) => const RobiConfigSettingsPage(),
                             ),
@@ -60,12 +60,13 @@ class _FileBrowserState extends State<FileBrowser> with TickerProviderStateMixin
                       const Divider(height: 0),
                       MenuItemButton(
                         leadingIcon: const Icon(Icons.settings),
-                        onPressed: () {
-                          Navigator.of(context).push(
+                        onPressed: () async {
+                          await Navigator.of(context).push(
                             MaterialPageRoute(
                               builder: (context) => const SettingsPage(),
                             ),
                           );
+                          setState(() {});
                         },
                         child: const MenuAcceleratorLabel('&Preferences'),
                       ),

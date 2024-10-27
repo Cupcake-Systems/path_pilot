@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:package_info_plus/package_info_plus.dart';
@@ -10,6 +12,8 @@ import 'package:universal_ble/universal_ble.dart';
 late final PackageInfo packageInfo;
 
 Map<String, void Function(String deviceId, bool connected)> bleConnectionChange = {};
+final rand = Random();
+
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   LicenseRegistry.addLicense(() => Stream<LicenseEntry>.value(const LicenseEntryWithLineBreaks(<String>["robi_line_drawer"], license)));

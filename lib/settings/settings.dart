@@ -1,13 +1,44 @@
 import 'package:flutter/material.dart';
+import 'package:robi_line_drawer/app_storage.dart';
 
-class SettingsPage extends StatelessWidget {
+class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
+
+  @override
+  State<SettingsPage> createState() => _SettingsPageState();
+}
+
+class _SettingsPageState extends State<SettingsPage> {
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text("Preferences")),
-      body: const Center(),
+      body: ListView(
+        children: [
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text("Advanced", style: Theme.of(context).textTheme.headlineSmall),
+                  const Divider(),
+                  ListTile(
+                    title: const Text("Developer Mode"),
+                    trailing: Switch(
+                      value: SettingsStorage.developerMode,
+                      onChanged: (value) => setState(() {
+                        SettingsStorage.developerMode = value;
+                      }),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
