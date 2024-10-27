@@ -189,11 +189,11 @@ class Simulator {
   }
 }
 
-Vector2 polarToCartesian(double deg, double radius) => Vector2(cosD(deg), sinD(deg)) * radius;
+Vector2 polarToCartesian(double deg, double radius) => Vector2(cosD(deg) * radius, sinD(deg) * radius);
 
-double sinD(double deg) => sin(deg * (pi / 180));
+double sinD(double deg) => sin(deg * degrees2Radians);
 
-double cosD(double deg) => cos(deg * (pi / 180));
+double cosD(double deg) => cos(deg * degrees2Radians);
 
 class CalculationResult {
   final double maxVelocity;
