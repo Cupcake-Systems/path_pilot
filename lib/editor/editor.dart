@@ -180,12 +180,11 @@ class _EditorState extends State<Editor> with AutomaticKeepAliveClientMixin {
                     ),
                     body: TabBarView(
                       children: [
-                        ReorderableListView.builder(
-                          itemCount: instructions.length,
-                          header: Padding(
-                            padding: const EdgeInsets.only(bottom: 5),
-                            child: MenuBar(
-                              clipBehavior: Clip.hardEdge,
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            MenuBar(
+                              clipBehavior: Clip.antiAlias,
                               style: const MenuStyle(
                                 shape: WidgetStatePropertyAll(
                                   RoundedRectangleBorder(
@@ -214,96 +213,102 @@ class _EditorState extends State<Editor> with AutomaticKeepAliveClientMixin {
                                 ),
                               ],
                             ),
-                          ),
-                          footer: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: [
-                              Row(
-                                children: [
-                                  Expanded(
-                                    child: Card.outlined(
+                            Expanded(
+                              child: ReorderableListView.builder(
+                                header: const SizedBox(height: 3),
+                                itemCount: instructions.length,
+                                itemBuilder: (context, i) => instructionToEditor(i),
+                                onReorder: (int oldIndex, int newIndex) {
+                                  if (oldIndex < newIndex) --newIndex;
+                                  instructions.insert(newIndex, instructions.removeAt(oldIndex));
+                                  rerunSimulationAndUpdate();
+                                },
+                              ),
+                            ),
+                            Column(
+                              mainAxisSize: MainAxisSize.min,
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: Card.outlined(
+                                        child: IconButton(
+                                          style: IconButton.styleFrom(
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius: BorderRadius.circular(10),
+                                            ),
+                                          ),
+                                          padding: const EdgeInsets.symmetric(vertical: 20),
+                                          icon: const Icon(Icons.add),
+                                          onPressed: () => showDialog(
+                                            context: context,
+                                            builder: (BuildContext context) => AddInstructionDialog(
+                                              instructionAdded: (MissionInstruction instruction) {
+                                                instructions.insert(instructions.length, instruction);
+                                                rerunSimulationAndUpdate();
+                                              },
+                                              robiConfig: selectedRobiConfig,
+                                              simulationResult: simulationResult,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                    Card.outlined(
                                       child: IconButton(
                                         style: IconButton.styleFrom(
                                           shape: RoundedRectangleBorder(
                                             borderRadius: BorderRadius.circular(10),
                                           ),
                                         ),
-                                        padding: const EdgeInsets.symmetric(vertical: 20),
-                                        icon: const Icon(Icons.add),
-                                        onPressed: () => showDialog(
-                                          context: context,
-                                          builder: (BuildContext context) => AddInstructionDialog(
-                                            instructionAdded: (MissionInstruction instruction) {
-                                              instructions.insert(instructions.length, instruction);
+                                        padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 30),
+                                        onPressed: () {
+                                          instructions.clear();
+                                          rerunSimulationAndUpdate();
+                                        },
+                                        icon: const Icon(Icons.close),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                if (SettingsStorage.developerMode)
+                                  Card.outlined(
+                                    child: Padding(
+                                      padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                                      child: Row(
+                                        children: [
+                                          const Text("Generate Random Instructions"),
+                                          const SizedBox(width: 10),
+                                          Flexible(
+                                            child: TextFormField(
+                                              initialValue: randomInstructionsGenerationLength.toString(),
+                                              onChanged: (value) {
+                                                final parsed = int.tryParse(value);
+                                                if (parsed == null) return;
+                                                randomInstructionsGenerationLength = parsed;
+                                              },
+                                              decoration: const InputDecoration(labelText: "Generation Length"),
+                                              keyboardType: TextInputType.number,
+                                              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                                            ),
+                                          ),
+                                          IconButton(
+                                            onPressed: () {
+                                              for (int i = 0; i < randomInstructionsGenerationLength; i++) {
+                                                instructions.add(MissionInstruction.generateRandom());
+                                              }
                                               rerunSimulationAndUpdate();
                                             },
-                                            robiConfig: selectedRobiConfig,
-                                            simulationResult: simulationResult,
+                                            icon: const Icon(Icons.send),
                                           ),
-                                        ),
+                                        ],
                                       ),
                                     ),
                                   ),
-                                  Card.outlined(
-                                    child: IconButton(
-                                      style: IconButton.styleFrom(
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(10),
-                                        ),
-                                      ),
-                                      padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 30),
-                                      onPressed: () {
-                                        instructions.clear();
-                                        rerunSimulationAndUpdate();
-                                      },
-                                      icon: const Icon(Icons.close),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              if (SettingsStorage.developerMode)
-                                Card.outlined(
-                                  child: Padding(
-                                    padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                                    child: Row(
-                                      children: [
-                                        const Text("Generate Random Instructions"),
-                                        const SizedBox(width: 10),
-                                        Flexible(
-                                          child: TextFormField(
-                                            initialValue: randomInstructionsGenerationLength.toString(),
-                                            onChanged: (value) {
-                                              final parsed = int.tryParse(value);
-                                              if (parsed == null) return;
-                                              randomInstructionsGenerationLength = parsed;
-                                            },
-                                            decoration: const InputDecoration(labelText: "Generation Length"),
-                                            keyboardType: TextInputType.number,
-                                            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                                          ),
-                                        ),
-                                        IconButton(
-                                          onPressed: () {
-                                            for (int i = 0; i < randomInstructionsGenerationLength; i++) {
-                                              instructions.add(MissionInstruction.generateRandom());
-                                            }
-                                            rerunSimulationAndUpdate();
-                                          },
-                                          icon: const Icon(Icons.send),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                            ],
-                          ),
-                          itemBuilder: (context, i) => instructionToEditor(i),
-                          onReorder: (int oldIndex, int newIndex) {
-                            if (oldIndex < newIndex) --newIndex;
-                            instructions.insert(newIndex, instructions.removeAt(oldIndex));
-                            rerunSimulationAndUpdate();
-                          },
+                              ],
+                            ),
+                          ],
                         ),
                         Scaffold(
                           body: ListView(
