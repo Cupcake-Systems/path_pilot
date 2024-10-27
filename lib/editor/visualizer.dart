@@ -3,6 +3,7 @@ import 'dart:math';
 
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:robi_line_drawer/app_storage.dart';
 import 'package:robi_line_drawer/editor/painters/ir_read_painter.dart';
 import 'package:robi_line_drawer/editor/painters/line_painter.dart';
 import 'package:robi_line_drawer/editor/painters/robi_painter.dart';
@@ -54,7 +55,7 @@ class _VisualizerState extends State<Visualizer> {
 
   static const double minScale = 6;
   static const double maxScale = 12;
-  static const double robiDrawerUpdateRate = 1 / 30;
+  final robiDrawerUpdateRate = 1 / SettingsStorage.visualizerFps;
 
   @override
   void initState() {
