@@ -11,25 +11,15 @@ class Simulator {
   SimulationResult calculate(List<MissionInstruction> instructions) {
     List<InstructionResult> results = [];
 
-    InstructionResult? prevInstruction;
+    InstructionResult? result;
 
     double maxManagedVel = 0;
     double maxTargetVel = 0;
 
     for (int i = 0; i < instructions.length; i++) {
       final instruction = instructions[i];
-      instructions.elementAtOrNull(i + 1);
 
-      InstructionResult result;
-      if (instruction is DriveInstruction) {
-        result = simulateDrive(prevInstruction, instruction);
-      } else if (instruction is TurnInstruction) {
-        result = simulateTurn(prevInstruction, instruction);
-      } else if (instruction is RapidTurnInstruction) {
-        result = simulateRapidTurn(prevInstruction, instruction);
-      } else {
-        throw UnsupportedError("");
-      }
+      result = simulateInstruction(result, instruction);
 
       if (instruction.targetVelocity > maxTargetVel) {
         maxTargetVel = instruction.targetVelocity;
@@ -40,10 +30,23 @@ class Simulator {
       }
 
       results.add(result);
-      prevInstruction = result;
     }
 
     return SimulationResult(results, maxTargetVel, maxManagedVel);
+  }
+
+  InstructionResult simulateInstruction(InstructionResult? prevResult, MissionInstruction instruction) {
+    InstructionResult result;
+    if (instruction is DriveInstruction) {
+      result = simulateDrive(prevResult, instruction);
+    } else if (instruction is TurnInstruction) {
+      result = simulateTurn(prevResult, instruction);
+    } else if (instruction is RapidTurnInstruction) {
+      result = simulateRapidTurn(prevResult, instruction);
+    } else {
+      throw UnsupportedError("");
+    }
+    return result;
   }
 
   DriveResult simulateDrive(InstructionResult? prevInstResult, DriveInstruction instruction) {

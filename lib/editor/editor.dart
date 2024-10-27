@@ -458,13 +458,14 @@ class _EditorState extends State<Editor> with AutomaticKeepAliveClientMixin {
   }
 
   void rerunSimulationAndUpdate() {
-    for (int i = 0; i < instructions.length - 1; ++i) {
-      final calcRes = simulator.calculate(instructions.sublist(0, i));
 
+    InstructionResult? currentResult;
+
+    for (int i = 0; i < instructions.length - 1; ++i) {
       final instruction = instructions[i];
       final nextInstruction = instructions[i + 1];
 
-      if (instructions[i + 1] is RapidTurnInstruction) {
+      if (nextInstruction is RapidTurnInstruction) {
         // Always stop at end of instruction if next instruction is rapid turn.
         instruction.targetFinalVelocity = 0;
       } else {
@@ -476,15 +477,15 @@ class _EditorState extends State<Editor> with AutomaticKeepAliveClientMixin {
         }
       }
 
-      if (i > 0) {
+      if (currentResult != null) {
         // Ensure the initial velocity for the next instruction is always <= than the target velocity
         // because an instruction cannot decelerate to target velocity, only accelerate.
-        if (calcRes.instructionResults.last.finalOuterVelocity > nextInstruction.targetVelocity) {
-          setState(() {
-            instruction.acceleration = 1; // TODO: Calculate the value
-          });
+        if (currentResult.finalOuterVelocity > nextInstruction.targetVelocity) {
+          instruction.acceleration = 1; // TODO: Calculate the value
         }
       }
+
+      currentResult = simulator.simulateInstruction(currentResult, instruction);
     }
 
     // Always decelerate to stop at end
