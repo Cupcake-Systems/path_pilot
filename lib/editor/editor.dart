@@ -69,6 +69,7 @@ class _EditorState extends State<Editor> with AutomaticKeepAliveClientMixin {
 
   // Developer Options
   int randomInstructionsGenerationLength = 100;
+  Duration? randomInstructionsGenerationDuration;
 
   @override
   void initState() {
@@ -293,12 +294,21 @@ class _EditorState extends State<Editor> with AutomaticKeepAliveClientMixin {
                                               inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                                             ),
                                           ),
+                                          const SizedBox(width: 10),
+                                          if (randomInstructionsGenerationDuration != null)
+                                            Text("(took ${randomInstructionsGenerationDuration!.inMilliseconds}ms)"),
+                                          const SizedBox(width: 10),
                                           IconButton(
                                             onPressed: () {
                                               for (int i = 0; i < randomInstructionsGenerationLength; i++) {
                                                 instructions.add(MissionInstruction.generateRandom());
                                               }
+                                              final sw = Stopwatch()..start();
                                               rerunSimulationAndUpdate();
+                                              sw.stop();
+                                              setState(() {
+                                                randomInstructionsGenerationDuration = sw.elapsed;
+                                              });
                                             },
                                             icon: const Icon(Icons.send),
                                           ),
