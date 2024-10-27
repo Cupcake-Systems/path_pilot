@@ -50,8 +50,9 @@ class _EditorState extends State<Editor> with AutomaticKeepAliveClientMixin {
   late Simulator simulator = Simulator(selectedRobiConfig);
 
   // Visualizer
-  double scale = 10;
+  double zoom = 10;
   Offset offset = Offset.zero;
+  bool lockToRobi = false;
   InstructionResult? highlightedInstruction;
   IrCalculatorResult? irCalculatorResult;
   List<Vector2>? irPathApproximation;
@@ -117,11 +118,13 @@ class _EditorState extends State<Editor> with AutomaticKeepAliveClientMixin {
           child: Visualizer(
             simulationResult: simulationResult,
             key: ValueKey(simulationResult),
-            scale: scale,
+            scale: zoom,
             offset: offset,
-            transformChanged: (newScale, newOffset) {
+            lockToRobi: lockToRobi,
+            transformChanged: (newZoom, newOffset, newLockToRobi) {
               offset = newOffset;
-              scale = newScale;
+              zoom = newZoom;
+              lockToRobi = newLockToRobi;
             },
             robiConfig: selectedRobiConfig,
             irReadPainterSettings: irReadPainterSettings,
