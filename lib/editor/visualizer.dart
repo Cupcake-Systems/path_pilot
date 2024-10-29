@@ -112,19 +112,21 @@ class _VisualizerState extends State<Visualizer> {
                   lockToRobi = false;
                   widget.transformChanged(zoom, _offset, lockToRobi);
                 }),
-                child: CustomPaint(
-                  painter: LinePainter(
-                    robiState: robiState,
-                    scale: pow(2, zoom) - 1,
-                    robiConfig: widget.robiConfig,
-                    simulationResult: widget.simulationResult,
-                    irReadPainterSettings: widget.irReadPainterSettings,
-                    highlightedInstruction: widget.highlightedInstruction,
-                    irCalculatorResult: widget.irCalculatorResult,
-                    irPathApproximation: widget.irPathApproximation,
-                    offset: _offset,
+                child: RepaintBoundary(
+                  child: CustomPaint(
+                    painter: LinePainter(
+                      robiState: robiState,
+                      scale: pow(2, zoom) - 1,
+                      robiConfig: widget.robiConfig,
+                      simulationResult: widget.simulationResult,
+                      irReadPainterSettings: widget.irReadPainterSettings,
+                      highlightedInstruction: widget.highlightedInstruction,
+                      irCalculatorResult: widget.irCalculatorResult,
+                      irPathApproximation: widget.irPathApproximation,
+                      offset: _offset,
+                    ),
+                    child: Container(),
                   ),
-                  child: Container(),
                 ),
               ),
             ),
@@ -161,9 +163,9 @@ class _VisualizerState extends State<Visualizer> {
                         children: [
                           const SizedBox(width: 24),
                           Expanded(
-                            child: SizedBox(
-                              height: 15,
+                            child: RepaintBoundary(
                               child: CustomPaint(
+                                size: const Size.fromHeight(15),
                                 painter: TimelinePainter(
                                   simResult: widget.simulationResult,
                                   highlightedInstruction: widget.highlightedInstruction,
