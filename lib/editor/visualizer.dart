@@ -7,6 +7,7 @@ import 'package:robi_line_drawer/app_storage.dart';
 import 'package:robi_line_drawer/editor/painters/ir_read_painter.dart';
 import 'package:robi_line_drawer/editor/painters/line_painter.dart';
 import 'package:robi_line_drawer/editor/painters/robi_painter.dart';
+import 'package:robi_line_drawer/editor/painters/timeline_painter.dart';
 import 'package:robi_line_drawer/robi_api/ir_read_api.dart';
 import 'package:robi_line_drawer/robi_api/robi_utils.dart';
 import 'package:vector_math/vector_math.dart' show Vector2;
@@ -155,49 +156,24 @@ class _VisualizerState extends State<Visualizer> {
                 child: Stack(
                   alignment: Alignment.center,
                   children: [
-                    SizedBox(
-                      height: 50,
-                      child: Row(
+                    if (widget.simulationResult.instructionResults.length < 10001)
+                      Row(
                         children: [
                           const SizedBox(width: 24),
                           Expanded(
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                for (final res in widget.simulationResult.instructionResults) ...[
-                                  Flexible(
-                                    flex: ((res.outerTotalTime / widget.simulationResult.totalTime) * 10000).toInt(),
-                                    fit: FlexFit.tight,
-                                    child: Stack(
-                                      alignment: Alignment.center,
-                                      children: [
-                                        Container(
-                                          decoration: BoxDecoration(
-                                            borderRadius: BorderRadius.horizontal(
-                                              left: res == widget.simulationResult.instructionResults.first ? const Radius.circular(10) : Radius.zero,
-                                              right: res == widget.simulationResult.instructionResults.last ? const Radius.circular(10) : Radius.zero,
-                                            ),
-                                            color: res == widget.highlightedInstruction ? Colors.orangeAccent : null,
-                                          ),
-                                          height: 8,
-                                        ),
-                                        Container(
-                                          decoration: BoxDecoration(
-                                            border: res == widget.simulationResult.instructionResults.first ? null : const Border(left: BorderSide(color: Colors.grey)),
-                                          ),
-                                          height: 15,
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ]
-                              ],
+                            child: SizedBox(
+                              height: 15,
+                              child: CustomPaint(
+                                painter: TimelinePainter(
+                                  simResult: widget.simulationResult,
+                                  highlightedInstruction: widget.highlightedInstruction,
+                                ),
+                              ),
                             ),
                           ),
                           const SizedBox(width: 24),
                         ],
                       ),
-                    ),
                     Slider(
                       value: t,
                       onChanged: (value) {
@@ -216,7 +192,7 @@ class _VisualizerState extends State<Visualizer> {
           ),
         ),
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal:  8.0),
+          padding: const EdgeInsets.symmetric(horizontal: 8.0),
           child: Row(
             children: [
               ElevatedButton.icon(
