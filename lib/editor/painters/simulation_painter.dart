@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:curved_gradient/curved_gradient.dart';
 import 'package:flutter/material.dart';
 import 'package:robi_line_drawer/editor/painters/abstract_painter.dart';
+import 'package:robi_line_drawer/editor/painters/timeline_painter.dart';
 import 'package:vector_math/vector_math.dart' show Vector2, radians;
 
 import '../../robi_api/robi_utils.dart';
@@ -16,7 +17,7 @@ class SimulationPainter extends MyPainter {
   final InstructionResult? highlightedInstruction;
 
   late final highlightPaint = Paint()
-    ..color = Colors.orangeAccent
+    ..color = TimelinePainter.highlightPaint.color
     ..strokeWidth = (strokeWidth + 0.01)
     ..style = PaintingStyle.stroke;
 

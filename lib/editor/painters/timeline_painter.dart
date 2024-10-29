@@ -9,7 +9,7 @@ class TimelinePainter extends CustomPainter {
     ..strokeWidth = 1
     ..style = PaintingStyle.stroke;
   static final Paint highlightPaint = Paint()
-    ..color = Colors.orange
+    ..color = Colors.orangeAccent
     ..style = PaintingStyle.fill;
 
   const TimelinePainter({
