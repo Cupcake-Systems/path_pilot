@@ -43,47 +43,42 @@ class Visualizer extends StatefulWidget {
 }
 
 class _VisualizerState extends State<Visualizer> {
-  Timer? _timer;
-
   late double zoom = widget.scale;
   late Offset _offset = widget.offset;
   late Offset _previousOffset = widget.offset;
   late bool lockToRobi = widget.lockToRobi;
 
-  double t = 0;
   bool updateRobi = false;
-  RobiState robiState = RobiState.zero();
 
   static const double minScale = 6;
   static const double maxScale = 12;
 
-  @override
-  void dispose() {
-    super.dispose();
-    _timer?.cancel();
-  }
+  Stopwatch sw = Stopwatch();
+  double timeOffset = 0;
 
   @override
   Widget build(BuildContext context) {
+    final robiDrawerUpdateRate = 1 / SettingsStorage.visualizerFps;
+
+    Future.delayed(Duration(milliseconds: (robiDrawerUpdateRate * 1000).round())).then(
+      (value) {
+        if (!mounted || !updateRobi) return;
+        setState(() {});
+      },
+    );
+
+    double timeSnapshot = timeOffset + sw.elapsedMilliseconds / 1000;
+
+    if (timeSnapshot >= widget.simulationResult.totalTime) {
+      pause();
+      timeSnapshot = widget.simulationResult.totalTime;
+    }
+
+    final robiState = getRobiStateAtTime(widget.simulationResult.instructionResults, timeSnapshot);
+
     if (lockToRobi) {
       _offset = Offset(-robiState.position.x, robiState.position.y) * (pow(2, zoom) - 1);
     }
-
-    _timer?.cancel();
-
-    final robiDrawerUpdateRate = 1 / SettingsStorage.visualizerFps;
-
-    _timer = Timer.periodic(Duration(milliseconds: (robiDrawerUpdateRate * 1000).round()), (timer) {
-      if (!mounted || !updateRobi) return;
-
-      setState(() {
-        setTime(t + robiDrawerUpdateRate);
-        if (t >= widget.simulationResult.totalTime) {
-          setTime(widget.simulationResult.totalTime);
-          updateRobi = false;
-        }
-      });
-    });
 
     return Column(
       children: [
@@ -153,7 +148,7 @@ class _VisualizerState extends State<Visualizer> {
           padding: const EdgeInsets.symmetric(horizontal: 8),
           child: Row(
             children: [
-              Text("Time ${_printDuration(Duration(milliseconds: (t * 1000).toInt()))} / ${_printDuration(Duration(milliseconds: (widget.simulationResult.totalTime * 1000).toInt()))}"),
+              Text("Time ${_printDuration(Duration(milliseconds: (timeSnapshot * 1000).toInt()))} / ${_printDuration(Duration(milliseconds: (widget.simulationResult.totalTime * 1000).toInt()))}"),
               Expanded(
                 child: Stack(
                   alignment: Alignment.center,
@@ -177,11 +172,12 @@ class _VisualizerState extends State<Visualizer> {
                         ],
                       ),
                     Slider(
-                      value: t,
+                      value: timeSnapshot,
                       onChanged: (value) {
                         setState(() {
-                          setTime(value);
-                          updateRobi = false;
+                          pause();
+                          timeOffset = value;
+                          sw.reset();
                         });
                       },
                       max: widget.simulationResult.totalTime,
@@ -200,9 +196,14 @@ class _VisualizerState extends State<Visualizer> {
               ElevatedButton.icon(
                 onPressed: () {
                   setState(() {
-                    updateRobi = !updateRobi;
-                    if (updateRobi && t == widget.simulationResult.totalTime) {
-                      setTime(0);
+                    if (updateRobi) {
+                      pause();
+                    } else {
+                      resume();
+                    }
+                    if (updateRobi && timeSnapshot >= widget.simulationResult.totalTime) {
+                      sw.reset();
+                      timeOffset = 0;
                     }
                   });
                 },
@@ -249,9 +250,14 @@ class _VisualizerState extends State<Visualizer> {
     widget.transformChanged(zoom, _offset, lockToRobi);
   }
 
-  void setTime(double newTime) {
-    t = newTime;
-    robiState = getRobiStateAtTime(widget.simulationResult.instructionResults, t);
+  void resume() {
+    updateRobi = true;
+    sw.start();
+  }
+
+  void pause() {
+    updateRobi = false;
+    sw.stop();
   }
 }
 
