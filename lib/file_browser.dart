@@ -9,6 +9,7 @@ import 'package:robi_line_drawer/robi_api/robi_path_serializer.dart';
 import 'package:robi_line_drawer/robi_api/robi_utils.dart';
 import 'package:robi_line_drawer/settings/robi_config_settings.dart';
 import 'package:robi_line_drawer/settings/settings.dart';
+import 'package:robi_line_drawer/welcome_screen.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 
 class FileBrowser extends StatefulWidget {
@@ -18,24 +19,13 @@ class FileBrowser extends StatefulWidget {
   State<FileBrowser> createState() => _FileBrowserState();
 }
 
-class _FileBrowserState extends State<FileBrowser> with TickerProviderStateMixin {
+class _FileBrowserState extends State<FileBrowser> {
   File? openedFile;
+  Iterable<MissionInstruction>? loadedInstructions;
+  String? errorMessage;
 
   @override
   Widget build(BuildContext context) {
-    final loadedInstructions = openedFile == null ? null : getInstructionsFromFile(openedFile!);
-
-    if (loadedInstructions == null && openedFile != null) {
-      openedFile = null;
-      WidgetsBinding.instance.addPostFrameCallback(
-        (_) => ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Failed to decode content!'),
-          ),
-        ),
-      );
-    }
-
     return Column(
       children: [
         Row(
@@ -138,66 +128,25 @@ class _FileBrowserState extends State<FileBrowser> with TickerProviderStateMixin
         ),
         Expanded(
           child: openedFile == null || loadedInstructions == null
-              ? Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    ElevatedButton.icon(
-                      style: const ButtonStyle(
-                        shape: WidgetStatePropertyAll(
-                          RoundedRectangleBorder(
-                            borderRadius: BorderRadius.horizontal(left: Radius.circular(20)),
-                          ),
-                        ),
-                      ),
-                      icon: const Icon(Icons.add),
-                      onPressed: newFile,
-                      label: const Text('Create'),
-                    ),
-                    const SizedBox(
-                      height: 30,
-                      child: VerticalDivider(width: 1),
-                    ),
-                    ElevatedButton.icon(
-                      style: const ButtonStyle(
-                        shape: WidgetStatePropertyAll(
-                          RoundedRectangleBorder(
-                            borderRadius: BorderRadius.horizontal(right: Radius.circular(20)),
-                          ),
-                        ),
-                      ),
-                      icon: const Icon(Icons.folder),
-                      onPressed: () => openFile(context),
-                      label: const Text('Open'),
-                    ),
-                  ],
+              ? WelcomeScreen(
+                  newFilePressed: newFile,
+                  openFilePressed: () => openFile(context),
+                  errorMessage: errorMessage,
                 )
               : Editor(
+                  key: ObjectKey(openedFile),
                   file: openedFile!,
-                  initailInstructions: loadedInstructions.toList(growable: false),
+                  initialInstructions: loadedInstructions!.toList(),
                 ),
         ),
       ],
     );
   }
 
-  Iterable<MissionInstruction>? getInstructionsFromFile(File file) {
-    final data = file.readAsStringSync();
+  Future<Iterable<MissionInstruction>?> getInstructionsFromFile(File file) async {
+    final data = await file.readAsString();
     final newInstructions = RobiPathSerializer.decode(data);
     return newInstructions;
-  }
-
-  Future<void> openTab(BuildContext context, File tab) async {
-    if (openedFile != null && openedFile!.absolute.path == tab.absolute.path) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('File already opened!'),
-        ),
-      );
-      // TODO: Focus editor
-      return;
-    }
-    setState(() => openedFile = tab);
-    // TODO: Focus editor
   }
 
   Future<void> newFile() async {
@@ -205,13 +154,11 @@ class _FileBrowserState extends State<FileBrowser> with TickerProviderStateMixin
 
     if (result == null) return;
 
-    final file = File(result);
-
-    if (openedFile != null && openedFile!.absolute.path == file.absolute.path) return;
-
-    RobiPathSerializer.saveToFile(file, []);
-
-    setState(() => openedFile = file);
+    setState(() {
+      openedFile =  File(result);
+      loadedInstructions = [];
+      errorMessage = null;
+    });
   }
 
   Future<void> openFile(BuildContext context) async {
@@ -220,8 +167,24 @@ class _FileBrowserState extends State<FileBrowser> with TickerProviderStateMixin
       allowedExtensions: ["robi_script.json", ".json"],
     );
     if (result == null) return;
+
     final file = File(result.files.single.path!);
-    if (context.mounted) openTab(context, file);
+    await tryLoadingInstructions(file);
+  }
+
+  Future<void> tryLoadingInstructions(File file) async {
+    final instructions = await getInstructionsFromFile(file);
+
+    setState(() {
+      if (instructions == null) {
+        errorMessage = "Failed to decode content!";
+        openedFile = null;
+      } else {
+        errorMessage = null;
+        openedFile = file;
+      }
+      loadedInstructions = instructions;
+    });
   }
 }
 
