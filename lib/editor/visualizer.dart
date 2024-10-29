@@ -42,7 +42,7 @@ class Visualizer extends StatefulWidget {
 }
 
 class _VisualizerState extends State<Visualizer> {
-  late final Timer _timer;
+  Timer? _timer;
 
   late double zoom = widget.scale;
   late Offset _offset = widget.offset;
@@ -55,11 +55,22 @@ class _VisualizerState extends State<Visualizer> {
 
   static const double minScale = 6;
   static const double maxScale = 12;
-  final robiDrawerUpdateRate = 1 / SettingsStorage.visualizerFps;
 
   @override
-  void initState() {
-    super.initState();
+  void dispose() {
+    super.dispose();
+    _timer?.cancel();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (lockToRobi) {
+      _offset = Offset(-robiState.position.x, robiState.position.y) * (pow(2, zoom) - 1);
+    }
+
+    _timer?.cancel();
+
+    final robiDrawerUpdateRate = 1 / SettingsStorage.visualizerFps;
 
     _timer = Timer.periodic(Duration(milliseconds: (robiDrawerUpdateRate * 1000).round()), (timer) {
       if (!mounted || !updateRobi) return;
@@ -72,19 +83,6 @@ class _VisualizerState extends State<Visualizer> {
         }
       });
     });
-  }
-
-  @override
-  void dispose() {
-    super.dispose();
-    _timer.cancel();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    if (lockToRobi) {
-      _offset = Offset(-robiState.position.x, robiState.position.y) * (pow(2, zoom) - 1);
-    }
 
     return Column(
       children: [
