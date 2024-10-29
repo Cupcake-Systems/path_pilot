@@ -17,35 +17,59 @@ class TimelinePainter extends CustomPainter {
     required this.highlightedInstruction,
   });
 
+  static const double highlightOffset = 3;
+
   @override
   void paint(Canvas canvas, Size size) {
-    double t = 0;
-    for (int i = 0; i < simResult.instructionResults.length; ++i) {
+    final cornerRadius = Radius.circular(size.height / 2);
+    double t = simResult.instructionResults.first.outerTotalTime;
+    double x = t / simResult.totalTime * size.width;
+
+    for (int i = 1; i < simResult.instructionResults.length; ++i) {
       InstructionResult result = simResult.instructionResults[i];
 
-      t += result.outerTotalTime;
-      final x = t / simResult.totalTime * size.width;
+      x = t / simResult.totalTime * size.width;
 
-      if (result == highlightedInstruction) {
+      if (result == highlightedInstruction && i != simResult.instructionResults.length - 1 && i > 0) {
+        final width = result.outerTotalTime / simResult.totalTime * size.width;
         canvas.drawRect(
-          Rect.fromLTWH(
-            x,
-            2,
-            -result.outerTotalTime / simResult.totalTime * size.width,
-            size.height - 4,
-          ),
+          Rect.fromLTWH(x, highlightOffset, width, size.height - highlightOffset * 2),
           highlightPaint,
         );
-      }
-
-      if (i == simResult.instructionResults.length - 1) {
-        break;
       }
 
       canvas.drawLine(
         Offset(x, 0),
         Offset(x, size.height),
         strokePaint,
+      );
+
+      t += result.outerTotalTime;
+    }
+
+    if (highlightedInstruction == simResult.instructionResults.last) {
+      canvas.drawRRect(
+        RRect.fromRectAndCorners(
+          Rect.fromLTWH(x, highlightOffset, size.width - x, size.height - highlightOffset * 2),
+          topRight: cornerRadius,
+          bottomRight: cornerRadius,
+        ),
+        highlightPaint,
+      );
+    } else if (highlightedInstruction == simResult.instructionResults.first) {
+      final width = simResult.instructionResults.first.outerTotalTime / simResult.totalTime * size.width;
+      canvas.drawRRect(
+        RRect.fromRectAndCorners(
+          Rect.fromLTWH(
+            0,
+            highlightOffset,
+            width,
+            size.height - highlightOffset * 2,
+          ),
+          topLeft: cornerRadius,
+          bottomLeft: cornerRadius,
+        ),
+        highlightPaint,
       );
     }
   }
