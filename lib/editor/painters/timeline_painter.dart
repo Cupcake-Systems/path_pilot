@@ -21,6 +21,9 @@ class TimelinePainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
+
+    if (simResult.instructionResults.isEmpty) return;
+
     final cornerRadius = Radius.circular(size.height / 2);
     double t = simResult.instructionResults.first.outerTotalTime;
     double x = t / simResult.totalTime * size.width;
@@ -75,5 +78,5 @@ class TimelinePainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+  bool shouldRepaint(TimelinePainter oldDelegate) => false;
 }
