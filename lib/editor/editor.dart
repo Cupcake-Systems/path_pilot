@@ -30,12 +30,12 @@ import 'ir_line_approximation/path_to_instructions.dart';
 final inputFormatters = [FilteringTextInputFormatter.allow(RegExp(r'^(\d+)?\.?\d{0,5}'))];
 
 class Editor extends StatefulWidget {
-  final List<MissionInstruction> initailInstructions;
+  final List<MissionInstruction> initialInstructions;
   final File file;
 
   const Editor({
     super.key,
-    required this.initailInstructions,
+    required this.initialInstructions,
     required this.file,
   });
 
@@ -46,7 +46,7 @@ class Editor extends StatefulWidget {
 class _EditorState extends State<Editor> with AutomaticKeepAliveClientMixin {
   RobiConfig selectedRobiConfig = defaultRobiConfig;
 
-  late List<MissionInstruction> instructions = List.from(widget.initailInstructions);
+  late List<MissionInstruction> instructions = List.from(widget.initialInstructions);
   late Simulator simulator = Simulator(selectedRobiConfig);
 
   // Visualizer
@@ -201,8 +201,9 @@ class _EditorState extends State<Editor> with AutomaticKeepAliveClientMixin {
                               children: [
                                 MenuItemButton(
                                   leadingIcon: const Icon(Icons.save),
-                                  onPressed: () {
-                                    RobiPathSerializer.saveToFile(widget.file, instructions);
+                                  onPressed: () async {
+                                    await RobiPathSerializer.saveToFile(widget.file, instructions);
+                                    if (!context.mounted) return;
                                     ScaffoldMessenger.of(context).showSnackBar(
                                       const SnackBar(content: Text('Saved')),
                                     );
@@ -298,8 +299,7 @@ class _EditorState extends State<Editor> with AutomaticKeepAliveClientMixin {
                                             ),
                                           ),
                                           const SizedBox(width: 10),
-                                          if (randomInstructionsGenerationDuration != null)
-                                            Text("(took ${randomInstructionsGenerationDuration!.inMilliseconds}ms)"),
+                                          if (randomInstructionsGenerationDuration != null) Text("(took ${randomInstructionsGenerationDuration!.inMilliseconds}ms)"),
                                           const SizedBox(width: 10),
                                           IconButton(
                                             onPressed: () {
@@ -471,7 +471,6 @@ class _EditorState extends State<Editor> with AutomaticKeepAliveClientMixin {
   }
 
   void rerunSimulationAndUpdate() {
-
     InstructionResult? currentResult;
 
     for (int i = 0; i < instructions.length - 1; ++i) {
