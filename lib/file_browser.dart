@@ -55,6 +55,7 @@ class _FileBrowserState extends State<FileBrowser> {
                               builder: (context) => const RobiConfigSettingsPage(),
                             ),
                           );
+                          setState(() {});
                         },
                         child: const MenuAcceleratorLabel('&Robi Configs'),
                       ),
@@ -67,6 +68,7 @@ class _FileBrowserState extends State<FileBrowser> {
                               builder: (context) => const SettingsPage(),
                             ),
                           );
+                          setState(() {});
                         },
                         child: const MenuAcceleratorLabel('&Preferences'),
                       ),
