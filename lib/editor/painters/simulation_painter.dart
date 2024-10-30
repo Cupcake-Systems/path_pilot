@@ -1,11 +1,11 @@
 import 'dart:math';
 
-import 'package:curved_gradient/curved_gradient.dart';
 import 'package:flutter/material.dart';
 import 'package:robi_line_drawer/editor/painters/abstract_painter.dart';
 import 'package:robi_line_drawer/editor/painters/timeline_painter.dart';
 import 'package:vector_math/vector_math.dart' show Vector2, radians;
 
+import '../../helper/curved_gradient.dart';
 import '../../robi_api/robi_utils.dart';
 import '../../robi_api/simulator.dart';
 
@@ -57,10 +57,10 @@ class SimulationPainter extends MyPainter {
 
     final accelerationPaint = Paint()
       ..shader = CurvedGradient(
-        colors: [
+        colors: (
           velocityToColor(instructionResult.initialVelocity),
           velocityToColor(instructionResult.maxVelocity),
-        ],
+        ),
         begin: Alignment.center,
         end: polarToAlignment(instructionResult.startRotation),
         granularity: 10,
@@ -70,10 +70,10 @@ class SimulationPainter extends MyPainter {
 
     final decelerationPaint = Paint()
       ..shader = CurvedGradient(
-        colors: [
+        colors: (
           velocityToColor(instructionResult.finalVelocity),
           velocityToColor(instructionResult.maxVelocity),
-        ],
+        ),
         begin: Alignment.center,
         end: polarToAlignment(instructionResult.startRotation),
         granularity: 10,
@@ -106,7 +106,6 @@ class SimulationPainter extends MyPainter {
   }
 
   void drawRapidTurn(RapidTurnResult res) {
-
     if (res == highlightedInstruction) {
       canvas.drawCircle(
         vecToOffset(res.startPosition),

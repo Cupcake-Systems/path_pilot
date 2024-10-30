@@ -65,14 +65,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.3.4+2"
-  curved_gradient:
-    dependency: "direct main"
-    description:
-      name: curved_gradient
-      sha256: e6e903e41eafb38f63c7b5f94eceed39bd717f2aa6364c69aade04a50e7c8dc3
-      url: "https://pub.dev"
-    source: hosted
-    version: "0.3.0"
   dbus:
     dependency: transitive
     description:
