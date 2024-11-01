@@ -474,15 +474,32 @@ class RapidTurnResult extends InstructionResult {
 
 class SimulationResult {
   final List<InstructionResult> instructionResults;
-  final double maxTargetedVelocity;
-  final double maxReachedVelocity;
-  late final double totalTime = instructionResults.fold(0, (prev, element) => prev + element.outerTotalTime);
+  final double maxTargetedVelocity, maxReachedVelocity;
+  final List<TurnResult> turnResults = [];
+  final List<DriveResult> driveResults = [];
+  final List<RapidTurnResult> rapidTurnResults = [];
+
+  double _totalTime = 0;
+  double get totalTime => _totalTime;
 
   SimulationResult(
     this.instructionResults,
     this.maxTargetedVelocity,
     this.maxReachedVelocity,
-  );
+  ) {
+    for (final instruction in instructionResults) {
+      if (instruction is TurnResult) {
+        turnResults.add(instruction);
+      } else if (instruction is DriveResult) {
+        driveResults.add(instruction);
+      } else if (instruction is RapidTurnResult) {
+        rapidTurnResults.add(instruction);
+      } else {
+        throw Exception("Unknown instruction type");
+      }
+      _totalTime += instruction.outerTotalTime;
+    }
+  }
 }
 
 class RobiConfig {

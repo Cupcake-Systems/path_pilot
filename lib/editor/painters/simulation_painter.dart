@@ -21,6 +21,11 @@ class SimulationPainter extends MyPainter {
     ..strokeWidth = (strokeWidth + 0.01)
     ..style = PaintingStyle.stroke;
 
+  late final Color zeroVelColor = velocityToColor(0);
+  late final Paint zeroVelPaint = Paint()..color = zeroVelColor;
+
+  static const int curveGranularity = 10;
+
   SimulationPainter({
     required this.simulationResult,
     required this.canvas,
@@ -31,17 +36,17 @@ class SimulationPainter extends MyPainter {
 
   @override
   void paint() {
-    for (InstructionResult result in simulationResult.instructionResults) {
-      if (result is RapidTurnResult) {
-        drawRapidTurn(result);
-      }
+    for (final result in simulationResult.rapidTurnResults) {
+      drawRapidTurn(result);
     }
 
-    for (InstructionResult result in simulationResult.instructionResults) {
+    Offset o = Offset.zero;
+    for (final result in simulationResult.instructionResults) {
       if (result is DriveResult) {
-        drawDrive(result);
+        o = drawDriveWO(result, o);
       } else if (result is TurnResult) {
-        drawTurn(result);
+        drawTurnWO(result, o);
+        o = vecToOffset(result.endPosition);
       } else if (result is RapidTurnResult) {
       } else {
         throw UnsupportedError("");
@@ -49,90 +54,128 @@ class SimulationPainter extends MyPainter {
     }
   }
 
-  static Alignment polarToAlignment(double deg) => Alignment(cosD(deg), -sinD(deg));
+  static Alignment polarToAlignment(final double deg) => Alignment(cosD(deg), -sinD(deg));
 
-  void drawDrive(DriveResult instructionResult) {
+  void drawDrive(final DriveResult instructionResult) => drawDriveWO(
+        instructionResult,
+        vecToOffset(instructionResult.startPosition),
+      );
+
+  Offset drawDriveWO(final DriveResult instructionResult, final Offset startPositionOffset) {
     final accelerationEndPoint = polarToCartesian(instructionResult.startRotation, instructionResult.accelerationDistance) + instructionResult.startPosition;
     final decelerationStartPoint = instructionResult.endPosition + polarToCartesian(instructionResult.endRotation - 180, instructionResult.decelerationDistance);
+    final maxVelColor = velocityToColor(instructionResult.maxVelocity);
+    final startRotationAlignment = polarToAlignment(instructionResult.startRotation);
+    final endPositionOffset = vecToOffset(instructionResult.endPosition);
+    final decelerationStartOffset = vecToOffset(decelerationStartPoint);
 
     final accelerationPaint = Paint()
       ..shader = CurvedGradient(
         colors: (
           velocityToColor(instructionResult.initialVelocity),
-          velocityToColor(instructionResult.maxVelocity),
+          maxVelColor,
         ),
         begin: Alignment.center,
-        end: polarToAlignment(instructionResult.startRotation),
-        granularity: 10,
+        end: startRotationAlignment,
+        granularity: curveGranularity,
         curveGenerator: (x) => sqrt(x),
-      ).createShader(Rect.fromCircle(center: vecToOffset(instructionResult.startPosition), radius: instructionResult.accelerationDistance))
+      ).createShader(Rect.fromCircle(
+        center: startPositionOffset,
+        radius: instructionResult.accelerationDistance,
+      ))
       ..strokeWidth = strokeWidth;
 
     final decelerationPaint = Paint()
       ..shader = CurvedGradient(
         colors: (
           velocityToColor(instructionResult.finalVelocity),
-          velocityToColor(instructionResult.maxVelocity),
+          maxVelColor,
         ),
         begin: Alignment.center,
-        end: polarToAlignment(instructionResult.startRotation),
-        granularity: 10,
+        end: startRotationAlignment,
+        granularity: curveGranularity,
         curveGenerator: (x) => sqrt(1 - x),
-      ).createShader(Rect.fromCircle(center: vecToOffset(decelerationStartPoint), radius: instructionResult.decelerationDistance))
+      ).createShader(
+        Rect.fromCircle(
+          center: decelerationStartOffset,
+          radius: instructionResult.decelerationDistance,
+        ),
+      )
       ..strokeWidth = strokeWidth;
 
     if (instructionResult == highlightedInstruction) {
-      canvas.drawLine(vecToOffset(instructionResult.startPosition), vecToOffset(instructionResult.endPosition), highlightPaint);
+      canvas.drawLine(
+        startPositionOffset,
+        endPositionOffset,
+        highlightPaint,
+      );
     }
 
     // Draw the original line
     canvas.drawLine(
-      vecToOffset(instructionResult.startPosition),
+      startPositionOffset,
       vecToOffset(accelerationEndPoint),
       accelerationPaint,
     );
     canvas.drawLine(
       vecToOffset(accelerationEndPoint),
-      vecToOffset(decelerationStartPoint),
+      decelerationStartOffset,
       Paint()
-        ..color = velocityToColor(instructionResult.maxVelocity)
+        ..color = maxVelColor
         ..strokeWidth = strokeWidth,
     );
     canvas.drawLine(
-      vecToOffset(decelerationStartPoint),
-      vecToOffset(instructionResult.endPosition),
+      decelerationStartOffset,
+      endPositionOffset,
       decelerationPaint,
     );
+
+    return endPositionOffset;
   }
 
-  void drawRapidTurn(RapidTurnResult res) {
+  void drawRapidTurn(final RapidTurnResult res) => drawRapidTurnWO(res, vecToOffset(res.startPosition));
+
+  void drawRapidTurnWO(final RapidTurnResult res, final Offset offset) {
     if (res == highlightedInstruction) {
       canvas.drawCircle(
-        vecToOffset(res.startPosition),
+        offset,
         strokeWidth / 2,
         highlightPaint..strokeWidth = strokeWidth / 2,
       );
     }
 
     canvas.drawCircle(
-      vecToOffset(res.startPosition),
+      offset,
       strokeWidth / 2,
-      Paint()..color = velocityToColor(0),
+      zeroVelPaint,
     );
   }
 
-  void drawTurn(TurnResult instruction) {
-    final highlight = instruction == highlightedInstruction;
+  void drawTurn(final TurnResult instruction) => drawTurnWO(
+        instruction,
+        vecToOffset(instruction.startPosition),
+      );
+
+  void drawTurnWO(final TurnResult instruction, final Offset startPositionOffset) {
     final radius = (instruction.innerRadius + instruction.outerRadius) / 2;
+
+    if (instruction == highlightedInstruction) {
+      drawCirclePart(
+        radius: radius,
+        left: instruction.left,
+        lineStart: startPositionOffset,
+        sweepAngle: instruction.totalTurnDegree,
+        robiRotation: instruction.startRotation,
+        paint: highlightPaint,
+      );
+    }
 
     drawCirclePart(
       radius: radius,
       left: instruction.left,
-      lineStart: vecToOffset(instruction.startPosition),
+      lineStart: startPositionOffset,
       sweepAngle: instruction.accelerationDegree,
       robiRotation: instruction.startRotation,
-      highlight: highlight,
-      degreeOffset: 0,
       initialVelocity: instruction.outerInitialVelocity,
       endVelocity: instruction.maxOuterVelocity,
     );
@@ -140,10 +183,9 @@ class SimulationPainter extends MyPainter {
     drawCirclePart(
       radius: radius,
       left: instruction.left,
-      lineStart: vecToOffset(instruction.startPosition),
+      lineStart: startPositionOffset,
       sweepAngle: instruction.totalTurnDegree - instruction.accelerationDegree - instruction.decelerationDegree,
       robiRotation: instruction.startRotation,
-      highlight: highlight,
       degreeOffset: instruction.accelerationDegree,
       initialVelocity: instruction.maxOuterVelocity,
       endVelocity: instruction.maxOuterVelocity,
@@ -152,10 +194,9 @@ class SimulationPainter extends MyPainter {
     drawCirclePart(
       radius: radius,
       left: instruction.left,
-      lineStart: vecToOffset(instruction.startPosition),
+      lineStart: startPositionOffset,
       sweepAngle: instruction.decelerationDegree,
       robiRotation: instruction.startRotation,
-      highlight: highlight,
       degreeOffset: instruction.totalTurnDegree - instruction.decelerationDegree,
       initialVelocity: instruction.maxOuterVelocity,
       endVelocity: instruction.finalInnerVelocity,
@@ -163,16 +204,21 @@ class SimulationPainter extends MyPainter {
   }
 
   void drawCirclePart({
-    required double radius,
-    required bool left,
-    required Offset lineStart,
-    required double sweepAngle,
-    required double robiRotation,
-    required bool highlight,
-    required double degreeOffset,
-    required double initialVelocity,
-    required double endVelocity,
+    required final double radius,
+    required final bool left,
+    required final Offset lineStart,
+    required final double sweepAngle,
+    required final double robiRotation,
+    double degreeOffset = 0,
+    final double? initialVelocity,
+    final double? endVelocity,
+    Paint? paint,
   }) {
+    assert(() {
+      if (paint != null) return true;
+      return initialVelocity != null && endVelocity != null;
+    }());
+
     double startAngle = 90 - sweepAngle - robiRotation;
     Offset center = vecToOffset(polarToCartesian(robiRotation + 90, radius));
 
@@ -183,31 +229,24 @@ class SimulationPainter extends MyPainter {
       center = center.scale(-1, 1);
     }
 
-    final rect = Rect.fromCircle(center: lineStart + center, radius: radius);
+    if (paint == null) {
+      List<Color> colors = [
+        velocityToColor(initialVelocity!),
+        velocityToColor(endVelocity!),
+      ];
 
-    List<Color> colors = [
-      velocityToColor(initialVelocity),
-      velocityToColor(endVelocity),
-    ];
-    if (left) colors = colors.reversed.toList();
+      if (left) colors = colors.reversed.toList();
 
-    final paint = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = strokeWidth
-      ..shader = SweepGradient(
-        colors: colors,
-        stops: [0, sweepAngle / 360],
-        transform: GradientRotation(radians(startAngle - degreeOffset)),
-      ).createShader(rect);
+      final rect = Rect.fromCircle(center: lineStart + center, radius: radius);
 
-    if (highlight) {
-      canvas.drawArc(
-        rect,
-        radians(startAngle - degreeOffset),
-        radians(sweepAngle),
-        false,
-        highlightPaint,
-      );
+      paint = Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = strokeWidth
+        ..shader = SweepGradient(
+          colors: colors,
+          stops: [0, sweepAngle / 360],
+          transform: GradientRotation(radians(startAngle - degreeOffset)),
+        ).createShader(rect);
     }
 
     canvas.drawArc(
@@ -219,18 +258,18 @@ class SimulationPainter extends MyPainter {
     );
   }
 
-  Color velocityToColor(double velocity) => velToColor(velocity, simulationResult.maxTargetedVelocity);
-
-  Offset vecToOffset(Vector2 vec) => Offset(vec.x, -vec.y);
+  Color velocityToColor(final double velocity) => velToColor(velocity, simulationResult.maxTargetedVelocity);
 }
 
-Color velToColor(double velocity, double maxVelocity) {
+Offset vecToOffset(final Vector2 vec) => Offset(vec.x, -vec.y);
+
+Color velToColor(final double velocity, final double maxVelocity) {
   int r = ((1 - velocity / maxVelocity) * 255).round();
   int g = 255 - r;
   return Color.fromARGB(255, r, g, 0);
 }
 
-Vector2 centerOfCircle(double radius, double angle, bool left) {
+Vector2 centerOfCircle(final double radius, final double angle, final bool left) {
   Vector2 center = polarToCartesian(angle + 90, radius);
 
   if (!left) {
