@@ -44,20 +44,30 @@ class RobiPainter extends MyPainter {
   }
 }
 
-class RobiState {
+enum RobiStateType {
+  leftRight,
+  innerOuter,
+}
+
+abstract class RobiState {
   final Vector2 position;
-  final double rotation, innerVelocity, outerVelocity, innerAcceleration, outerAcceleration;
+  final double rotation;
+  @protected
+  final double _innerVelocity, _outerVelocity, _innerAcceleration, _outerAcceleration;
 
   const RobiState({
     required this.position,
     required this.rotation,
-    required this.innerVelocity,
-    required this.outerVelocity,
-    required this.innerAcceleration,
-    required this.outerAcceleration,
-  });
+    required double innerVelocity,
+    required double outerVelocity,
+    required double innerAcceleration,
+    required double outerAcceleration,
+  })  : _innerVelocity = innerVelocity,
+        _outerVelocity = outerVelocity,
+        _innerAcceleration = innerAcceleration,
+        _outerAcceleration = outerAcceleration;
 
-  static final RobiState zero = RobiState(
+  static final RobiState zero = InnerOuterRobiState(
     position: Vector2.zero(),
     rotation: 0,
     innerVelocity: 0,
@@ -67,19 +77,79 @@ class RobiState {
   );
 
   RobiState interpolate(RobiState other, double t) {
-    return RobiState(
+    return InnerOuterRobiState(
       position: position * (1 - t) + other.position * t,
       rotation: rotation * (1 - t) + other.rotation * t,
-      innerVelocity: innerVelocity * (1 - t) + other.innerVelocity * t,
-      outerVelocity: outerVelocity * (1 - t) + other.outerVelocity * t,
-      innerAcceleration: innerAcceleration * (1 - t) + other.innerAcceleration * t,
-      outerAcceleration: outerAcceleration * (1 - t) + other.outerAcceleration * t,
+      innerVelocity: _innerVelocity * (1 - t) + other._innerVelocity * t,
+      outerVelocity: _outerVelocity * (1 - t) + other._outerVelocity * t,
+      innerAcceleration: _innerAcceleration * (1 - t) + other._innerAcceleration * t,
+      outerAcceleration: _outerAcceleration * (1 - t) + other._outerAcceleration * t,
+    );
+  }
+
+  LeftRightRobiState asLeftRight() {
+    return LeftRightRobiState(
+      position: position,
+      rotation: rotation,
+      leftVelocity: _innerVelocity,
+      rightVelocity: _outerVelocity,
+      leftAcceleration: _innerAcceleration,
+      rightAcceleration: _outerAcceleration,
+    );
+  }
+
+  InnerOuterRobiState asInnerOuter() {
+    return InnerOuterRobiState(
+      position: position,
+      rotation: rotation,
+      innerVelocity: _innerVelocity,
+      outerVelocity: _outerVelocity,
+      innerAcceleration: _innerAcceleration,
+      outerAcceleration: _outerAcceleration,
     );
   }
 }
 
-RobiState getRobiStateAtTime(List<InstructionResult> instructionResults, double t) {
-  if (instructionResults.isEmpty) return RobiState.zero;
+class LeftRightRobiState extends RobiState {
+  static RobiStateType type = RobiStateType.leftRight;
+  final double leftVelocity, rightVelocity, leftAcceleration, rightAcceleration;
+
+  LeftRightRobiState({
+    required super.position,
+    required super.rotation,
+    required this.leftVelocity,
+    required this.rightVelocity,
+    required this.leftAcceleration,
+    required this.rightAcceleration,
+  }) : super(
+          innerVelocity: leftVelocity,
+          outerVelocity: rightVelocity,
+          innerAcceleration: leftAcceleration,
+          outerAcceleration: rightAcceleration,
+        );
+}
+
+class InnerOuterRobiState extends RobiState {
+  static RobiStateType type = RobiStateType.innerOuter;
+  final double innerVelocity, outerVelocity, innerAcceleration, outerAcceleration;
+
+  InnerOuterRobiState({
+    required super.position,
+    required super.rotation,
+    required this.innerVelocity,
+    required this.outerVelocity,
+    required this.innerAcceleration,
+    required this.outerAcceleration,
+  }) : super(
+          innerVelocity: innerVelocity,
+          outerVelocity: outerVelocity,
+          innerAcceleration: innerAcceleration,
+          outerAcceleration: outerAcceleration,
+        );
+}
+
+InnerOuterRobiState getRobiStateAtTime(List<InstructionResult> instructionResults, double t) {
+  if (instructionResults.isEmpty) return RobiState.zero.asInnerOuter();
 
   final currentDriveResult = getRobiInstructionResultAtTime(instructionResults, t);
 
@@ -101,7 +171,7 @@ InstructionResult? getRobiInstructionResultAtTime(List<InstructionResult> result
   return results.lastOrNull;
 }
 
-RobiState getRobiStateAtTimeInInstructionResult(InstructionResult res, double t) {
+InnerOuterRobiState getRobiStateAtTimeInInstructionResult(InstructionResult res, double t) {
   if (res is DriveResult) {
     return getRobiStateAtTimeInDriveResult(res, t);
   }
@@ -114,7 +184,7 @@ RobiState getRobiStateAtTimeInInstructionResult(InstructionResult res, double t)
   throw UnsupportedError("");
 }
 
-RobiState getRobiStateAtTimeInDriveResult(DriveResult res, double t) {
+InnerOuterRobiState getRobiStateAtTimeInDriveResult(DriveResult res, double t) {
   late final double distanceTraveled, velocity, acceleration;
 
   if (t < res.accelerationTime) {
@@ -139,7 +209,7 @@ RobiState getRobiStateAtTimeInDriveResult(DriveResult res, double t) {
 
   final position = res.startPosition + polarToCartesian(res.startRotation, distanceTraveled);
 
-  return RobiState(
+  return InnerOuterRobiState(
     position: position,
     rotation: res.startRotation,
     innerVelocity: velocity,
@@ -149,7 +219,7 @@ RobiState getRobiStateAtTimeInDriveResult(DriveResult res, double t) {
   );
 }
 
-RobiState getRobiStateAtTimeInTurnResult(TurnResult res, double t) {
+InnerOuterRobiState getRobiStateAtTimeInTurnResult(TurnResult res, double t) {
   final radius = res.medianRadius;
   double rotation = res.startRotation;
   final Vector2 cOfCircle = centerOfCircle(radius, rotation, res.left) + res.startPosition;
@@ -191,7 +261,7 @@ RobiState getRobiStateAtTimeInTurnResult(TurnResult res, double t) {
     rotation = res.startRotation - degreeTraveled;
   }
 
-  return RobiState(
+  return InnerOuterRobiState(
     position: position,
     rotation: rotation,
     innerVelocity: innerVelocity,
@@ -201,7 +271,7 @@ RobiState getRobiStateAtTimeInTurnResult(TurnResult res, double t) {
   );
 }
 
-RobiState getRobiStateAtTimeInRapidTurnResult(RapidTurnResult res, double t) {
+InnerOuterRobiState getRobiStateAtTimeInRapidTurnResult(RapidTurnResult res, double t) {
   late final double degreeTraveled, velocity, acceleration, rotation;
 
   if (t < res.innerAccelerationTime) {
@@ -229,7 +299,7 @@ RobiState getRobiStateAtTimeInRapidTurnResult(RapidTurnResult res, double t) {
     rotation = res.startRotation - degreeTraveled;
   }
 
-  return RobiState(
+  return InnerOuterRobiState(
     position: res.startPosition,
     rotation: rotation,
     innerVelocity: velocity,

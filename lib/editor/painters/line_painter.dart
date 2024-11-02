@@ -22,6 +22,7 @@ class LinePainter extends CustomPainter {
   final IrCalculatorResult? irCalculatorResult;
   final List<Vector2>? irPathApproximation;
   final RobiState robiState;
+  final RobiStateType robiStateType;
 
   const LinePainter({
     super.repaint,
@@ -34,6 +35,7 @@ class LinePainter extends CustomPainter {
     required this.irPathApproximation,
     required this.offset,
     required this.robiState,
+    required this.robiStateType,
   });
 
   static void paintText(String text, Offset offset, Canvas canvas, Size size, {bool center = true, TextStyle? textStyle}) {
@@ -87,18 +89,23 @@ class LinePainter extends CustomPainter {
   }
 
   void paintRobiState(Canvas canvas, Size size) {
-    final String xPosText = (robiState.position.x * 100).toStringAsFixed(0);
-    final String innerVelText = (robiState.innerVelocity * 100).toStringAsFixed(0);
-    final String innerAccelText = (robiState.innerAcceleration * 100).toStringAsFixed(0);
+    final rs = robiState.asInnerOuter();
+    final String xPosText = (rs.position.x * 100).toStringAsFixed(0);
+    final String innerVelText = (rs.innerVelocity * 100).toStringAsFixed(0);
+    final String innerAccelText = (rs.innerAcceleration * 100).toStringAsFixed(0);
     final String posSpace = " " * (8 - xPosText.length);
     final String velSpace = " " * (6 - innerVelText.length);
     final String accelSpace = " " * (5 - innerAccelText.length);
 
-    final String robiStateText = """
-Rot.: ${robiState.rotation.toStringAsFixed(2)}°
-Pos.: X ${xPosText}cm${posSpace}Y ${(robiState.position.y * 100).toInt()}cm
-Vel.: I ${innerVelText}cm/s${velSpace}O ${(robiState.outerVelocity * 100).toInt()}cm/s
-Acc.: I ${innerAccelText}cm/s²${accelSpace}O ${(robiState.outerAcceleration * 100).toInt()}cm/s²""";
+    String robiStateText = """
+Rot.: ${rs.rotation.toStringAsFixed(2)}°
+Pos.: X ${xPosText}cm${posSpace}Y ${(rs.position.y * 100).toInt()}cm
+Vel.: I ${innerVelText}cm/s${velSpace}O ${(rs.outerVelocity * 100).toInt()}cm/s
+Acc.: I ${innerAccelText}cm/s²${accelSpace}O ${(rs.outerAcceleration * 100).toInt()}cm/s²""";
+
+    if (robiStateType == RobiStateType.leftRight) {
+      robiStateText = robiStateText.replaceAll("I ", "L ").replaceAll("O ", "R ");
+    }
 
     paintText(
       robiStateText,

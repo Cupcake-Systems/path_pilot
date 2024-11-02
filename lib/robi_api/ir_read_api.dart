@@ -80,7 +80,7 @@ class IrReading {
 class IrCalculatorResult {
   final List<(IrReading left, IrReading middle, IrReading right)> irData;
   final List<(Vector2 left, Vector2 right)> wheelPositions;
-  final List<RobiState> robiStates;
+  final List<LeftRightRobiState> robiStates;
 
   const IrCalculatorResult({
     required this.irData,
@@ -106,7 +106,7 @@ class IrCalculator {
 
     List<(IrReading, IrReading, IrReading)> irData = [];
     List<(Vector2, Vector2)> wheelPositions = [];
-    List<RobiState> robiStates = [];
+    List<LeftRightRobiState> robiStates = [];
 
     for (final measurement in irReadResult.measurements) {
       double leftVel = freqToVel(measurement.motorLeftFreq, robiConfig.wheelRadius);
@@ -128,13 +128,13 @@ class IrCalculator {
 
       wheelPositions.add((lastLeftOffset, lastRightOffset));
 
-      robiStates.add(RobiState(
+      robiStates.add(LeftRightRobiState(
         position: (lastLeftOffset + lastRightOffset) / 2,
         rotation: rotationRad * radians2Degrees,
-        innerVelocity: leftVel,
-        outerVelocity: rightVel,
-        innerAcceleration: leftAccel,
-        outerAcceleration: rightAccel,
+        leftVelocity: leftVel,
+        rightVelocity: rightVel,
+        leftAcceleration: leftAccel,
+        rightAcceleration: rightAccel,
       ));
 
       // IR Stuff

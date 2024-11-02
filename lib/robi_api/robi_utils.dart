@@ -531,7 +531,7 @@ class SimulationResult {
     }
   }
 
-  RobiState getStateAtTime(double t) => getRobiStateAtTime(instructionResults, t);
+  InnerOuterRobiState getStateAtTime(double t) => getRobiStateAtTime(instructionResults, t);
 }
 
 class RobiConfig {

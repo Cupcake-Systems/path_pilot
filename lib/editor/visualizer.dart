@@ -28,6 +28,7 @@ class InstructionsVisualizer extends Visualizer {
     super.enableTimeInput = true,
   }) : super(
           simulationResult: simulationResult,
+          robiStateType: RobiStateType.innerOuter,
         );
 }
 
@@ -48,6 +49,7 @@ class IrVisualizer extends Visualizer {
     super.enableTimeInput = true,
   }) : super(
           irReadPainterSettings: irReadPainterSettings,
+          robiStateType: RobiStateType.leftRight,
         );
 }
 
@@ -65,6 +67,7 @@ class Visualizer extends StatefulWidget {
   final SimulationResult? simulationResult;
   final double timeOffset;
   final bool enableTimeInput;
+  final RobiStateType robiStateType;
 
   const Visualizer({
     super.key,
@@ -82,6 +85,7 @@ class Visualizer extends StatefulWidget {
     this.simulationResult,
     this.timeOffset = 0,
     this.enableTimeInput = true,
+    required this.robiStateType,
   });
 
   @override
@@ -152,6 +156,7 @@ class _VisualizerState extends State<Visualizer> {
               child: RepaintBoundary(
                 child: CustomPaint(
                   painter: LinePainter(
+                    robiStateType: widget.robiStateType,
                     robiState: robiState,
                     scale: pow(2, zoom) - 1,
                     robiConfig: widget.robiConfig,
