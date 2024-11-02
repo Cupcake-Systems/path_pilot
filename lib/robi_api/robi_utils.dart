@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import 'package:flutter/foundation.dart';
+import 'package:robi_line_drawer/editor/painters/simulation_painter.dart';
 import 'package:robi_line_drawer/robi_api/exporter/exporter_instructions.dart';
 import 'package:robi_line_drawer/robi_api/simulator.dart';
 import 'package:vector_math/vector_math.dart';
@@ -314,6 +315,13 @@ class DriveResult extends InstructionResult {
       constantSpeedTime: constantSpeedTime,
     );
   }
+
+  bool intersectsWithAabb(final Aabb2 aabb) => isLineIntersectingAABB(aabb, startPosition, endPosition);
+
+  bool isVisibleFast(final Vector2 visionCenter, final double centerMaxDistance) {
+    final a = centerMaxDistance + totalDistance;
+    return visionCenter.distanceToSquared(startPosition) < a * a;
+  }
 }
 
 class TurnResult extends InstructionResult {
@@ -322,6 +330,8 @@ class TurnResult extends InstructionResult {
 
   late final totalTurnDegree = accelerationDegree + decelerationDegree + constantSpeedDegree;
   late final trackWidth = outerRadius - innerRadius;
+  late final center = _calculateCenter(left, medianRadius, startRotation, startPosition);
+  late final medianRadius = (innerRadius + outerRadius) / 2;
 
   TurnResult({
     required this.left,
@@ -393,6 +403,13 @@ class TurnResult extends InstructionResult {
         decelerationDegree: decelerationDegree.abs(),
       );
 
+  static Vector2 _calculateCenter(bool left, double radius, double startRotation, Vector2 startPosition) {
+    if (left) {
+      return startPosition + polarToCartesian(startRotation + 90, radius);
+    }
+    return startPosition + polarToCartesian(startRotation - 90, radius);
+  }
+
   static Vector2 _calculateEndPosition(bool left, double radius, double startRotation, Vector2 startPosition, double totalTurnDegree) {
     late final Vector2 center;
     if (left) {
@@ -405,6 +422,11 @@ class TurnResult extends InstructionResult {
   }
 
   double linearToAngular(double inner, double outer) => (outer - inner) / trackWidth * (180 / pi);
+
+  bool isVisibleFast(final Vector2 visionCenter, final double centerMaxDistance) {
+    final a = centerMaxDistance + medianRadius;
+    return visionCenter.distanceToSquared(center) < a * a;
+  }
 }
 
 class RapidTurnResult extends InstructionResult {
@@ -470,6 +492,12 @@ class RapidTurnResult extends InstructionResult {
       angular: $finalAngularVelocity°/s
 )''';
   }
+
+  bool intersectsWithAabb(final Aabb2 aabb) => aabb.intersectsWithVector2(startPosition);
+
+  bool isVisibleFast(final Vector2 visionCenter, final double centerMaxDistanceSquared) {
+    return visionCenter.distanceToSquared(startPosition) < centerMaxDistanceSquared;
+  }
 }
 
 class SimulationResult {
@@ -480,6 +508,7 @@ class SimulationResult {
   final List<RapidTurnResult> rapidTurnResults = [];
 
   double _totalTime = 0;
+
   double get totalTime => _totalTime;
 
   SimulationResult(

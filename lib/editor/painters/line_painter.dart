@@ -6,7 +6,7 @@ import 'package:robi_line_drawer/editor/painters/robi_painter.dart';
 import 'package:robi_line_drawer/editor/painters/simulation_painter.dart';
 import 'package:robi_line_drawer/robi_api/ir_read_api.dart';
 import 'package:robi_line_drawer/robi_api/robi_utils.dart';
-import 'package:vector_math/vector_math.dart' show Vector2;
+import 'package:vector_math/vector_math.dart' show Aabb2, Vector2;
 
 import 'abstract_painter.dart';
 
@@ -155,12 +155,17 @@ Acc.: I ${innerAccelText}cm/s²${accelSpace}O ${(robiState.outerAcceleration * 1
     canvas.translate(center.dx + offset.dx, center.dy + offset.dy);
     canvas.scale(scale);
 
+    final Aabb2 visibleArea1 = Aabb2.minMax(
+      Vector2(-offset.dx - center.dx, offset.dy - center.dy) / scale,
+      Vector2(-offset.dx + center.dx, offset.dy + center.dy) / scale,
+    );
+
     if (irCalculatorResult != null) assert(irPathApproximation != null);
     final List<MyPainter> painters = [
       SimulationPainter(
         simulationResult: simulationResult,
         canvas: canvas,
-        size: size,
+        visibleArea: visibleArea1,
         highlightedInstruction: highlightedInstruction,
       ),
       if (irCalculatorResult != null)

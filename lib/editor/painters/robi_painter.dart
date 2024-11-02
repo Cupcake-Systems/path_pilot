@@ -20,7 +20,7 @@ class RobiPainter extends MyPainter {
   static final b = Vector2(0.1045, 0.08);
   static final a = atan(b.y / b.x) * radians2Degrees;
 
-  RobiPainter({
+  const RobiPainter({
     required this.canvas,
     required this.simulationResult,
     required this.robiState,
@@ -140,7 +140,7 @@ RobiState getRobiStateAtTimeInDriveResult(DriveResult res, double t) {
 }
 
 RobiState getRobiStateAtTimeInTurnResult(TurnResult res, double t) {
-  final radius = (res.innerRadius + res.outerRadius) / 2;
+  final radius = res.medianRadius;
   double rotation = res.startRotation;
   final Vector2 cOfCircle = centerOfCircle(radius, rotation, res.left) + res.startPosition;
 

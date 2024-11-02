@@ -3,7 +3,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:robi_line_drawer/editor/painters/abstract_painter.dart';
 import 'package:robi_line_drawer/editor/painters/timeline_painter.dart';
-import 'package:vector_math/vector_math.dart' show Vector2, radians;
+import 'package:vector_math/vector_math.dart' show Aabb2, Vector2, radians;
 
 import '../../helper/curved_gradient.dart';
 import '../../robi_api/robi_utils.dart';
@@ -12,44 +12,55 @@ import '../../robi_api/simulator.dart';
 class SimulationPainter extends MyPainter {
   final SimulationResult simulationResult;
   final Canvas canvas;
-  final Size size;
+  final Aabb2 visibleArea;
   final double strokeWidth;
   final InstructionResult? highlightedInstruction;
+
+  static final Color zeroVelColor = velToColor(0, 1);
+  static final Paint zeroVelPaint = Paint()..color = zeroVelColor;
 
   late final highlightPaint = Paint()
     ..color = TimelinePainter.highlightPaint.color
     ..strokeWidth = (strokeWidth + 0.01)
     ..style = PaintingStyle.stroke;
-
-  late final Color zeroVelColor = velocityToColor(0);
-  late final Paint zeroVelPaint = Paint()..color = zeroVelColor;
+  late final Vector2 visionCenter = visibleArea.center;
+  late final Vector2 expansion = Vector2.all(strokeWidth / 2);
+  late final Aabb2 expandedArea = Aabb2.minMax(
+    visibleArea.min - expansion,
+    visibleArea.max + expansion,
+  );
+  late final double centerMaxDistance = visionCenter.distanceTo(expandedArea.max);
 
   static const int curveGranularity = 10;
 
   SimulationPainter({
     required this.simulationResult,
     required this.canvas,
-    required this.size,
+    required this.visibleArea,
     this.strokeWidth = 0.02,
     required this.highlightedInstruction,
   });
 
   @override
   void paint() {
-    for (final result in simulationResult.rapidTurnResults) {
-      drawRapidTurn(result);
+    for (int i = 0; i < simulationResult.rapidTurnResults.length; ++i) {
+      final result = simulationResult.rapidTurnResults[i];
+      if (result.intersectsWithAabb(expandedArea)) {
+        drawRapidTurn(result);
+      }
     }
 
-    Offset o = Offset.zero;
-    for (final result in simulationResult.instructionResults) {
-      if (result is DriveResult) {
-        o = drawDriveWO(result, o);
-      } else if (result is TurnResult) {
-        drawTurnWO(result, o);
-        o = vecToOffset(result.endPosition);
-      } else if (result is RapidTurnResult) {
-      } else {
-        throw UnsupportedError("");
+    for (int i = 0; i < simulationResult.driveResults.length; ++i) {
+      final result = simulationResult.driveResults[i];
+      if (result.isVisibleFast(visionCenter, centerMaxDistance)) {
+        drawDrive(result);
+      }
+    }
+
+    for (int i = 0; i < simulationResult.turnResults.length; ++i) {
+      final result = simulationResult.turnResults[i];
+      if (result.isVisibleFast(visionCenter, centerMaxDistance)) {
+        drawTurn(result);
       }
     }
   }
@@ -59,14 +70,14 @@ class SimulationPainter extends MyPainter {
   void drawDrive(final DriveResult instructionResult) => drawDriveWO(
         instructionResult,
         vecToOffset(instructionResult.startPosition),
+        vecToOffset(instructionResult.endPosition),
       );
 
-  Offset drawDriveWO(final DriveResult instructionResult, final Offset startPositionOffset) {
+  void drawDriveWO(final DriveResult instructionResult, final Offset startPositionOffset, final Offset endPositionOffset) {
     final accelerationEndPoint = polarToCartesian(instructionResult.startRotation, instructionResult.accelerationDistance) + instructionResult.startPosition;
     final decelerationStartPoint = instructionResult.endPosition + polarToCartesian(instructionResult.endRotation - 180, instructionResult.decelerationDistance);
     final maxVelColor = velocityToColor(instructionResult.maxVelocity);
     final startRotationAlignment = polarToAlignment(instructionResult.startRotation);
-    final endPositionOffset = vecToOffset(instructionResult.endPosition);
     final decelerationStartOffset = vecToOffset(decelerationStartPoint);
 
     final accelerationPaint = Paint()
@@ -129,8 +140,6 @@ class SimulationPainter extends MyPainter {
       endPositionOffset,
       decelerationPaint,
     );
-
-    return endPositionOffset;
   }
 
   void drawRapidTurn(final RapidTurnResult res) => drawRapidTurnWO(res, vecToOffset(res.startPosition));
@@ -157,31 +166,33 @@ class SimulationPainter extends MyPainter {
       );
 
   void drawTurnWO(final TurnResult instruction, final Offset startPositionOffset) {
-    final radius = (instruction.innerRadius + instruction.outerRadius) / 2;
+    final center = vecToOffset(instruction.center);
 
     if (instruction == highlightedInstruction) {
       drawCirclePart(
-        radius: radius,
+        radius: instruction.medianRadius,
         left: instruction.left,
         lineStart: startPositionOffset,
         sweepAngle: instruction.totalTurnDegree,
         robiRotation: instruction.startRotation,
         paint: highlightPaint,
+        center: center,
       );
     }
 
     drawCirclePart(
-      radius: radius,
+      radius: instruction.medianRadius,
       left: instruction.left,
       lineStart: startPositionOffset,
       sweepAngle: instruction.accelerationDegree,
       robiRotation: instruction.startRotation,
       initialVelocity: instruction.outerInitialVelocity,
       endVelocity: instruction.maxOuterVelocity,
+      center: center,
     );
 
     drawCirclePart(
-      radius: radius,
+      radius: instruction.medianRadius,
       left: instruction.left,
       lineStart: startPositionOffset,
       sweepAngle: instruction.totalTurnDegree - instruction.accelerationDegree - instruction.decelerationDegree,
@@ -189,10 +200,11 @@ class SimulationPainter extends MyPainter {
       degreeOffset: instruction.accelerationDegree,
       initialVelocity: instruction.maxOuterVelocity,
       endVelocity: instruction.maxOuterVelocity,
+      center: center,
     );
 
     drawCirclePart(
-      radius: radius,
+      radius: instruction.medianRadius,
       left: instruction.left,
       lineStart: startPositionOffset,
       sweepAngle: instruction.decelerationDegree,
@@ -200,6 +212,7 @@ class SimulationPainter extends MyPainter {
       degreeOffset: instruction.totalTurnDegree - instruction.decelerationDegree,
       initialVelocity: instruction.maxOuterVelocity,
       endVelocity: instruction.finalInnerVelocity,
+      center: center,
     );
   }
 
@@ -209,6 +222,7 @@ class SimulationPainter extends MyPainter {
     required final Offset lineStart,
     required final double sweepAngle,
     required final double robiRotation,
+    required final Offset center,
     double degreeOffset = 0,
     final double? initialVelocity,
     final double? endVelocity,
@@ -220,13 +234,10 @@ class SimulationPainter extends MyPainter {
     }());
 
     double startAngle = 90 - sweepAngle - robiRotation;
-    Offset center = vecToOffset(polarToCartesian(robiRotation + 90, radius));
 
     if (!left) {
       startAngle = -90 - robiRotation;
       degreeOffset = -degreeOffset;
-      center = vecToOffset(polarToCartesian(startAngle, radius));
-      center = center.scale(-1, 1);
     }
 
     if (paint == null) {
@@ -237,7 +248,7 @@ class SimulationPainter extends MyPainter {
 
       if (left) colors = colors.reversed.toList();
 
-      final rect = Rect.fromCircle(center: lineStart + center, radius: radius);
+      final rect = Rect.fromCircle(center: center, radius: radius);
 
       paint = Paint()
         ..style = PaintingStyle.stroke
@@ -250,7 +261,7 @@ class SimulationPainter extends MyPainter {
     }
 
     canvas.drawArc(
-      Rect.fromCircle(center: lineStart + center, radius: radius),
+      Rect.fromCircle(center: center, radius: radius),
       radians(startAngle - degreeOffset),
       radians(sweepAngle),
       false,
@@ -278,4 +289,39 @@ Vector2 centerOfCircle(final double radius, final double angle, final bool left)
   }
 
   return center;
+}
+
+bool isLineIntersectingAABB(final Aabb2 aabb2, final Vector2 p1, final Vector2 p2) {
+  double tmin = 0.0;
+  double tmax = 1.0;
+
+  final aabbMin = aabb2.min;
+  final aabbMax = aabb2.max;
+
+  for (int i = 0; i < 2; i++) {
+    final direction = i == 0 ? p2.x - p1.x : p2.y - p1.y;
+    final min = i == 0 ? aabbMin.x : aabbMin.y;
+    final max = i == 0 ? aabbMax.x : aabbMax.y;
+    final origin = i == 0 ? p1.x : p1.y;
+
+    if (direction.abs() < 1e-9) {
+      if (origin < min || origin > max) return false;
+    } else {
+      double t1 = (min - origin) / direction;
+      double t2 = (max - origin) / direction;
+
+      if (t1 > t2) {
+        final temp = t1;
+        t1 = t2;
+        t2 = temp;
+      }
+
+      tmin = tmin > t1 ? tmin : t1;
+      tmax = tmax < t2 ? tmax : t2;
+
+      if (tmin > tmax) return false;
+    }
+  }
+
+  return true;
 }
