@@ -159,6 +159,7 @@ class _VisualizerState extends State<Visualizer> {
                           const SizedBox(width: 24),
                           Expanded(
                             child: RepaintBoundary(
+                              key: ValueKey(widget.simulationResult.hashCode + widget.highlightedInstruction.hashCode),
                               child: CustomPaint(
                                 size: const Size.fromHeight(15),
                                 painter: TimelinePainter(
