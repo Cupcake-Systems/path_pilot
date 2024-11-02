@@ -215,13 +215,15 @@ class _VisualizerState extends State<Visualizer> {
                       ),
                     Slider(
                       value: timeSnapshot,
-                      onChanged: (value) {
-                        setState(() {
-                          pause();
-                          timeOffset = value;
-                          sw.reset();
-                        });
-                      },
+                      onChanged: widget.enableTimeInput
+                          ? (value) {
+                              setState(() {
+                                pause();
+                                timeOffset = value;
+                                sw.reset();
+                              });
+                            }
+                          : null,
                       max: widget.totalTime,
                       min: 0,
                     ),
@@ -236,19 +238,21 @@ class _VisualizerState extends State<Visualizer> {
           child: Row(
             children: [
               ElevatedButton.icon(
-                onPressed: () {
-                  setState(() {
-                    if (updateRobi) {
-                      pause();
-                    } else {
-                      resume();
-                    }
-                    if (updateRobi && timeSnapshot >= widget.totalTime) {
-                      sw.reset();
-                      timeOffset = 0;
-                    }
-                  });
-                },
+                onPressed: widget.enableTimeInput
+                    ? () {
+                        setState(() {
+                          if (updateRobi) {
+                            pause();
+                          } else {
+                            resume();
+                          }
+                          if (updateRobi && timeSnapshot >= widget.totalTime) {
+                            sw.reset();
+                            timeOffset = 0;
+                          }
+                        });
+                      }
+                    : null,
                 label: Text(updateRobi ? "Pause" : "Play"),
                 icon: Icon(updateRobi ? Icons.pause : Icons.play_arrow),
               ),
