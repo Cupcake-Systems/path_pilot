@@ -1,6 +1,8 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:robi_line_drawer/editor/painters/abstract_painter.dart';
-import 'package:vector_math/vector_math.dart' show Vector2;
+import 'package:vector_math/vector_math.dart' show Aabb2, Vector2;
 
 import '../../robi_api/ir_read_api.dart';
 import '../../robi_api/robi_utils.dart';
@@ -34,18 +36,32 @@ class IrReadPainter extends MyPainter {
     ..color = white.withOpacity(0.6)
     ..style = PaintingStyle.stroke;
 
+  final Aabb2 visibleArea;
+  final Vector2 expansion = Vector2.all(irReadingsRadius);
+  late final Aabb2 expandedArea = Aabb2.minMax(
+    visibleArea.min - expansion,
+    visibleArea.max + expansion,
+  );
+  late final Vector2 visionCenter = visibleArea.center;
+  late final double centerMaxDistance = visionCenter.distanceTo(expandedArea.max);
+  late final a = pow(centerMaxDistance + robiConfig.irDistance * 1.5, 2);
+
+  static const double irReadingsRadius = 0.005;
+  static Paint paintCache = Paint();
+
   IrReadPainter({
     required this.robiConfig,
     required this.settings,
     required this.canvas,
     required this.size,
     required this.irCalculatorResult,
+    required this.visibleArea,
     this.pathApproximation,
   });
 
   static void addLine(Vector2 a, Path path) => path.lineTo(a.x, -a.y);
 
-  void drawCircle(Vector2 a, Paint paint, {double radius = 0.005}) {
+  void drawCircle(Vector2 a, Paint paint, {double radius = irReadingsRadius}) {
     final o = Offset(a.x, -a.y);
     canvas.drawCircle(o, radius, paint);
   }
@@ -60,7 +76,7 @@ class IrReadPainter extends MyPainter {
     leftPath.moveTo(first.$1.x, -first.$1.y);
     rightPath.moveTo(first.$2.x, -first.$2.y);
 
-    for (int i = 0; i < irCalculatorResult.wheelPositions.length; ++i) {
+    for (int i = 0; i < irCalculatorResult.length; ++i) {
       final wheelPositions = irCalculatorResult.wheelPositions[i];
       final irPositions = irCalculatorResult.irData[i];
 
@@ -69,9 +85,13 @@ class IrReadPainter extends MyPainter {
         addLine(wheelPositions.$2, rightPath);
       }
 
+      final mp = irPositions.$2.position;
+      if (visionCenter.distanceToSquared(mp) > a) continue; // rough pre filter
+
       for (final ir in [irPositions.$1, irPositions.$2, irPositions.$3]) {
-        if (ir.value < settings.irReadingsThreshold) {
-          drawCircle(ir.position, irToPaint(ir.value));
+        if (ir.value < settings.irReadingsThreshold && expandedArea.intersectsWithVector2(ir.position)) {
+          paintCache.color = irToColor(ir.value);
+          drawCircle(ir.position, paintCache);
         }
       }
     }
@@ -84,14 +104,14 @@ class IrReadPainter extends MyPainter {
     if (settings.showCalculatedPath) paintReducedLineEstimate();
   }
 
-  Paint irToPaint(int rawIr) {
+  Color irToColor(final int rawIr) {
     int gray = rawIr ~/ 4;
 
     if (gray > 255) {
       gray = 255;
     }
 
-    return Paint()..color = Color.fromARGB(255, gray, gray, gray);
+    return Color.fromARGB(255, gray, gray, gray);
   }
 
   void paintReducedLineEstimate() {
@@ -100,15 +120,18 @@ class IrReadPainter extends MyPainter {
     final path = Path();
 
     for (final point in pathApproximation!) {
-      drawCircle(point, Paint()..color = Colors.white);
+      if (expandedArea.intersectsWithVector2(point)) {
+        drawCircle(point, Paint()..color = Colors.white);
+      }
       addLine(point, path);
     }
 
     canvas.drawPath(
-        path,
-        Paint()
-          ..strokeWidth = 0.005
-          ..color = Colors.blue
-          ..style = PaintingStyle.stroke);
+      path,
+      Paint()
+        ..strokeWidth = irReadingsRadius
+        ..color = Colors.blue
+        ..style = PaintingStyle.stroke,
+    );
   }
 }
