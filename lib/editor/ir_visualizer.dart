@@ -54,23 +54,22 @@ class _IrVisualizerWidgetState extends State<IrVisualizerWidget> {
             robiConfig: widget.robiConfig,
             lockToRobi: false,
             getStateAtTime: (t) {
-              final res = widget.irReadResult;
+              final res = widget.irReadResult.resolution;
+              final states = irCalculatorResult.robiStates;
 
-              if (res.measurements.isEmpty) {
+              if (states.isEmpty) {
                 return RobiState.zero;
+              } else if (states.length == 1) {
+                return states.first;
               }
 
-              if (res.measurements.length == 1) {
-                return irCalculatorResult.robiStates.first;
-              }
-
-              for (int i = 0; i < res.measurements.length - 1; ++i) {
-                if (t <= res.resolution * (i + 1)) {
-                  return irCalculatorResult.robiStates[i].interpolate(irCalculatorResult.robiStates[i + 1], (t - (res.resolution * (i))) / res.resolution);
+              for (int i = 0; i < states.length - 1; ++i) {
+                if (t <= res * (i + 1)) {
+                  return states[i].interpolate(states[i + 1], (t - (res * i)) / res);
                 }
               }
 
-              return irCalculatorResult.robiStates.last;
+              return states.last;
             },
             totalTime: widget.irReadResult.totalTime,
             irCalculatorResult: irCalculatorResult,
