@@ -32,22 +32,14 @@ class IrVisualizerWidget extends StatefulWidget {
 class _IrVisualizerWidgetState extends State<IrVisualizerWidget> {
   double ramerDouglasPeuckerTolerance = 0.5;
   IrReadPainterSettings irReadPainterSettings = defaultIrReadPainterSettings();
-  late IrCalculator irCalculator;
   int irInclusionThreshold = 100;
 
-  IrCalculatorResult? irCalculatorResult;
   List<Vector2>? irPathApproximation;
 
   @override
-  void initState() {
-    super.initState();
-  }
-
-  @override
   Widget build(BuildContext context) {
-    irCalculator = IrCalculator(irReadResult: widget.irReadResult);
-    irCalculatorResult = irCalculator.calculate(widget.robiConfig);
-    approximateIrPath();
+    final irCalculatorResult = IrCalculator.calculate(widget.irReadResult, widget.robiConfig);
+    approximateIrPath(irCalculatorResult);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -69,18 +61,16 @@ class _IrVisualizerWidgetState extends State<IrVisualizerWidget> {
               }
 
               if (res.measurements.length == 1) {
-                return irCalculator.getRobiStateAtMeasurement(res.measurements[0], widget.robiConfig);
+                return irCalculatorResult.robiStates.first;
               }
 
               for (int i = 0; i < res.measurements.length - 1; ++i) {
                 if (t <= res.resolution * (i + 1)) {
-                  final currentState = irCalculator.getRobiStateAtMeasurement(res.measurements[i], widget.robiConfig);
-                  final nextState = irCalculator.getRobiStateAtMeasurement(res.measurements[i + 1], widget.robiConfig);
-                  return currentState.interpolate(nextState, (t - (res.resolution * (i))) / res.resolution);
+                  return irCalculatorResult.robiStates[i].interpolate(irCalculatorResult.robiStates[i + 1], (t - (res.resolution * (i))) / res.resolution);
                 }
               }
 
-              return irCalculator.getRobiStateAtMeasurement(res.measurements.last, widget.robiConfig);
+              return irCalculatorResult.robiStates.last;
             },
             totalTime: widget.irReadResult.totalTime,
             irCalculatorResult: irCalculatorResult,
@@ -100,25 +90,22 @@ class _IrVisualizerWidgetState extends State<IrVisualizerWidget> {
               irReadPainterSettings = settings;
               this.irInclusionThreshold = irInclusionThreshold;
               this.ramerDouglasPeuckerTolerance = ramerDouglasPeuckerTolerance;
-              if (irCalculatorResult != null) approximateIrPath();
+              approximateIrPath(irCalculatorResult);
             });
           },
         ),
-        if (irCalculatorResult != null) ...[
-          IrReadingInfoWidget(
-            selectedRobiConfig: widget.robiConfig,
-            irCalculator: irCalculator,
-            irReadResult: widget.irReadResult,
-            irCalculatorResult: irCalculatorResult!,
-          ),
-        ],
+        IrReadingInfoWidget(
+          selectedRobiConfig: widget.robiConfig,
+          irReadResult: widget.irReadResult,
+          irCalculatorResult: irCalculatorResult,
+        ),
       ],
     );
   }
 
-  void approximateIrPath() {
+  void approximateIrPath(IrCalculatorResult irCalculatorResult) {
     irPathApproximation = IrCalculator.pathApproximation(
-      irCalculatorResult!,
+      irCalculatorResult,
       irInclusionThreshold,
       ramerDouglasPeuckerTolerance,
     );

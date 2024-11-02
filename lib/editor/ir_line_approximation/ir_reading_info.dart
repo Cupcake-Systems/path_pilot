@@ -8,14 +8,12 @@ import '../../robi_api/robi_utils.dart';
 class IrReadingInfoWidget extends StatelessWidget {
   final IrReadResult irReadResult;
   final IrCalculatorResult irCalculatorResult;
-  final IrCalculator irCalculator;
   final RobiConfig selectedRobiConfig;
 
   const IrReadingInfoWidget({
     super.key,
     required this.irReadResult,
     required this.irCalculatorResult,
-    required this.irCalculator,
     required this.selectedRobiConfig,
   });
 

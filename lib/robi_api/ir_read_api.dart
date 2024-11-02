@@ -80,66 +80,18 @@ class IrReading {
 class IrCalculatorResult {
   final List<(IrReading left, IrReading middle, IrReading right)> irData;
   final List<(Vector2 left, Vector2 right)> wheelPositions;
+  final List<RobiState> robiStates;
 
   const IrCalculatorResult({
     required this.irData,
     required this.wheelPositions,
+    required this.robiStates,
   });
 }
 
 class IrCalculator {
-  final IrReadResult irReadResult;
 
-  const IrCalculator({required this.irReadResult});
-
-  RobiState getRobiStateAtMeasurement(final Measurement measurement, final RobiConfig robiConfig) {
-    Vector2 lastRightOffset = Vector2(0, -robiConfig.trackWidth / 2);
-    Vector2 lastLeftOffset = Vector2(0, robiConfig.trackWidth / 2);
-
-    double lastLeftVel = freqToVel(irReadResult.measurements[0].motorLeftFreq, robiConfig.wheelRadius);
-    double lastRightVel = freqToVel(irReadResult.measurements[0].motorRightFreq, robiConfig.wheelRadius);
-
-    double rotationRad = 0;
-
-    for (final m in irReadResult.measurements) {
-      double leftVel = freqToVel(m.motorLeftFreq, robiConfig.wheelRadius);
-      if (!m.leftFwd) leftVel *= -1;
-      double rightVel = freqToVel(m.motorRightFreq, robiConfig.wheelRadius);
-      if (!m.rightFwd) rightVel *= -1;
-
-      final leftAccel = (leftVel - lastLeftVel) / irReadResult.resolution;
-      final rightAccel = (rightVel - lastRightVel) / irReadResult.resolution;
-
-      final angularVelocityRad = (rightVel - leftVel) / robiConfig.trackWidth;
-      rotationRad += angularVelocityRad * irReadResult.resolution;
-
-      final rightDistance = rightVel * irReadResult.resolution;
-      final leftDistance = leftVel * irReadResult.resolution;
-
-      final newRightOffset = lastRightOffset + polarToCartesianRad(rotationRad, rightDistance);
-      final newLeftOffset = lastLeftOffset + polarToCartesianRad(rotationRad, leftDistance);
-
-      if (m == measurement) {
-        return RobiState(
-          position: (lastLeftOffset + lastRightOffset) / 2,
-          rotation: rotationRad * radians2Degrees,
-          innerVelocity: leftVel,
-          outerVelocity: rightVel,
-          innerAcceleration: leftAccel,
-          outerAcceleration: rightAccel,
-        );
-      }
-
-      lastRightOffset = newRightOffset;
-      lastLeftOffset = newLeftOffset;
-      lastLeftVel = leftVel;
-      lastRightVel = rightVel;
-    }
-
-    throw UnsupportedError("Measurement not found");
-  }
-
-  IrCalculatorResult calculate(RobiConfig robiConfig) {
+  static IrCalculatorResult calculate(final IrReadResult irReadResult, final RobiConfig robiConfig) {
     final mc = sqrt(pow(robiConfig.distanceWheelIr, 2) + pow(robiConfig.trackWidth / 2, 2));
     final rc = sqrt(pow(robiConfig.distanceWheelIr, 2) + pow(robiConfig.trackWidth / 2 - robiConfig.irDistance, 2));
     final lc = sqrt(pow(robiConfig.distanceWheelIr, 2) + pow(robiConfig.trackWidth / 2 + robiConfig.irDistance, 2));
@@ -147,9 +99,14 @@ class IrCalculator {
     Vector2 lastRightOffset = Vector2(0, -robiConfig.trackWidth / 2);
     Vector2 lastLeftOffset = Vector2(0, robiConfig.trackWidth / 2);
 
+    double lastLeftVel = 0;
+    double lastRightVel = 0;
+
     double rotationRad = 0;
+
     List<(IrReading, IrReading, IrReading)> irData = [];
     List<(Vector2, Vector2)> wheelPositions = [];
+    List<RobiState> robiStates = [];
 
     for (final measurement in irReadResult.measurements) {
       double leftVel = freqToVel(measurement.motorLeftFreq, robiConfig.wheelRadius);
@@ -163,10 +120,22 @@ class IrCalculator {
       final rightDistance = rightVel * irReadResult.resolution;
       final leftDistance = leftVel * irReadResult.resolution;
 
+      final leftAccel = (leftVel - lastLeftVel) / irReadResult.resolution;
+      final rightAccel = (rightVel - lastRightVel) / irReadResult.resolution;
+
       final newRightOffset = lastRightOffset + polarToCartesianRad(rotationRad, rightDistance);
       final newLeftOffset = lastLeftOffset + polarToCartesianRad(rotationRad, leftDistance);
 
       wheelPositions.add((lastLeftOffset, lastRightOffset));
+
+      robiStates.add(RobiState(
+        position: (lastLeftOffset + lastRightOffset) / 2,
+        rotation: rotationRad * radians2Degrees,
+        innerVelocity: leftVel,
+        outerVelocity: rightVel,
+        innerAcceleration: leftAccel,
+        outerAcceleration: rightAccel,
+      ));
 
       // IR Stuff
 
@@ -182,9 +151,11 @@ class IrCalculator {
 
       lastRightOffset = newRightOffset;
       lastLeftOffset = newLeftOffset;
+      lastLeftVel = leftVel;
+      lastRightVel = rightVel;
     }
 
-    return IrCalculatorResult(irData: irData, wheelPositions: wheelPositions);
+    return IrCalculatorResult(irData: irData, wheelPositions: wheelPositions, robiStates: robiStates);
   }
 
   static List<Vector2>? pathApproximation(IrCalculatorResult irCalculatorResult, int minBlackLevel, double tolerance) {
