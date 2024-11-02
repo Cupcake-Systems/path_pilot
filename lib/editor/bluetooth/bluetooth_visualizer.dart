@@ -65,26 +65,20 @@ class _BluetoothVisualizerWidgetState extends State<BluetoothVisualizerWidget> {
 
   @override
   Widget build(BuildContext context) {
-    if (irReadResult == null) {
-      return const Center();
-    }
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         IrVisualizerWidget(
           robiConfig: widget.robiConfig,
           onPathCreationClick: widget.onPathCreationClick,
-          irReadResult: irReadResult!,
-          time: irReadResult!.totalTime,
+          irReadResult: irReadResult,
+          time: irReadResult?.totalTime ?? 0,
           enableTimeInput: !readBluetoothValues,
         ),
         Padding(
           padding: const EdgeInsets.all(4),
           child: ElevatedButton.icon(
-            onPressed: () {
-              irReadResult = null;
-            },
+            onPressed: irReadResult == null ? null : () => setState(() => irReadResult = null),
             icon: const Icon(Icons.clear),
             label: const Text("Clear"),
           ),
