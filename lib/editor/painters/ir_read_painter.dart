@@ -77,10 +77,10 @@ class IrReadPainter extends MyPainter {
     rightPath.moveTo(first.$2.x, -first.$2.y);
 
     for (int i = 0; i < irCalculatorResult.length; ++i) {
-      final wheelPositions = irCalculatorResult.wheelPositions[i];
       final irPositions = irCalculatorResult.irData[i];
 
       if (settings.showTracks) {
+        final wheelPositions = irCalculatorResult.wheelPositions[i];
         addLine(wheelPositions.$1, leftPath);
         addLine(wheelPositions.$2, rightPath);
       }
