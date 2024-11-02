@@ -147,9 +147,13 @@ Acc.: I ${innerAccelText}cm/s²${accelSpace}O ${(robiState.outerAcceleration * 1
 
   @override
   void paint(Canvas canvas, Size size) {
-    paintGrid(canvas, size);
-
     canvas.save();
+
+    canvas.clipRect(
+      Rect.fromLTWH(0, 0, size.width, size.height),
+      doAntiAlias: false,
+    );
+    paintGrid(canvas, size);
 
     final Offset center = Offset(size.width / 2, size.height / 2);
     canvas.translate(center.dx + offset.dx, center.dy + offset.dy);

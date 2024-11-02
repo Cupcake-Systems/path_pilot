@@ -83,45 +83,43 @@ class _VisualizerState extends State<Visualizer> {
     return Column(
       children: [
         Expanded(
-          child: ClipRect(
-            child: Listener(
-              onPointerSignal: (event) {
-                if (event is PointerScrollEvent) {
-                  double newScale = zoom - event.scrollDelta.dy / 500;
-                  if (newScale > maxScale) {
-                    newScale = maxScale;
-                  } else if (newScale < minScale) {
-                    newScale = minScale;
-                  }
-                  changeZoom(newScale);
+          child: Listener(
+            onPointerSignal: (event) {
+              if (event is PointerScrollEvent) {
+                double newScale = zoom - event.scrollDelta.dy / 500;
+                if (newScale > maxScale) {
+                  newScale = maxScale;
+                } else if (newScale < minScale) {
+                  newScale = minScale;
                 }
+                changeZoom(newScale);
+              }
+            },
+            child: GestureDetector(
+              onHorizontalDragStart: (details) {
+                _previousOffset = details.localPosition - _offset;
+                lockToRobi = false;
+                widget.transformChanged(zoom, _offset, lockToRobi);
               },
-              child: GestureDetector(
-                onHorizontalDragStart: (details) {
-                  _previousOffset = details.localPosition - _offset;
-                  lockToRobi = false;
-                  widget.transformChanged(zoom, _offset, lockToRobi);
-                },
-                onHorizontalDragUpdate: (details) => setState(() {
-                  _offset = details.localPosition - _previousOffset;
-                  lockToRobi = false;
-                  widget.transformChanged(zoom, _offset, lockToRobi);
-                }),
-                child: RepaintBoundary(
-                  child: CustomPaint(
-                    painter: LinePainter(
-                      robiState: robiState,
-                      scale: pow(2, zoom) - 1,
-                      robiConfig: widget.robiConfig,
-                      simulationResult: widget.simulationResult,
-                      irReadPainterSettings: widget.irReadPainterSettings,
-                      highlightedInstruction: widget.highlightedInstruction,
-                      irCalculatorResult: widget.irCalculatorResult,
-                      irPathApproximation: widget.irPathApproximation,
-                      offset: _offset,
-                    ),
-                    child: Container(),
+              onHorizontalDragUpdate: (details) => setState(() {
+                _offset = details.localPosition - _previousOffset;
+                lockToRobi = false;
+                widget.transformChanged(zoom, _offset, lockToRobi);
+              }),
+              child: RepaintBoundary(
+                child: CustomPaint(
+                  painter: LinePainter(
+                    robiState: robiState,
+                    scale: pow(2, zoom) - 1,
+                    robiConfig: widget.robiConfig,
+                    simulationResult: widget.simulationResult,
+                    irReadPainterSettings: widget.irReadPainterSettings,
+                    highlightedInstruction: widget.highlightedInstruction,
+                    irCalculatorResult: widget.irCalculatorResult,
+                    irPathApproximation: widget.irPathApproximation,
+                    offset: _offset,
                   ),
+                  child: Container(),
                 ),
               ),
             ),
