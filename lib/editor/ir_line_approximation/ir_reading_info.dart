@@ -1,19 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:robi_line_drawer/editor/editor.dart';
-import 'package:vector_math/vector_math.dart';
+import 'package:vector_math/vector_math.dart' show Vector2;
 
 import '../../robi_api/ir_read_api.dart';
+import '../../robi_api/robi_utils.dart';
 
 class IrReadingInfoWidget extends StatelessWidget {
   final IrReadResult irReadResult;
   final IrCalculatorResult irCalculatorResult;
-  final void Function() onRemoveClick;
+  final IrCalculator irCalculator;
+  final RobiConfig selectedRobiConfig;
 
   const IrReadingInfoWidget({
     super.key,
     required this.irReadResult,
     required this.irCalculatorResult,
-    required this.onRemoveClick,
+    required this.irCalculator,
+    required this.selectedRobiConfig,
   });
 
   @override
@@ -46,10 +49,6 @@ class IrReadingInfoWidget extends StatelessWidget {
                   Text("Right track length: ${roundToDigits(rightTravelDistance, 2)}m"),
                 ],
               ),
-            ),
-            IconButton(
-              onPressed: onRemoveClick,
-              icon: const Icon(Icons.close),
             ),
           ],
         ),

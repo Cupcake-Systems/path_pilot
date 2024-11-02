@@ -23,7 +23,7 @@ class IrReadPainter extends MyPainter {
   final Canvas canvas;
   final Size size;
   final IrCalculatorResult irCalculatorResult;
-  final List<Vector2> pathApproximation;
+  final List<Vector2>? pathApproximation;
 
   late final Paint leftTrackPaint = Paint()
     ..strokeWidth = robiConfig.wheelWidth
@@ -40,7 +40,7 @@ class IrReadPainter extends MyPainter {
     required this.canvas,
     required this.size,
     required this.irCalculatorResult,
-    required this.pathApproximation,
+    this.pathApproximation,
   });
 
   static void addLine(Vector2 a, Path path) => path.lineTo(a.x, -a.y);
@@ -95,9 +95,11 @@ class IrReadPainter extends MyPainter {
   }
 
   void paintReducedLineEstimate() {
+    if (pathApproximation == null) return;
+
     final path = Path();
 
-    for (final point in pathApproximation) {
+    for (final point in pathApproximation!) {
       drawCircle(point, Paint()..color = Colors.white);
       addLine(point, path);
     }

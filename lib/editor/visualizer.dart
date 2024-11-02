@@ -12,30 +12,76 @@ import 'package:robi_line_drawer/robi_api/ir_read_api.dart';
 import 'package:robi_line_drawer/robi_api/robi_utils.dart';
 import 'package:vector_math/vector_math.dart' show Vector2;
 
+class InstructionsVisualizer extends Visualizer {
+  const InstructionsVisualizer({
+    super.key,
+    required super.scale,
+    required super.offset,
+    required super.transformChanged,
+    required super.robiConfig,
+    required super.lockToRobi,
+    required super.getStateAtTime,
+    required super.totalTime,
+    required super.highlightedInstruction,
+    required SimulationResult simulationResult,
+    super.timeOffset = 0,
+    super.enableTimeInput = true,
+  }) : super(
+          simulationResult: simulationResult,
+        );
+}
+
+class IrVisualizer extends Visualizer {
+  const IrVisualizer({
+    super.key,
+    required super.scale,
+    required super.offset,
+    required super.transformChanged,
+    required super.robiConfig,
+    required super.lockToRobi,
+    required super.getStateAtTime,
+    required super.totalTime,
+    required super.irCalculatorResult,
+    required super.irPathApproximation,
+    required IrReadPainterSettings irReadPainterSettings,
+    super.timeOffset = 0,
+    super.enableTimeInput = true,
+  }) : super(
+          irReadPainterSettings: irReadPainterSettings,
+        );
+}
+
 class Visualizer extends StatefulWidget {
-  final SimulationResult simulationResult;
-  final double scale;
+  final double scale, totalTime;
   final void Function(double zoom, Offset offset, bool lockToRobi) transformChanged;
   final RobiConfig robiConfig;
-  final IrReadPainterSettings irReadPainterSettings;
+  final IrReadPainterSettings? irReadPainterSettings;
   final InstructionResult? highlightedInstruction;
   final IrCalculatorResult? irCalculatorResult;
   final List<Vector2>? irPathApproximation;
   final Offset offset;
   final bool lockToRobi;
+  final RobiState Function(double t) getStateAtTime;
+  final SimulationResult? simulationResult;
+  final double timeOffset;
+  final bool enableTimeInput;
 
   const Visualizer({
     super.key,
-    required this.simulationResult,
     required this.scale,
     required this.offset,
     required this.transformChanged,
     required this.robiConfig,
-    required this.irReadPainterSettings,
-    required this.highlightedInstruction,
+    this.irReadPainterSettings,
+    this.highlightedInstruction,
     this.irCalculatorResult,
     this.irPathApproximation,
     required this.lockToRobi,
+    required this.getStateAtTime,
+    required this.totalTime,
+    this.simulationResult,
+    this.timeOffset = 0,
+    this.enableTimeInput = true,
   });
 
   @override
@@ -67,14 +113,15 @@ class _VisualizerState extends State<Visualizer> {
       },
     );
 
+    if (!widget.enableTimeInput) timeOffset = widget.timeOffset;
     double timeSnapshot = timeOffset + sw.elapsedMilliseconds / 1000;
 
-    if (timeSnapshot >= widget.simulationResult.totalTime) {
+    if (timeSnapshot >= widget.totalTime) {
       pause();
-      timeSnapshot = widget.simulationResult.totalTime;
+      timeSnapshot = widget.totalTime;
     }
 
-    final robiState = getRobiStateAtTime(widget.simulationResult.instructionResults, timeSnapshot);
+    final robiState = widget.getStateAtTime(timeSnapshot);
 
     if (lockToRobi) {
       _offset = Offset(-robiState.position.x, robiState.position.y) * (pow(2, zoom) - 1);
@@ -87,11 +134,7 @@ class _VisualizerState extends State<Visualizer> {
             onPointerSignal: (event) {
               if (event is PointerScrollEvent) {
                 double newScale = zoom - event.scrollDelta.dy / 500;
-                if (newScale > maxScale) {
-                  newScale = maxScale;
-                } else if (newScale < minScale) {
-                  newScale = minScale;
-                }
+                newScale = newScale.clamp(minScale, maxScale);
                 changeZoom(newScale);
               }
             },
@@ -146,12 +189,12 @@ class _VisualizerState extends State<Visualizer> {
           padding: const EdgeInsets.symmetric(horizontal: 8),
           child: Row(
             children: [
-              Text("Time ${_printDuration(Duration(milliseconds: (timeSnapshot * 1000).toInt()))} / ${_printDuration(Duration(milliseconds: (widget.simulationResult.totalTime * 1000).toInt()))}"),
+              Text("Time ${_printDuration(Duration(milliseconds: (timeSnapshot * 1000).toInt()))} / ${_printDuration(Duration(milliseconds: (widget.totalTime * 1000).toInt()))}"),
               Expanded(
                 child: Stack(
                   alignment: Alignment.center,
                   children: [
-                    if (widget.simulationResult.instructionResults.length < 10001)
+                    if (widget.simulationResult != null && widget.simulationResult!.instructionResults.length < 10001)
                       Row(
                         children: [
                           const SizedBox(width: 24),
@@ -161,7 +204,7 @@ class _VisualizerState extends State<Visualizer> {
                               child: CustomPaint(
                                 size: const Size.fromHeight(15),
                                 painter: TimelinePainter(
-                                  simResult: widget.simulationResult,
+                                  simResult: widget.simulationResult!,
                                   highlightedInstruction: widget.highlightedInstruction,
                                 ),
                               ),
@@ -179,7 +222,7 @@ class _VisualizerState extends State<Visualizer> {
                           sw.reset();
                         });
                       },
-                      max: widget.simulationResult.totalTime,
+                      max: widget.totalTime,
                       min: 0,
                     ),
                   ],
@@ -200,7 +243,7 @@ class _VisualizerState extends State<Visualizer> {
                     } else {
                       resume();
                     }
-                    if (updateRobi && timeSnapshot >= widget.simulationResult.totalTime) {
+                    if (updateRobi && timeSnapshot >= widget.totalTime) {
                       sw.reset();
                       timeOffset = 0;
                     }

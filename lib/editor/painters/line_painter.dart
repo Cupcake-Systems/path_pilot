@@ -16,8 +16,8 @@ class LinePainter extends CustomPainter {
   final double scale;
   final Offset offset;
   final RobiConfig robiConfig;
-  final SimulationResult simulationResult;
-  final IrReadPainterSettings irReadPainterSettings;
+  final SimulationResult? simulationResult;
+  final IrReadPainterSettings? irReadPainterSettings;
   final InstructionResult? highlightedInstruction;
   final IrCalculatorResult? irCalculatorResult;
   final List<Vector2>? irPathApproximation;
@@ -30,8 +30,8 @@ class LinePainter extends CustomPainter {
     required this.irReadPainterSettings,
     required this.simulationResult,
     required this.highlightedInstruction,
-    this.irCalculatorResult,
-    this.irPathApproximation,
+    required this.irCalculatorResult,
+    required this.irPathApproximation,
     required this.offset,
     required this.robiState,
   });
@@ -110,10 +110,10 @@ Acc.: I ${innerAccelText}cm/s²${accelSpace}O ${(robiState.outerAcceleration * 1
     );
   }
 
-  void paintVelocityScale(Canvas canvas, Size size) {
-    if (simulationResult.maxTargetedVelocity <= 0) return;
+  void paintVelocityScale(Canvas canvas, Size size, double maxTargetedVelocity) {
+    if (maxTargetedVelocity <= 0) return;
 
-    List<Color> colors = [velToColor(0, simulationResult.maxTargetedVelocity), velToColor(simulationResult.maxTargetedVelocity, simulationResult.maxTargetedVelocity)];
+    List<Color> colors = [velToColor(0, maxTargetedVelocity), velToColor(maxTargetedVelocity, maxTargetedVelocity)];
 
     final lineStart = Offset(size.width - 130, size.height - 20);
     final lineEnd = Offset(size.width - 30, size.height - 20);
@@ -139,7 +139,7 @@ Acc.: I ${innerAccelText}cm/s²${accelSpace}O ${(robiState.outerAcceleration * 1
           ..color = white
           ..strokeWidth = 1);
     LinePainter.paintText("0m/s", lineStart.translate(0, -7), canvas, size);
-    LinePainter.paintText("${simulationResult.maxTargetedVelocity.toStringAsFixed(2)}m/s", lineEnd.translate(0, -7), canvas, size);
+    LinePainter.paintText("${maxTargetedVelocity.toStringAsFixed(2)}m/s", lineEnd.translate(0, -7), canvas, size);
   }
 
   @override
@@ -164,27 +164,27 @@ Acc.: I ${innerAccelText}cm/s²${accelSpace}O ${(robiState.outerAcceleration * 1
       Vector2(-offset.dx + center.dx, offset.dy + center.dy) / scale,
     );
 
-    if (irCalculatorResult != null) assert(irPathApproximation != null);
+    if (irCalculatorResult != null) assert(irReadPainterSettings != null);
     final List<MyPainter> painters = [
-      SimulationPainter(
-        simulationResult: simulationResult,
-        canvas: canvas,
-        visibleArea: visibleArea1,
-        highlightedInstruction: highlightedInstruction,
-      ),
+      if (simulationResult != null)
+        SimulationPainter(
+          simulationResult: simulationResult!,
+          canvas: canvas,
+          visibleArea: visibleArea1,
+          highlightedInstruction: highlightedInstruction,
+        ),
       if (irCalculatorResult != null)
         IrReadPainter(
           robiConfig: robiConfig,
-          settings: irReadPainterSettings,
+          settings: irReadPainterSettings!,
           canvas: canvas,
           size: size,
           irCalculatorResult: irCalculatorResult!,
-          pathApproximation: irPathApproximation!,
+          pathApproximation: irPathApproximation,
         ),
       RobiPainter(
         robiState: robiState,
         canvas: canvas,
-        simulationResult: simulationResult,
       ),
     ];
 
@@ -196,6 +196,9 @@ Acc.: I ${innerAccelText}cm/s²${accelSpace}O ${(robiState.outerAcceleration * 1
 
     paintRobiState(canvas, size);
     paintScale(canvas, size);
-    paintVelocityScale(canvas, size);
+
+    if (simulationResult != null) {
+      paintVelocityScale(canvas, size, simulationResult!.maxTargetedVelocity);
+    }
   }
 }

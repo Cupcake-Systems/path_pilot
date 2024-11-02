@@ -38,7 +38,7 @@ class _BluetoothConnectWidgetState extends State<BluetoothConnectWidget> {
           disconnectedRobiDevices.remove(d.first);
         });
       } else {
-        final d = connectedRobiDevices.where((element) => element.deviceId == deviceId);
+        final d = List.from(connectedRobiDevices.where((element) => element.deviceId == deviceId));
         if (d.isEmpty) return;
         setState(() {
           connectedRobiDevices.remove(d.first);

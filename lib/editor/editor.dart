@@ -5,19 +5,14 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:robi_line_drawer/editor/add_instruction_dialog.dart';
+import 'package:robi_line_drawer/editor/bluetooth/bluetooth_visualizer.dart';
 import 'package:robi_line_drawer/editor/bluetooth/connect_widget.dart';
 import 'package:robi_line_drawer/editor/instructions/abstract.dart';
 import 'package:robi_line_drawer/editor/instructions/rapid_turn.dart';
-import 'package:robi_line_drawer/editor/ir_line_approximation/approximation_settings_widget.dart';
-import 'package:robi_line_drawer/editor/ir_line_approximation/ir_reading_info.dart';
-import 'package:robi_line_drawer/editor/painters/ir_read_painter.dart';
 import 'package:robi_line_drawer/editor/visualizer.dart';
 import 'package:robi_line_drawer/file_browser.dart';
-import 'package:robi_line_drawer/main.dart';
 import 'package:robi_line_drawer/robi_api/ir_read_api.dart';
 import 'package:robi_line_drawer/robi_api/robi_utils.dart';
-import 'package:universal_ble/universal_ble.dart';
-import 'package:vector_math/vector_math.dart' show Vector2;
 
 import '../app_storage.dart';
 import '../robi_api/exporter/exporter.dart';
@@ -26,6 +21,7 @@ import '../robi_api/simulator.dart';
 import 'instructions/drive.dart';
 import 'instructions/turn.dart';
 import 'ir_line_approximation/path_to_instructions.dart';
+import 'ir_visualizer.dart';
 
 final inputFormatters = [FilteringTextInputFormatter.allow(RegExp(r'^(\d+)?\.?\d{0,5}'))];
 
@@ -54,60 +50,14 @@ class _EditorState extends State<Editor> with AutomaticKeepAliveClientMixin {
   Offset offset = Offset.zero;
   bool lockToRobi = false;
   InstructionResult? highlightedInstruction;
-  IrCalculatorResult? irCalculatorResult;
-  List<Vector2>? irPathApproximation;
   late SimulationResult simulationResult = simulator.calculate(instructions);
 
-  // IR readings settings
-  double ramerDouglasPeuckerTolerance = 0.5;
-  IrReadPainterSettings irReadPainterSettings = defaultIrReadPainterSettings();
-  IrCalculator? irCalculator;
-  int irInclusionThreshold = 100;
-
-  IrReadResult? irReadResult;
-
-  static bool readBluetoothValues = true;
+  // IR Visualizer
+  List<IrReadResult> irReadResults = [];
 
   // Developer Options
   int randomInstructionsGenerationLength = 100;
   Duration? randomInstructionsGenerationDuration;
-
-  @override
-  void initState() {
-    super.initState();
-    bleConnectionChange["editor"] = (deviceId, connected) async {
-      readBluetoothValues = true;
-      if (!connected) {
-        readBluetoothValues = false;
-        return;
-      }
-
-      while (readBluetoothValues) {
-        late final Uint8List data;
-        try {
-          data = await UniversalBle.readValue(deviceId, serviceUuid, "00005678-0000-1000-8000-00805f9b34fb");
-        } on Exception {
-          await Future.delayed(const Duration(milliseconds: 500));
-          continue;
-        }
-
-        irReadResult ??= const IrReadResult(resolution: 0.1, measurements: []);
-
-        setState(() {
-          irReadResult = IrReadResult(resolution: irReadResult!.resolution, measurements: [
-            ...irReadResult!.measurements,
-            Measurement.fromLine(data.buffer.asByteData()),
-          ]);
-        });
-
-        irCalculator = IrCalculator(irReadResult: irReadResult!);
-        setState(() {
-          irCalculatorResult = irCalculator!.calculate(selectedRobiConfig);
-          approximateIrPath();
-        });
-      }
-    };
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -115,8 +65,10 @@ class _EditorState extends State<Editor> with AutomaticKeepAliveClientMixin {
     return Row(
       children: [
         Flexible(
-          child: Visualizer(
+          child: InstructionsVisualizer(
             simulationResult: simulationResult,
+            totalTime: simulationResult.totalTime,
+            getStateAtTime: (t) => simulationResult.getStateAtTime(t),
             key: ValueKey(simulationResult),
             scale: zoom,
             offset: offset,
@@ -127,10 +79,7 @@ class _EditorState extends State<Editor> with AutomaticKeepAliveClientMixin {
               lockToRobi = newLockToRobi;
             },
             robiConfig: selectedRobiConfig,
-            irReadPainterSettings: irReadPainterSettings,
             highlightedInstruction: highlightedInstruction,
-            irCalculatorResult: irCalculatorResult,
-            irPathApproximation: irPathApproximation,
           ),
         ),
         const VerticalDivider(width: 1),
@@ -157,8 +106,8 @@ class _EditorState extends State<Editor> with AutomaticKeepAliveClientMixin {
                         setState(() {
                           selectedRobiConfig = value;
                           rerunSimulationAndUpdate();
-                          irCalculatorResult = irCalculator!.calculate(selectedRobiConfig);
-                          approximateIrPath();
+                          //irCalculatorResult = irCalculator!.calculate(selectedRobiConfig);
+                          //approximateIrPath();
                         });
                       },
                     ),
@@ -326,63 +275,69 @@ class _EditorState extends State<Editor> with AutomaticKeepAliveClientMixin {
                         Scaffold(
                           body: ListView(
                             children: [
-                              IrPathApproximationSettingsWidget(
-                                onPathCreation: irPathApproximation == null
-                                    ? null
-                                    : () {
-                                        setState(() => instructions = PathToInstructions.calculate(irPathApproximation!));
-                                        rerunSimulationAndUpdate();
-                                      },
-                                onSettingsChange: (
-                                  settings,
-                                  irInclusionThreshold,
-                                  ramerDouglasPeuckerTolerance,
-                                ) {
-                                  setState(() {
-                                    irReadPainterSettings = settings;
-                                    this.irInclusionThreshold = irInclusionThreshold;
-                                    this.ramerDouglasPeuckerTolerance = ramerDouglasPeuckerTolerance;
-                                    if (irCalculatorResult != null) approximateIrPath();
-                                  });
-                                },
-                              ),
-                              if (irReadResult == null || irCalculatorResult == null) ...[
-                                Padding(
-                                  padding: const EdgeInsets.all(4),
-                                  child: ElevatedButton.icon(
-                                    onPressed: () async {
-                                      final result = await FilePicker.platform.pickFiles(
-                                        type: FileType.custom,
-                                        allowedExtensions: ["bin"],
-                                      );
-                                      if (result == null) return;
-                                      final file = File(result.files.single.path!);
-                                      setState(() {
-                                        irReadResult = IrReadResult.fromFile(file);
-                                        irCalculator = IrCalculator(irReadResult: irReadResult!);
-                                        irCalculatorResult = irCalculator!.calculate(selectedRobiConfig);
-                                        approximateIrPath();
-                                      });
-                                    },
-                                    icon: const Icon(Icons.file_download_outlined),
-                                    label: const Text("Import IR Reading"),
+                              for (final irReadResult in irReadResults) ...[
+                                Card(
+                                  clipBehavior: Clip.antiAlias,
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                                    children: [
+                                      IrVisualizerWidget(
+                                        robiConfig: selectedRobiConfig,
+                                        onPathCreationClick: (pathApproximation) {
+                                          setState(() => instructions = PathToInstructions.calculate(pathApproximation));
+                                          rerunSimulationAndUpdate();
+                                        },
+                                        irReadResult: irReadResult,
+                                      ),
+                                      Padding(
+                                        padding: const EdgeInsets.all(4),
+                                        child: ElevatedButton.icon(
+                                          onPressed: () {
+                                            setState(() {
+                                              irReadResults.remove(irReadResult);
+                                            });
+                                          },
+                                          icon: const Icon(Icons.remove),
+                                          label: const Text("Remove IR Reading"),
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ),
-                              ] else ...[
-                                IrReadingInfoWidget(
-                                  irReadResult: irReadResult!,
-                                  irCalculatorResult: irCalculatorResult!,
-                                  onRemoveClick: () => setState(() {
-                                    irCalculatorResult = null;
-                                    irReadResult = null;
-                                    irPathApproximation = null;
-                                  }),
-                                ),
                               ],
+                              Padding(
+                                padding: const EdgeInsets.all(4),
+                                child: ElevatedButton.icon(
+                                  onPressed: () async {
+                                    final result = await FilePicker.platform.pickFiles(
+                                      type: FileType.custom,
+                                      allowedExtensions: ["bin"],
+                                    );
+                                    if (result == null) return;
+                                    final file = File(result.files.single.path!);
+                                    setState(() {
+                                      irReadResults.add(IrReadResult.fromFile(file));
+                                    });
+                                  },
+                                  icon: const Icon(Icons.file_download_outlined),
+                                  label: const Text("Import IR Reading"),
+                                ),
+                              ),
+                              const SizedBox(height: 8),
                             ],
                           ),
                         ),
-                        const BluetoothConnectWidget(),
+                        SingleChildScrollView(
+                          child: Column(
+                            children: [
+                              const BluetoothConnectWidget(),
+                              BluetoothVisualizerWidget(
+                                robiConfig: selectedRobiConfig,
+                                onPathCreationClick: (pathApproximation) {},
+                              ),
+                            ],
+                          ),
+                        ),
                       ],
                     ),
                   ),
@@ -506,14 +461,6 @@ class _EditorState extends State<Editor> with AutomaticKeepAliveClientMixin {
     setState(() {
       simulationResult = simulator.calculate(instructions);
     });
-  }
-
-  void approximateIrPath() {
-    irPathApproximation = IrCalculator.pathApproximation(
-      irCalculatorResult!,
-      irInclusionThreshold,
-      ramerDouglasPeuckerTolerance,
-    );
   }
 
   @override

@@ -3,7 +3,9 @@ import 'dart:math';
 import 'dart:typed_data';
 
 import 'package:robi_line_drawer/editor/ir_line_approximation/ramers_douglas.dart';
+import 'package:robi_line_drawer/editor/painters/robi_painter.dart';
 import 'package:robi_line_drawer/robi_api/robi_utils.dart';
+import 'package:robi_line_drawer/robi_api/simulator.dart';
 import 'package:vector_math/vector_math.dart';
 
 class Measurement {
@@ -19,6 +21,17 @@ class Measurement {
     required this.leftFwd,
     required this.rightFwd,
   });
+
+  Measurement.zero()
+      : this(
+          motorLeftFreq: 0,
+          motorRightFreq: 0,
+          leftIr: 0,
+          middleIr: 0,
+          rightIr: 0,
+          leftFwd: true,
+          rightFwd: true,
+        );
 
   /// Measurement binary structure documentation:
   /// https://github.com/Finnomator/robi_line_drawer/wiki/IR-Read-Result-Binary-File-Definition#64-bit-measurement-format
@@ -39,8 +52,9 @@ class Measurement {
 class IrReadResult {
   final double resolution;
   final List<Measurement> measurements;
+  late final double totalTime = resolution * measurements.length;
 
-  const IrReadResult({required this.resolution, required this.measurements});
+  IrReadResult({required this.resolution, required this.measurements});
 
   /// Binary file structure documentation:
   /// https://github.com/Finnomator/robi_line_drawer/wiki/IR-Read-Result-Binary-File-Definition
@@ -78,6 +92,53 @@ class IrCalculator {
 
   const IrCalculator({required this.irReadResult});
 
+  RobiState getRobiStateAtMeasurement(final Measurement measurement, final RobiConfig robiConfig) {
+    Vector2 lastRightOffset = Vector2(0, -robiConfig.trackWidth / 2);
+    Vector2 lastLeftOffset = Vector2(0, robiConfig.trackWidth / 2);
+
+    double lastLeftVel = freqToVel(irReadResult.measurements[0].motorLeftFreq, robiConfig.wheelRadius);
+    double lastRightVel = freqToVel(irReadResult.measurements[0].motorRightFreq, robiConfig.wheelRadius);
+
+    double rotationRad = 0;
+
+    for (final m in irReadResult.measurements) {
+      double leftVel = freqToVel(m.motorLeftFreq, robiConfig.wheelRadius);
+      if (!m.leftFwd) leftVel *= -1;
+      double rightVel = freqToVel(m.motorRightFreq, robiConfig.wheelRadius);
+      if (!m.rightFwd) rightVel *= -1;
+
+      final leftAccel = (leftVel - lastLeftVel) / irReadResult.resolution;
+      final rightAccel = (rightVel - lastRightVel) / irReadResult.resolution;
+
+      final angularVelocityRad = (rightVel - leftVel) / robiConfig.trackWidth;
+      rotationRad += angularVelocityRad * irReadResult.resolution;
+
+      final rightDistance = rightVel * irReadResult.resolution;
+      final leftDistance = leftVel * irReadResult.resolution;
+
+      final newRightOffset = lastRightOffset + polarToCartesianRad(rotationRad, rightDistance);
+      final newLeftOffset = lastLeftOffset + polarToCartesianRad(rotationRad, leftDistance);
+
+      if (m == measurement) {
+        return RobiState(
+          position: (lastLeftOffset + lastRightOffset) / 2,
+          rotation: rotationRad * radians2Degrees,
+          innerVelocity: leftVel,
+          outerVelocity: rightVel,
+          innerAcceleration: leftAccel,
+          outerAcceleration: rightAccel,
+        );
+      }
+
+      lastRightOffset = newRightOffset;
+      lastLeftOffset = newLeftOffset;
+      lastLeftVel = leftVel;
+      lastRightVel = rightVel;
+    }
+
+    throw UnsupportedError("Measurement not found");
+  }
+
   IrCalculatorResult calculate(RobiConfig robiConfig) {
     final mc = sqrt(pow(robiConfig.distanceWheelIr, 2) + pow(robiConfig.trackWidth / 2, 2));
     final rc = sqrt(pow(robiConfig.distanceWheelIr, 2) + pow(robiConfig.trackWidth / 2 - robiConfig.irDistance, 2));
@@ -88,7 +149,7 @@ class IrCalculator {
 
     double rotationRad = 0;
     List<(IrReading, IrReading, IrReading)> irData = [];
-    List<(Vector2, Vector2)> wheelPositions = [(lastLeftOffset, lastRightOffset)];
+    List<(Vector2, Vector2)> wheelPositions = [];
 
     for (final measurement in irReadResult.measurements) {
       double leftVel = freqToVel(measurement.motorLeftFreq, robiConfig.wheelRadius);
@@ -102,10 +163,10 @@ class IrCalculator {
       final rightDistance = rightVel * irReadResult.resolution;
       final leftDistance = leftVel * irReadResult.resolution;
 
-      final newRightOffset = lastRightOffset + Vector2(cos(rotationRad) * rightDistance, sin(rotationRad) * rightDistance);
-      final newLeftOffset = lastLeftOffset + Vector2(cos(rotationRad) * leftDistance, sin(rotationRad) * leftDistance);
+      final newRightOffset = lastRightOffset + polarToCartesianRad(rotationRad, rightDistance);
+      final newLeftOffset = lastLeftOffset + polarToCartesianRad(rotationRad, leftDistance);
 
-      wheelPositions.add((newLeftOffset, newRightOffset));
+      wheelPositions.add((lastLeftOffset, lastRightOffset));
 
       // IR Stuff
 
@@ -113,9 +174,9 @@ class IrCalculator {
       double rAlpha = rotationRad + pi / 2 - atan(robiConfig.distanceWheelIr / (robiConfig.trackWidth / 2 - robiConfig.irDistance));
       double lAlpha = rotationRad + pi / 2 - atan(robiConfig.distanceWheelIr / (robiConfig.trackWidth / 2 + robiConfig.irDistance));
 
-      Vector2 mIrPosition = newRightOffset + Vector2(cos(mAlpha) * mc, sin(mAlpha) * mc);
-      Vector2 rIrPosition = newRightOffset + Vector2(cos(rAlpha) * rc, sin(rAlpha) * rc);
-      Vector2 lIrPosition = newRightOffset + Vector2(cos(lAlpha) * lc, sin(lAlpha) * lc);
+      Vector2 mIrPosition = lastRightOffset + Vector2(cos(mAlpha) * mc, sin(mAlpha) * mc);
+      Vector2 rIrPosition = lastRightOffset + Vector2(cos(rAlpha) * rc, sin(rAlpha) * rc);
+      Vector2 lIrPosition = lastRightOffset + Vector2(cos(lAlpha) * lc, sin(lAlpha) * lc);
 
       irData.add((IrReading(measurement.leftIr, lIrPosition), IrReading(measurement.middleIr, mIrPosition), IrReading(measurement.rightIr, rIrPosition)));
 
@@ -123,11 +184,10 @@ class IrCalculator {
       lastLeftOffset = newLeftOffset;
     }
 
-    wheelPositions.removeLast();
     return IrCalculatorResult(irData: irData, wheelPositions: wheelPositions);
   }
 
-  static List<Vector2> pathApproximation(IrCalculatorResult irCalculatorResult, int minBlackLevel, double tolerance) {
+  static List<Vector2>? pathApproximation(IrCalculatorResult irCalculatorResult, int minBlackLevel, double tolerance) {
     List<Vector2> blackPoints = [Vector2(0, 0)];
 
     for (final measurement in irCalculatorResult.irData) {
@@ -140,6 +200,8 @@ class IrCalculator {
       vectorsToPoints(blackPoints),
       pow(2, tolerance / 100) - 1,
     ));
+
+    if (simplifiedPoints.length < 2) return null;
 
     return simplifiedPoints;
   }

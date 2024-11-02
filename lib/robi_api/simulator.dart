@@ -193,6 +193,7 @@ class Simulator {
 }
 
 Vector2 polarToCartesian(double deg, double radius) => Vector2(cosD(deg) * radius, sinD(deg) * radius);
+Vector2 polarToCartesianRad(double rad, double radius) => Vector2(cos(rad) * radius, sin(rad) * radius);
 
 double sinD(double deg) => sin(deg * degrees2Radians);
 

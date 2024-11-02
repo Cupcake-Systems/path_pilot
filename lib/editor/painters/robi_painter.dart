@@ -11,7 +11,6 @@ import 'package:vector_math/vector_math.dart' show Vector2, degrees2Radians, rad
 
 class RobiPainter extends MyPainter {
   final Canvas canvas;
-  final SimulationResult simulationResult;
   final RobiState robiState;
 
   static late final ui.Image robiUiImage;
@@ -22,7 +21,6 @@ class RobiPainter extends MyPainter {
 
   const RobiPainter({
     required this.canvas,
-    required this.simulationResult,
     required this.robiState,
   });
 
@@ -59,17 +57,29 @@ class RobiState {
     required this.outerAcceleration,
   });
 
-  RobiState.zero()
-      : position = Vector2.zero(),
-        rotation = 0,
-        innerVelocity = 0,
-        outerVelocity = 0,
-        innerAcceleration = 0,
-        outerAcceleration = 0;
+  static final RobiState zero = RobiState(
+    position: Vector2.zero(),
+    rotation: 0,
+    innerVelocity: 0,
+    outerVelocity: 0,
+    innerAcceleration: 0,
+    outerAcceleration: 0,
+  );
+
+  RobiState interpolate(RobiState other, double t) {
+    return RobiState(
+      position: position * (1 - t) + other.position * t,
+      rotation: rotation * (1 - t) + other.rotation * t,
+      innerVelocity: innerVelocity * (1 - t) + other.innerVelocity * t,
+      outerVelocity: outerVelocity * (1 - t) + other.outerVelocity * t,
+      innerAcceleration: innerAcceleration * (1 - t) + other.innerAcceleration * t,
+      outerAcceleration: outerAcceleration * (1 - t) + other.outerAcceleration * t,
+    );
+  }
 }
 
 RobiState getRobiStateAtTime(List<InstructionResult> instructionResults, double t) {
-  if (instructionResults.isEmpty) return RobiState.zero();
+  if (instructionResults.isEmpty) return RobiState.zero;
 
   final currentDriveResult = getRobiInstructionResultAtTime(instructionResults, t);
 
