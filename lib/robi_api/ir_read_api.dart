@@ -174,10 +174,10 @@ class IrCalculator {
       }
     }
 
-    List<Vector2> simplifiedPoints = pointsToVector2(RamerDouglasPeucker.ramerDouglasPeucker(
-      vectorsToPoints(blackPoints),
+    List<Vector2> simplifiedPoints = RamerDouglasPeucker.ramerDouglasPeucker(
+      blackPoints,
       pow(2, tolerance / 100) - 1,
-    ));
+    );
 
     if (simplifiedPoints.length < 2) return null;
 
