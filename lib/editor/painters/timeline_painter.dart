@@ -21,7 +21,6 @@ class TimelinePainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-
     if (simResult.instructionResults.isEmpty) return;
 
     final cornerRadius = Radius.circular(size.height / 2);
@@ -51,14 +50,24 @@ class TimelinePainter extends CustomPainter {
     }
 
     if (highlightedInstruction == simResult.instructionResults.last) {
-      canvas.drawRRect(
-        RRect.fromRectAndCorners(
-          Rect.fromLTWH(x, highlightOffset, size.width - x, size.height - highlightOffset * 2),
-          topRight: cornerRadius,
-          bottomRight: cornerRadius,
-        ),
-        highlightPaint,
-      );
+      if (simResult.instructionResults.length == 1) {
+        canvas.drawRRect(
+          RRect.fromRectAndRadius(
+            Rect.fromLTWH(0, highlightOffset, size.width, size.height - highlightOffset * 2),
+            cornerRadius,
+          ),
+          highlightPaint,
+        );
+      } else {
+        canvas.drawRRect(
+          RRect.fromRectAndCorners(
+            Rect.fromLTWH(x, highlightOffset, size.width - x, size.height - highlightOffset * 2),
+            topRight: cornerRadius,
+            bottomRight: cornerRadius,
+          ),
+          highlightPaint,
+        );
+      }
     } else if (highlightedInstruction == simResult.instructionResults.first) {
       final width = simResult.instructionResults.first.outerTotalTime / simResult.totalTime * size.width;
       canvas.drawRRect(
