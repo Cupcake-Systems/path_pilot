@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:robi_line_drawer/editor/painters/abstract_painter.dart';
 import 'package:robi_line_drawer/editor/painters/simulation_painter.dart';
+import 'package:robi_line_drawer/robi_api/ir_read_api.dart';
 import 'package:robi_line_drawer/robi_api/robi_utils.dart';
 import 'package:robi_line_drawer/robi_api/simulator.dart';
 import 'package:vector_math/vector_math.dart' show Vector2, degrees2Radians, radians2Degrees;
@@ -68,7 +69,7 @@ abstract class RobiState {
         _outerAcceleration = outerAcceleration;
 
   static final RobiState zero = InnerOuterRobiState(
-    position: Vector2.zero(),
+    position: zeroVec,
     rotation: 0,
     innerVelocity: 0,
     outerVelocity: 0,
@@ -127,6 +128,15 @@ class LeftRightRobiState extends RobiState {
           innerAcceleration: leftAcceleration,
           outerAcceleration: rightAcceleration,
         );
+
+  static final LeftRightRobiState zero = LeftRightRobiState(
+    position: zeroVec,
+    rotation: 0,
+    leftVelocity: 0,
+    rightVelocity: 0,
+    leftAcceleration: 0,
+    rightAcceleration: 0,
+  );
 }
 
 class InnerOuterRobiState extends RobiState {

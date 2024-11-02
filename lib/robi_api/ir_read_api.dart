@@ -75,44 +75,52 @@ class IrReading {
   final Vector2 position;
 
   const IrReading(this.value, this.position);
+
+  static final IrReading zero = IrReading(0, zeroVec);
 }
 
 class IrCalculatorResult {
   final List<(IrReading left, IrReading middle, IrReading right)> irData;
   final List<(Vector2 left, Vector2 right)> wheelPositions;
   final List<LeftRightRobiState> robiStates;
+  final int length;
 
-  const IrCalculatorResult({
+  IrCalculatorResult({
     required this.irData,
     required this.wheelPositions,
     required this.robiStates,
-  });
+  }) : length = irData.length {
+    assert(length == wheelPositions.length && length == wheelPositions.length);
+  }
 }
 
 class IrCalculator {
-
   static IrCalculatorResult calculate(final IrReadResult irReadResult, final RobiConfig robiConfig) {
-    final mc = sqrt(pow(robiConfig.distanceWheelIr, 2) + pow(robiConfig.trackWidth / 2, 2));
-    final rc = sqrt(pow(robiConfig.distanceWheelIr, 2) + pow(robiConfig.trackWidth / 2 - robiConfig.irDistance, 2));
-    final lc = sqrt(pow(robiConfig.distanceWheelIr, 2) + pow(robiConfig.trackWidth / 2 + robiConfig.irDistance, 2));
 
-    Vector2 lastRightOffset = Vector2(0, -robiConfig.trackWidth / 2);
-    Vector2 lastLeftOffset = Vector2(0, robiConfig.trackWidth / 2);
+    final halfTrackWidth = robiConfig.trackWidth / 2;
+    final piOver2 = pi / 2;
+
+    final mc = sqrt(pow(robiConfig.distanceWheelIr, 2) + pow(halfTrackWidth, 2));
+    final rc = sqrt(pow(robiConfig.distanceWheelIr, 2) + pow(halfTrackWidth - robiConfig.irDistance, 2));
+    final lc = sqrt(pow(robiConfig.distanceWheelIr, 2) + pow(halfTrackWidth + robiConfig.irDistance, 2));
+
+    Vector2 lastRightOffset = Vector2(0, -halfTrackWidth);
+    Vector2 lastLeftOffset = Vector2(0, halfTrackWidth);
 
     double lastLeftVel = 0;
     double lastRightVel = 0;
-
     double rotationRad = 0;
 
-    List<(IrReading, IrReading, IrReading)> irData = [];
-    List<(Vector2, Vector2)> wheelPositions = [];
-    List<LeftRightRobiState> robiStates = [];
+    final int length = irReadResult.measurements.length;
+    final List<(IrReading, IrReading, IrReading)> irData = List.filled(length, (IrReading.zero, IrReading.zero, IrReading.zero));
+    final List<(Vector2, Vector2)> wheelPositions = List.filled(length, (zeroVec, zeroVec));
+    final List<LeftRightRobiState> robiStates = List.filled(length, LeftRightRobiState.zero);
 
-    for (final measurement in irReadResult.measurements) {
-      double leftVel = freqToVel(measurement.motorLeftFreq, robiConfig.wheelRadius);
-      if (!measurement.leftFwd) leftVel *= -1;
-      double rightVel = freqToVel(measurement.motorRightFreq, robiConfig.wheelRadius);
-      if (!measurement.rightFwd) rightVel *= -1;
+    for (int i = 0; i < length; i++) {
+      final measurement = irReadResult.measurements[i];
+
+      final leftVel = freqToVel(measurement.motorLeftFreq, robiConfig.wheelRadius) * (measurement.leftFwd ? 1 : -1);
+      final rightVel = freqToVel(measurement.motorRightFreq, robiConfig.wheelRadius) * (measurement.rightFwd ? 1 : -1);
 
       final angularVelocityRad = (rightVel - leftVel) / robiConfig.trackWidth;
       rotationRad += angularVelocityRad * irReadResult.resolution;
@@ -126,28 +134,27 @@ class IrCalculator {
       final newRightOffset = lastRightOffset + polarToCartesianRad(rotationRad, rightDistance);
       final newLeftOffset = lastLeftOffset + polarToCartesianRad(rotationRad, leftDistance);
 
-      wheelPositions.add((lastLeftOffset, lastRightOffset));
+      wheelPositions[i] = (lastLeftOffset, lastRightOffset);
 
-      robiStates.add(LeftRightRobiState(
+      robiStates[i] = LeftRightRobiState(
         position: (lastLeftOffset + lastRightOffset) / 2,
         rotation: rotationRad * radians2Degrees,
         leftVelocity: leftVel,
         rightVelocity: rightVel,
         leftAcceleration: leftAccel,
         rightAcceleration: rightAccel,
-      ));
+      );
 
-      // IR Stuff
+      // IR Calculations
+      final double mAlpha = rotationRad + piOver2 - atan(robiConfig.distanceWheelIr / halfTrackWidth);
+      final double rAlpha = rotationRad + piOver2 - atan(robiConfig.distanceWheelIr / (halfTrackWidth - robiConfig.irDistance));
+      final double lAlpha = rotationRad + piOver2 - atan(robiConfig.distanceWheelIr / (halfTrackWidth + robiConfig.irDistance));
 
-      double mAlpha = rotationRad + pi / 2 - atan(robiConfig.distanceWheelIr / (robiConfig.trackWidth / 2));
-      double rAlpha = rotationRad + pi / 2 - atan(robiConfig.distanceWheelIr / (robiConfig.trackWidth / 2 - robiConfig.irDistance));
-      double lAlpha = rotationRad + pi / 2 - atan(robiConfig.distanceWheelIr / (robiConfig.trackWidth / 2 + robiConfig.irDistance));
-
-      Vector2 mIrPosition = lastRightOffset + Vector2(cos(mAlpha) * mc, sin(mAlpha) * mc);
-      Vector2 rIrPosition = lastRightOffset + Vector2(cos(rAlpha) * rc, sin(rAlpha) * rc);
-      Vector2 lIrPosition = lastRightOffset + Vector2(cos(lAlpha) * lc, sin(lAlpha) * lc);
-
-      irData.add((IrReading(measurement.leftIr, lIrPosition), IrReading(measurement.middleIr, mIrPosition), IrReading(measurement.rightIr, rIrPosition)));
+      irData[i] = (
+        IrReading(measurement.leftIr, lastRightOffset + Vector2(cos(lAlpha) * lc, sin(lAlpha) * lc)),
+        IrReading(measurement.middleIr, lastRightOffset + Vector2(cos(mAlpha) * mc, sin(mAlpha) * mc)),
+        IrReading(measurement.rightIr, lastRightOffset + Vector2(cos(rAlpha) * rc, sin(rAlpha) * rc))
+      );
 
       lastRightOffset = newRightOffset;
       lastLeftOffset = newLeftOffset;
@@ -177,3 +184,5 @@ class IrCalculator {
     return simplifiedPoints;
   }
 }
+
+final Vector2 zeroVec = Vector2.zero();
