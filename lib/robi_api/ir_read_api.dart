@@ -5,8 +5,9 @@ import 'dart:typed_data';
 import 'package:robi_line_drawer/editor/ir_line_approximation/ramers_douglas.dart';
 import 'package:robi_line_drawer/editor/painters/robi_painter.dart';
 import 'package:robi_line_drawer/robi_api/robi_utils.dart';
-import 'package:robi_line_drawer/robi_api/simulator.dart';
 import 'package:vector_math/vector_math.dart';
+
+import '../helper/geometry.dart';
 
 class Measurement {
   final int motorLeftFreq, motorRightFreq, leftIr, middleIr, rightIr;

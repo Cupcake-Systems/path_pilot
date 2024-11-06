@@ -6,8 +6,8 @@ import 'package:robi_line_drawer/editor/painters/timeline_painter.dart';
 import 'package:vector_math/vector_math.dart' show Aabb2, Vector2, radians;
 
 import '../../helper/curved_gradient.dart';
+import '../../helper/geometry.dart';
 import '../../robi_api/robi_utils.dart';
-import '../../robi_api/simulator.dart';
 
 class SimulationPainter extends MyPainter {
   final SimulationResult simulationResult;
@@ -64,8 +64,6 @@ class SimulationPainter extends MyPainter {
       }
     }
   }
-
-  static Alignment polarToAlignment(final double deg) => Alignment(cosD(deg), -sinD(deg));
 
   void drawDrive(final DriveResult instructionResult) => drawDriveWO(
         instructionResult,
@@ -272,56 +270,8 @@ class SimulationPainter extends MyPainter {
   Color velocityToColor(final double velocity) => velToColor(velocity, simulationResult.maxTargetedVelocity);
 }
 
-Offset vecToOffset(final Vector2 vec) => Offset(vec.x, -vec.y);
-
 Color velToColor(final double velocity, final double maxVelocity) {
   int r = ((1 - velocity / maxVelocity) * 255).round();
   int g = 255 - r;
   return Color.fromARGB(255, r, g, 0);
-}
-
-Vector2 centerOfCircle(final double radius, final double angle, final bool left) {
-  Vector2 center = polarToCartesian(angle + 90, radius);
-
-  if (!left) {
-    center = polarToCartesian(-90 - angle, radius);
-    center = Vector2(-center.x, center.y);
-  }
-
-  return center;
-}
-
-bool isLineIntersectingAABB(final Aabb2 aabb2, final Vector2 p1, final Vector2 p2) {
-  double tmin = 0.0;
-  double tmax = 1.0;
-
-  final aabbMin = aabb2.min;
-  final aabbMax = aabb2.max;
-
-  for (int i = 0; i < 2; i++) {
-    final direction = i == 0 ? p2.x - p1.x : p2.y - p1.y;
-    final min = i == 0 ? aabbMin.x : aabbMin.y;
-    final max = i == 0 ? aabbMax.x : aabbMax.y;
-    final origin = i == 0 ? p1.x : p1.y;
-
-    if (direction.abs() < 1e-9) {
-      if (origin < min || origin > max) return false;
-    } else {
-      double t1 = (min - origin) / direction;
-      double t2 = (max - origin) / direction;
-
-      if (t1 > t2) {
-        final temp = t1;
-        t1 = t2;
-        t2 = temp;
-      }
-
-      tmin = tmin > t1 ? tmin : t1;
-      tmax = tmax < t2 ? tmax : t2;
-
-      if (tmin > tmax) return false;
-    }
-  }
-
-  return true;
 }

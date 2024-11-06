@@ -1,8 +1,8 @@
 import 'dart:math';
 
-import 'package:robi_line_drawer/robi_api/simulator.dart';
 import 'package:vector_math/vector_math.dart';
 
+import '../../helper/geometry.dart';
 import '../../robi_api/robi_utils.dart';
 
 class PathToInstructions {
