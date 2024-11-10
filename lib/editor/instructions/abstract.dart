@@ -101,11 +101,13 @@ class _RemovableWarningCardState extends State<RemovableWarningCard> {
     final List<InnerOuterRobiState> chartStates = List.generate(
       iterations,
       (i) => getRobiStateAtTimeInInstructionResult(widget.instructionResult, i / (iterations - 1) * widget.instructionResult.outerTotalTime),
+      growable: false,
     );
     List<FlSpot> data1 = [];
     List<FlSpot>? data2;
-    String xAxisTitle;
-    String yAxisTitle;
+
+    late final String xAxisTitle;
+    late final String yAxisTitle;
 
     bool angularX = angular;
     bool angularY = angular;
@@ -114,20 +116,33 @@ class _RemovableWarningCardState extends State<RemovableWarningCard> {
       angularX = true;
     }
 
-    if (xAxisMode == XAxisType.time) {
-      xAxisTitle = "Time in s";
-    } else {
-      if (angularX) {
-        xAxisTitle = "Rotation in °";
-      } else {
-        xAxisTitle = "Distance driven in cm";
-      }
+    switch (xAxisMode) {
+      case XAxisType.time:
+        xAxisTitle = "Time in s";
+        break;
+      case XAxisType.position:
+        if (angularX) {
+          xAxisTitle = "Rotation in °";
+        } else {
+          xAxisTitle = "Distance driven in cm";
+        }
+        break;
     }
 
-    if (yAxisMode == YAxisType.velocity) {
-      yAxisTitle = "Velocity in ${angularY ? "°/s" : "cm/s"}";
-    } else {
-      yAxisTitle = "Acceleration in ${angularY ? "°/s²" : "cm/s²"}";
+    switch (yAxisMode) {
+      case YAxisType.position:
+        if (angularX) {
+          yAxisTitle = "Rotation in °";
+        } else {
+          yAxisTitle = "Distance driven in cm";
+        }
+        break;
+      case YAxisType.velocity:
+        yAxisTitle = "Velocity in ${angularY ? "°/s" : "cm/s"}";
+        break;
+      case YAxisType.acceleration:
+        yAxisTitle = "Acceleration in ${angularY ? "°/s²" : "cm/s²"}";
+        break;
     }
 
     double minY = 0;
@@ -359,6 +374,10 @@ class _RemovableWarningCardState extends State<RemovableWarningCard> {
                                   ),
                                   const Text("Y-Axis"),
                                   ListTile(
+                                    leading: Radio(value: YAxisType.position, groupValue: yAxisMode, onChanged: (value) => setState(() => yAxisMode = value!)),
+                                    title: const Text("Position"),
+                                  ),
+                                  ListTile(
                                     leading: Radio(value: YAxisType.velocity, groupValue: yAxisMode, onChanged: (value) => setState(() => yAxisMode = value!)),
                                     title: const Text("Velocity"),
                                   ),
@@ -396,18 +415,24 @@ class _RemovableWarningCardState extends State<RemovableWarningCard> {
     return states.map((state) {
       double y = 0;
 
-      if (yAxis == YAxisType.velocity) {
-        if (res is TurnResult) {
-          y = (state.outerVelocity - state.innerVelocity) / widget.robiConfig.trackWidth * (180 / pi);
-        } else if (res is RapidTurnResult) {
-          y = state.outerVelocity / (widget.robiConfig.trackWidth * pi) * 360;
-        }
-      } else {
-        if (res is TurnResult) {
-          y = (state.outerAcceleration - state.innerAcceleration) / widget.robiConfig.trackWidth * (180 / pi);
-        } else if (res is RapidTurnResult) {
-          y = state.outerAcceleration / (widget.robiConfig.trackWidth * pi) * 360;
-        }
+      switch (yAxis) {
+        case YAxisType.position:
+          y = state.rotation;
+          break;
+        case YAxisType.velocity:
+          if (res is TurnResult) {
+            y = (state.outerVelocity - state.innerVelocity) / widget.robiConfig.trackWidth * (180 / pi);
+          } else if (res is RapidTurnResult) {
+            y = state.outerVelocity / (widget.robiConfig.trackWidth * pi) * 360;
+          }
+          break;
+        case YAxisType.acceleration:
+          if (res is TurnResult) {
+            y = (state.outerAcceleration - state.innerAcceleration) / widget.robiConfig.trackWidth * (180 / pi);
+          } else if (res is RapidTurnResult) {
+            y = state.outerAcceleration / (widget.robiConfig.trackWidth * pi) * 360;
+          }
+          break;
       }
 
       return y;
@@ -418,10 +443,16 @@ class _RemovableWarningCardState extends State<RemovableWarningCard> {
     return states.map((state) {
       double y = 0;
 
-      if (yAxis == YAxisType.velocity) {
-        y = state.outerVelocity;
-      } else {
-        y = state.outerAcceleration;
+      switch (yAxis) {
+        case YAxisType.position:
+          y = state.position.distanceTo(res.startPosition);
+          break;
+        case YAxisType.velocity:
+          y = state.outerVelocity;
+          break;
+        case YAxisType.acceleration:
+          y = state.outerAcceleration;
+          break;
       }
 
       return y * 100;
@@ -432,10 +463,16 @@ class _RemovableWarningCardState extends State<RemovableWarningCard> {
     return states.map((state) {
       double y = 0;
 
-      if (yAxis == YAxisType.velocity) {
-        y = state.innerVelocity;
-      } else {
-        y = state.innerAcceleration;
+      switch (yAxis) {
+        case YAxisType.position:
+          y = state.position.distanceTo(res.startPosition);
+          break;
+        case YAxisType.velocity:
+          y = state.innerVelocity;
+          break;
+        case YAxisType.acceleration:
+          y = state.innerAcceleration;
+          break;
       }
 
       return y * 100;
@@ -455,6 +492,7 @@ enum XAxisType {
 }
 
 enum YAxisType {
+  position,
   velocity,
   acceleration,
 }
