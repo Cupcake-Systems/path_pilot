@@ -387,7 +387,7 @@ class _RemovableWarningCardState extends State<RemovableWarningCard> {
       if (xAxis == XAxisType.time) {
         return state.timeStamp - res.timeStamp;
       } else {
-        return angular ? state.rotation - res.startRotation : res.startPosition.distanceTo(state.position) * 100;
+        return angular ? (state.rotation - res.startRotation).abs() : res.startPosition.distanceTo(state.position) * 100;
       }
     }).toList();
   }
