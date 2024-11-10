@@ -89,7 +89,7 @@ class RemovableWarningCard extends StatefulWidget {
 String vecToString(Vector2 vec, int decimalPlaces) => "(${vec.x.toStringAsFixed(decimalPlaces)}, ${vec.y.toStringAsFixed(decimalPlaces)})";
 
 class _RemovableWarningCardState extends State<RemovableWarningCard> {
-  static const iterations = 1000;
+  static const iterations = 500;
 
   bool isExpanded = false;
   late XAxisType xAxisMode = widget.instruction is RapidTurnResult ? XAxisType.time : XAxisType.position;
