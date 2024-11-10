@@ -171,7 +171,7 @@ InnerOuterRobiState getRobiStateAtTime(List<InstructionResult> instructionResult
 
   final currentDriveResult = getRobiInstructionResultAtTime(instructionResults, t);
 
-  final double ct = instructionResults.takeWhile((instResult) => instResult != currentDriveResult).fold(0, (sum, instResult) => sum + instResult.outerTotalTime);
+  final double ct = instructionResults.takeWhile((instResult) => instResult != currentDriveResult).fold(0, (sum, instResult) => sum + instResult.totalTime);
 
   return getRobiStateAtTimeInInstructionResult(currentDriveResult!, t - ct);
 }
@@ -179,7 +179,7 @@ InnerOuterRobiState getRobiStateAtTime(List<InstructionResult> instructionResult
 InstructionResult? getRobiInstructionResultAtTime(List<InstructionResult> results, double t) {
   double ct = 0;
   for (final instResult in results) {
-    ct += instResult.outerTotalTime;
+    ct += instResult.totalTime;
 
     if (t < ct) {
       return instResult;
@@ -246,20 +246,20 @@ InnerOuterRobiState getRobiStateAtTimeInTurnResult(TurnResult res, double t) {
   late final Vector2 position;
   late final double innerVelocity, outerVelocity, innerAcceleration, outerAcceleration, degreeTraveled;
 
-  if (t < res.outerAccelerationTime) {
+  if (t < res.accelerationTime) {
     innerAcceleration = res.innerAcceleration;
     outerAcceleration = res.outerAcceleration;
     innerVelocity = res.innerAcceleration * t + res.innerInitialVelocity;
     outerVelocity = res.outerAcceleration * t + res.outerInitialVelocity;
     degreeTraveled = 0.5 * res.angularAcceleration * (t * t) + res.initialAngularVelocity * t;
-  } else if (t < res.outerAccelerationTime + res.outerConstantSpeedTime) {
-    final dt = t - res.outerAccelerationTime;
+  } else if (t < res.accelerationTime + res.constantSpeedTime) {
+    final dt = t - res.accelerationTime;
     innerAcceleration = outerAcceleration = 0;
     innerVelocity = res.maxInnerVelocity;
     outerVelocity = res.maxOuterVelocity;
     degreeTraveled = res.maxAngularVelocity * dt + res.accelerationDegree;
-  } else if (t < res.outerTotalTime) {
-    final dt = t - res.outerAccelerationTime - res.outerConstantSpeedTime;
+  } else if (t < res.totalTime) {
+    final dt = t - res.accelerationTime - res.constantSpeedTime;
     innerAcceleration = -res.innerAcceleration;
     outerAcceleration = -res.outerAcceleration;
     innerVelocity = res.maxInnerVelocity - res.innerAcceleration * dt;
@@ -294,19 +294,19 @@ InnerOuterRobiState getRobiStateAtTimeInTurnResult(TurnResult res, double t) {
 InnerOuterRobiState getRobiStateAtTimeInRapidTurnResult(RapidTurnResult res, double t) {
   late final double degreeTraveled, velocity, acceleration, rotation;
 
-  if (t < res.innerAccelerationTime) {
-    acceleration = res.innerAcceleration;
-    velocity = res.innerAcceleration * t;
+  if (t < res.accelerationTime) {
+    acceleration = res.acceleration;
+    velocity = res.acceleration * t;
     degreeTraveled = 0.5 * res.angularAcceleration * (t * t);
-  } else if (t < res.innerAccelerationTime + res.innerConstantSpeedTime) {
-    final dt = t - res.innerAccelerationTime;
+  } else if (t < res.accelerationTime + res.constantSpeedTime) {
+    final dt = t - res.accelerationTime;
     acceleration = 0;
-    velocity = res.maxInnerVelocity;
+    velocity = res.maxVelocity;
     degreeTraveled = res.maxAngularVelocity * dt + res.accelerationDegree;
-  } else if (t < res.innerTotalTime) {
-    final dt = t - res.innerAccelerationTime - res.innerConstantSpeedTime;
-    acceleration = -res.innerAcceleration;
-    velocity = res.maxInnerVelocity - res.innerAcceleration * dt;
+  } else if (t < res.totalTime) {
+    final dt = t - res.accelerationTime - res.constantSpeedTime;
+    acceleration = -res.acceleration;
+    velocity = res.maxVelocity - res.acceleration * dt;
     degreeTraveled = -0.5 * res.angularAcceleration * (dt * dt) + res.maxAngularVelocity * dt + (res.totalTurnDegree - res.accelerationDegree);
   } else {
     acceleration = velocity = 0;

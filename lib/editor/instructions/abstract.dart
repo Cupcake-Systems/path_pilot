@@ -43,11 +43,11 @@ abstract class AbstractEditor extends StatelessWidget {
 
   String? _generateWarning() {
     if (_warning != null) return _warning;
-    if (isLastInstruction && instructionResult.finalOuterVelocity.abs() > 0.00001) {
+    if (isLastInstruction && instructionResult.highestFinalVelocity.abs() > 0.00001) {
       return "Robi will not stop at the end";
     }
-    if ((instructionResult.maxOuterVelocity - instruction.targetVelocity).abs() > 0.000001) {
-      return "Robi will only reach ${roundToDigits(instructionResult.maxOuterVelocity * 100, 2)}cm/s";
+    if ((instructionResult.highestMaxVelocity - instruction.targetVelocity).abs() > 0.000001) {
+      return "Robi will only reach ${roundToDigits(instructionResult.highestMaxVelocity * 100, 2)}cm/s";
     }
     return null;
   }
@@ -100,7 +100,10 @@ class _RemovableWarningCardState extends State<RemovableWarningCard> {
   Widget build(BuildContext context) {
     final List<InnerOuterRobiState> chartStates = List.generate(
       iterations,
-      (i) => getRobiStateAtTimeInInstructionResult(widget.instructionResult, i / (iterations - 1) * widget.instructionResult.outerTotalTime),
+      (i) => getRobiStateAtTimeInInstructionResult(
+        widget.instructionResult,
+        i / (iterations - 1) * widget.instructionResult.totalTime,
+      ),
       growable: false,
     );
     List<FlSpot> data1 = [];

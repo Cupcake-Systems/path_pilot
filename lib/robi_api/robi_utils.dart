@@ -157,33 +157,32 @@ class RapidTurnInstruction extends MissionInstruction {
 abstract class InstructionResult {
   final double startRotation,
       endRotation,
-      maxOuterVelocity,
-      maxInnerVelocity,
-      finalOuterVelocity,
-      finalInnerVelocity,
-      outerAcceleration,
-      innerAcceleration,
-      innerInitialVelocity,
-      outerInitialVelocity,
-      innerAccelerationDistance,
-      outerAccelerationDistance,
-      innerConstantSpeedDistance,
-      outerConstantSpeedDistance,
-      innerDecelerationDistance,
-      outerDecelerationDistance,
+      _maxOuterVelocity,
+      _maxInnerVelocity,
+      _finalOuterVelocity,
+      _finalInnerVelocity,
+      _outerAcceleration,
+      _innerAcceleration,
+      _innerInitialVelocity,
+      _outerInitialVelocity,
+      _innerAccelerationDistance,
+      _outerAccelerationDistance,
+      _innerConstantSpeedDistance,
+      _outerConstantSpeedDistance,
+      _innerDecelerationDistance,
+      _outerDecelerationDistance,
       timeStamp;
   final Vector2 startPosition, endPosition;
 
-  late final double innerAccelerationTime = _calculateAccelerationTime(innerAcceleration, innerInitialVelocity, innerAccelerationDistance);
-  late final double outerAccelerationTime = _calculateAccelerationTime(outerAcceleration, outerInitialVelocity, outerAccelerationDistance);
-  late final double innerDecelerationTime = _calculateDecelerationTime(innerAcceleration, innerInitialVelocity, maxInnerVelocity, innerDecelerationDistance);
-  late final double outerDecelerationTime = _calculateDecelerationTime(outerAcceleration, outerInitialVelocity, maxOuterVelocity, outerDecelerationDistance);
-  late final double innerConstantSpeedTime = maxInnerVelocity > 0 ? innerConstantSpeedDistance / maxInnerVelocity : 0;
-  late final double outerConstantSpeedTime = maxOuterVelocity > 0 ? outerConstantSpeedDistance / maxOuterVelocity : 0;
-  late final double innerTotalTime = innerAccelerationTime + innerDecelerationTime + innerConstantSpeedTime;
-  late final double outerTotalTime = outerAccelerationTime + outerDecelerationTime + outerConstantSpeedTime;
-  late final double innerTotalDistance = innerAccelerationDistance + innerDecelerationDistance + innerConstantSpeedDistance;
-  late final double outerTotalDistance = outerAccelerationDistance + outerDecelerationDistance + outerConstantSpeedDistance;
+  late final double accelerationTime = _calculateAccelerationTime(_innerAcceleration, _innerInitialVelocity, _innerAccelerationDistance);
+  late final double decelerationTime = _calculateDecelerationTime(_innerAcceleration, _innerInitialVelocity, _maxInnerVelocity, _innerDecelerationDistance);
+  late final double constantSpeedTime = _maxInnerVelocity > 0 ? _innerConstantSpeedDistance / _maxInnerVelocity : 0;
+  late final double totalTime = accelerationTime + decelerationTime + constantSpeedTime;
+  late final double innerTotalDistance = _innerAccelerationDistance + _innerDecelerationDistance + _innerConstantSpeedDistance;
+  late final double outerTotalDistance = _outerAccelerationDistance + _outerDecelerationDistance + _outerConstantSpeedDistance;
+  late final double highestFinalVelocity = max(_finalInnerVelocity, _finalOuterVelocity);
+  late final double lowestFinalVelocity = min(_finalInnerVelocity, _finalOuterVelocity);
+  late final double highestMaxVelocity = max(_maxInnerVelocity, _maxOuterVelocity);
 
   double _calculateAccelerationTime(double a, double vi, double accelerationDistance) {
     if (a == 0) return 0;
@@ -204,23 +203,36 @@ abstract class InstructionResult {
     required this.timeStamp,
     required this.startRotation,
     required this.endRotation,
-    required this.maxOuterVelocity,
-    required this.maxInnerVelocity,
-    required this.finalOuterVelocity,
-    required this.finalInnerVelocity,
-    required this.outerAcceleration,
-    required this.innerAcceleration,
     required this.startPosition,
     required this.endPosition,
-    required this.innerInitialVelocity,
-    required this.outerInitialVelocity,
-    required this.innerAccelerationDistance,
-    required this.outerAccelerationDistance,
-    required this.innerConstantSpeedDistance,
-    required this.outerConstantSpeedDistance,
-    required this.innerDecelerationDistance,
-    required this.outerDecelerationDistance,
-  });
+    required double maxOuterVelocity,
+    required double finalOuterVelocity,
+    required double outerAcceleration,
+    required double outerInitialVelocity,
+    required double maxInnerVelocity,
+    required double finalInnerVelocity,
+    required double innerAcceleration,
+    required double innerInitialVelocity,
+    required double innerAccelerationDistance,
+    required double outerAccelerationDistance,
+    required double innerConstantSpeedDistance,
+    required double outerConstantSpeedDistance,
+    required double innerDecelerationDistance,
+    required double outerDecelerationDistance,
+  })  : _maxOuterVelocity = maxOuterVelocity,
+        _finalOuterVelocity = finalOuterVelocity,
+        _outerAcceleration = outerAcceleration,
+        _outerInitialVelocity = outerInitialVelocity,
+        _maxInnerVelocity = maxInnerVelocity,
+        _finalInnerVelocity = finalInnerVelocity,
+        _innerAcceleration = innerAcceleration,
+        _innerInitialVelocity = innerInitialVelocity,
+        _innerAccelerationDistance = innerAccelerationDistance,
+        _outerAccelerationDistance = outerAccelerationDistance,
+        _innerConstantSpeedDistance = innerConstantSpeedDistance,
+        _outerConstantSpeedDistance = outerConstantSpeedDistance,
+        _innerDecelerationDistance = innerDecelerationDistance,
+        _outerDecelerationDistance = outerDecelerationDistance;
 
   ExportedMissionInstruction export();
 }
@@ -229,10 +241,6 @@ class DriveResult extends InstructionResult {
   final double initialVelocity, maxVelocity, finalVelocity, acceleration, accelerationDistance, decelerationDistance, constantSpeedDistance;
 
   late final double totalDistance = innerTotalDistance;
-  late final double accelerationTime = innerAccelerationTime;
-  late final double decelerationTime = innerDecelerationTime;
-  late final double constantSpeedTime = innerConstantSpeedTime;
-  late final double totalTime = innerTotalTime;
 
   DriveResult({
     required super.startPosition,
@@ -284,27 +292,6 @@ class DriveResult extends InstructionResult {
   }
 
   @override
-  String toString() {
-    return '''TurnResult(
-    --- Given ---
-    Acceleration: ${acceleration}m/s²
-    Initial Velocity: ${initialVelocity}m/s    
-    --- Calculated ---
-    Distance:
-      Driven Distance: ${totalDistance}m
-      Acceleration Distance: ${accelerationDistance}m
-      Constant Speed Distance: ${constantSpeedDistance}m
-      Deceleration Distance: ${decelerationDistance}m
-    Time:
-      Acceleration Time: ${accelerationTime}s
-      Constant Speed Time: ${constantSpeedTime}s
-      Deceleration Time: ${decelerationTime}s
-    Max Velocity: ${maxVelocity}m/s
-    Final Velocity: ${finalVelocity}m/s
-)''';
-  }
-
-  @override
   ExportedDriveInstruction export() {
     assert(accelerationTime >= 0);
     assert(decelerationTime >= 0);
@@ -330,6 +317,34 @@ class DriveResult extends InstructionResult {
 class TurnResult extends InstructionResult {
   final double innerRadius, outerRadius, accelerationDegree, decelerationDegree, constantSpeedDegree, maxAngularVelocity, finalAngularVelocity, initialAngularVelocity, angularAcceleration;
   final bool left;
+
+  double get finalInnerVelocity => _finalInnerVelocity;
+
+  double get finalOuterVelocity => _finalOuterVelocity;
+
+  double get maxInnerVelocity => _maxInnerVelocity;
+
+  double get maxOuterVelocity => _maxOuterVelocity;
+
+  double get innerAcceleration => _innerAcceleration;
+
+  double get outerAcceleration => _outerAcceleration;
+
+  double get innerInitialVelocity => _innerInitialVelocity;
+
+  double get outerInitialVelocity => _outerInitialVelocity;
+
+  double get innerAccelerationDistance => _innerAccelerationDistance;
+
+  double get outerAccelerationDistance => _outerAccelerationDistance;
+
+  double get innerConstantSpeedDistance => _innerConstantSpeedDistance;
+
+  double get outerConstantSpeedDistance => _outerConstantSpeedDistance;
+
+  double get innerDecelerationDistance => _innerDecelerationDistance;
+
+  double get outerDecelerationDistance => _outerDecelerationDistance;
 
   late final totalTurnDegree = accelerationDegree + decelerationDegree + constantSpeedDegree;
   late final trackWidth = outerRadius - innerRadius;
@@ -370,33 +385,6 @@ class TurnResult extends InstructionResult {
         );
 
   @override
-  String toString() {
-    return '''TurnResult(
-    left: $left
-    totalTurnDegree: $totalTurnDegree°
-    innerRadius: ${innerRadius}m
-    Acceleration:
-      Inner: ${innerAcceleration}m/s²
-      Outer: ${outerAcceleration}m/s²
-      Angular: $angularAcceleration°/s²
-      Acceleration Degree: $accelerationDegree°
-      Deceleration Degree: $decelerationDegree°
-    Initial Velocity:
-      inner: ${innerInitialVelocity}m/s
-      outer: ${outerInitialVelocity}m/s
-      angular: $initialAngularVelocity°/s
-    Max Velocity:
-      inner: ${maxInnerVelocity}m/s
-      outer: ${maxOuterVelocity}m/s
-      angular: $maxAngularVelocity°/s
-    Final Velocity:
-      inner: ${finalInnerVelocity}m/s
-      outer: ${finalOuterVelocity}m/s
-      angular: $finalAngularVelocity°/s
-)''';
-  }
-
-  @override
   ExportedTurnInstruction export() => ExportedTurnInstruction(
         acceleration: outerAcceleration,
         initialVelocity: outerInitialVelocity,
@@ -434,7 +422,8 @@ class TurnResult extends InstructionResult {
 }
 
 class RapidTurnResult extends InstructionResult {
-  final double accelerationDegree, totalTurnDegree, angularAcceleration, maxAngularVelocity, trackWidth;
+  final double accelerationDegree, totalTurnDegree, angularAcceleration, maxAngularVelocity, trackWidth, maxVelocity, acceleration, accelerationDistance, decelerationDistance, constantSpeedDistance;
+
   final double finalAngularVelocity = 0;
   final bool left;
 
@@ -448,7 +437,12 @@ class RapidTurnResult extends InstructionResult {
     required this.accelerationDegree,
     required this.totalTurnDegree,
     required this.trackWidth,
-  }) : super(
+  })  : acceleration = angularToLinear(angularAcceleration, trackWidth / 2),
+        maxVelocity = angularToLinear(maxAngularVelocity, trackWidth / 2),
+        accelerationDistance = angularToLinear(accelerationDegree, trackWidth / 2),
+        constantSpeedDistance = angularToLinear(totalTurnDegree - accelerationDegree * 2, trackWidth / 2),
+        decelerationDistance = angularToLinear(accelerationDegree, trackWidth / 2),
+        super(
           outerAcceleration: angularToLinear(angularAcceleration, trackWidth / 2),
           innerAcceleration: angularToLinear(angularAcceleration, trackWidth / 2),
           finalOuterVelocity: 0,
@@ -469,34 +463,11 @@ class RapidTurnResult extends InstructionResult {
 
   @override
   ExportedRapidTurnInstruction export() => ExportedRapidTurnInstruction(
-        acceleration: outerAcceleration,
+        acceleration: acceleration,
         left: endRotation > startRotation,
         totalTurnDegree: totalTurnDegree,
         accelerationDegree: accelerationDegree,
       );
-
-  @override
-  String toString() {
-    return '''TurnResult(
-    Left: $left
-    Total Turn Degree: $totalTurnDegree°
-    Track Width: ${trackWidth}m
-    Acceleration:
-      Inner: ${innerAcceleration}m/s²
-      Outer: ${outerAcceleration}m/s²
-      Angular: $angularAcceleration°/s²
-      Acceleration Degree: $accelerationDegree°
-      Deceleration Degree: $accelerationDegree°
-    Max Velocity:
-      inner: ${maxInnerVelocity}m/s
-      outer: ${maxOuterVelocity}m/s
-      angular: $maxAngularVelocity°/s
-    Final Velocity:
-      inner: ${finalInnerVelocity}m/s
-      outer: ${finalOuterVelocity}m/s
-      angular: $finalAngularVelocity°/s
-)''';
-  }
 
   bool intersectsWithAabb(final Aabb2 aabb) => aabb.intersectsWithVector2(startPosition);
 
@@ -531,7 +502,7 @@ class SimulationResult {
       } else {
         throw Exception("Unknown instruction type");
       }
-      _totalTime += instruction.outerTotalTime;
+      _totalTime += instruction.totalTime;
     }
   }
 

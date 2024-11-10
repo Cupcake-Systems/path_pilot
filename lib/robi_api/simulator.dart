@@ -25,8 +25,8 @@ class Simulator {
         maxTargetVel = instruction.targetVelocity;
       }
 
-      if (result.maxOuterVelocity > maxManagedVel) {
-        maxManagedVel = result.maxOuterVelocity;
+      if (result.highestMaxVelocity > maxManagedVel) {
+        maxManagedVel = result.highestMaxVelocity;
       }
 
       results.add(result);
@@ -50,7 +50,7 @@ class Simulator {
   }
 
   DriveResult simulateDrive(InstructionResult? prevInstResult, DriveInstruction instruction) {
-    final initialVelocity = (prevInstResult == null || prevInstResult.finalInnerVelocity.abs() < 0.0000001) ? 0.0 : prevInstResult.finalInnerVelocity;
+    final initialVelocity = (prevInstResult == null || prevInstResult.lowestFinalVelocity.abs() < 0.0000001) ? 0.0 : prevInstResult.lowestFinalVelocity;
     final acceleration = instruction.acceleration;
 
     final calcResult = calculateMotion(
@@ -63,7 +63,7 @@ class Simulator {
 
     double timeStamp = 0;
     if (prevInstResult != null) {
-      timeStamp = prevInstResult.timeStamp + prevInstResult.outerTotalTime;
+      timeStamp = prevInstResult.timeStamp + prevInstResult.totalTime;
     }
 
     return DriveResult(
@@ -82,24 +82,27 @@ class Simulator {
 
 // Refactored simulateTurn function
   TurnResult simulateTurn(InstructionResult? prevInstructionResult, TurnInstruction instruction) {
-    double linearToAngular(double l) => l / robiConfig.trackWidth * (180 / pi);
-
     final innerRadius = instruction.innerRadius;
     final outerRadius = innerRadius + robiConfig.trackWidth;
     final k = innerRadius / outerRadius;
+    final k1 = 1 - k;
 
-    final outerAcceleration = instruction.acceleration;
-    final innerAcceleration = outerAcceleration * k;
-    final angularAcceleration = linearToAngular(outerAcceleration - innerAcceleration);
-    final initialOuterVelocity = prevInstructionResult?.finalInnerVelocity ?? 0;
-    final initialInnerVelocity = initialOuterVelocity * k;
-    final initialAngularVelocity = linearToAngular(initialOuterVelocity - initialInnerVelocity);
-    double finalOuterVelocity = instruction.targetFinalVelocity;
-    double finalInnerVelocity = finalOuterVelocity * k;
-    double targetFinalAngularVelocity = linearToAngular(finalOuterVelocity - finalInnerVelocity);
-    final targetOuterVelocity = instruction.targetVelocity;
-    final targetInnerVelocity = targetOuterVelocity * k;
-    final targetAngularVelocity = linearToAngular(targetOuterVelocity - targetInnerVelocity);
+    double linearToAngular(double l) => l / robiConfig.trackWidth * (180 / pi) * k1;
+
+    final angularAcceleration = linearToAngular(instruction.acceleration);
+
+    double initialOuterVelocity = 0;
+    if (prevInstructionResult != null) {
+      if (prevInstructionResult is TurnResult) {
+        initialOuterVelocity = prevInstructionResult.finalInnerVelocity;
+      } else if (prevInstructionResult is DriveResult) {
+        initialOuterVelocity = prevInstructionResult.finalVelocity;
+      }
+    }
+
+    final initialAngularVelocity = linearToAngular(initialOuterVelocity);
+    final targetFinalAngularVelocity = linearToAngular(instruction.targetFinalVelocity);
+    final targetAngularVelocity = linearToAngular(instruction.targetVelocity);
 
     final calcResult = calculateMotion(
       initialAngularVelocity,
@@ -111,7 +114,7 @@ class Simulator {
 
     double timeStamp = 0;
     if (prevInstructionResult != null) {
-      timeStamp = prevInstructionResult.timeStamp + prevInstructionResult.outerTotalTime;
+      timeStamp = prevInstructionResult.timeStamp + prevInstructionResult.totalTime;
     }
 
     return TurnResult(
@@ -141,7 +144,7 @@ class Simulator {
 
     double timeStamp = 0;
     if (prevInstructionResult != null) {
-      timeStamp = prevInstructionResult.timeStamp + prevInstructionResult.outerTotalTime;
+      timeStamp = prevInstructionResult.timeStamp + prevInstructionResult.totalTime;
     }
 
     return RapidTurnResult(

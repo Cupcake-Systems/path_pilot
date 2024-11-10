@@ -24,7 +24,7 @@ class TimelinePainter extends CustomPainter {
     if (simResult.instructionResults.isEmpty) return;
 
     final cornerRadius = Radius.circular(size.height / 2);
-    double t = simResult.instructionResults.first.outerTotalTime;
+    double t = simResult.instructionResults.first.totalTime;
     double x = t / simResult.totalTime * size.width;
 
     for (int i = 1; i < simResult.instructionResults.length; ++i) {
@@ -33,7 +33,7 @@ class TimelinePainter extends CustomPainter {
       x = t / simResult.totalTime * size.width;
 
       if (result == highlightedInstruction && i != simResult.instructionResults.length - 1 && i > 0) {
-        final width = result.outerTotalTime / simResult.totalTime * size.width;
+        final width = result.totalTime / simResult.totalTime * size.width;
         canvas.drawRect(
           Rect.fromLTWH(x, highlightOffset, width, size.height - highlightOffset * 2),
           highlightPaint,
@@ -46,7 +46,7 @@ class TimelinePainter extends CustomPainter {
         strokePaint,
       );
 
-      t += result.outerTotalTime;
+      t += result.totalTime;
     }
 
     if (highlightedInstruction == simResult.instructionResults.last) {
@@ -69,7 +69,7 @@ class TimelinePainter extends CustomPainter {
         );
       }
     } else if (highlightedInstruction == simResult.instructionResults.first) {
-      final width = simResult.instructionResults.first.outerTotalTime / simResult.totalTime * size.width;
+      final width = simResult.instructionResults.first.totalTime / simResult.totalTime * size.width;
       canvas.drawRRect(
         RRect.fromRectAndCorners(
           Rect.fromLTWH(

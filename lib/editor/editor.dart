@@ -450,7 +450,7 @@ class _EditorState extends State<Editor> with AutomaticKeepAliveClientMixin {
       if (currentResult != null) {
         // Ensure the initial velocity for the next instruction is always <= than the target velocity
         // because an instruction cannot decelerate to target velocity, only accelerate.
-        if (currentResult.finalOuterVelocity > nextInstruction.targetVelocity) {
+        if (currentResult.highestFinalVelocity > nextInstruction.targetVelocity) {
           instruction.acceleration = 1; // TODO: Calculate the value
         }
       }
