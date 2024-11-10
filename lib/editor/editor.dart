@@ -390,6 +390,7 @@ class _EditorState extends State<Editor> with AutomaticKeepAliveClientMixin {
 
     if (instruction is DriveInstruction) {
       return DriveInstructionEditor(
+        robiConfig: selectedRobiConfig,
         key: ObjectKey(instruction),
         instruction: instruction,
         change: changeCallback,
@@ -401,6 +402,7 @@ class _EditorState extends State<Editor> with AutomaticKeepAliveClientMixin {
       );
     } else if (instruction is TurnInstruction) {
       return TurnInstructionEditor(
+        robiConfig: selectedRobiConfig,
         key: ObjectKey(instruction),
         instruction: instruction,
         change: changeCallback,
@@ -412,6 +414,7 @@ class _EditorState extends State<Editor> with AutomaticKeepAliveClientMixin {
       );
     } else if (instruction is RapidTurnInstruction) {
       return RapidTurnInstructionEditor(
+        robiConfig: selectedRobiConfig,
         key: ObjectKey(instruction),
         instruction: instruction,
         change: changeCallback,

@@ -16,11 +16,13 @@ class RapidTurnInstructionEditor extends AbstractEditor {
     required super.removed,
     required super.entered,
     required super.exited,
+    required super.robiConfig,
   }) : super(instruction: instruction);
 
   @override
   Widget build(BuildContext context) {
     return RemovableWarningCard(
+      robiConfig: robiConfig,
       change: change,
       entered: entered,
       exited: exited,

@@ -61,7 +61,13 @@ class Simulator {
       instruction.targetFinalVelocity,
     );
 
+    double timeStamp = 0;
+    if (prevInstResult != null) {
+      timeStamp = prevInstResult.timeStamp + prevInstResult.outerTotalTime;
+    }
+
     return DriveResult(
+      timeStamp: timeStamp,
       startRotation: prevInstResult?.endRotation ?? 0,
       startPosition: prevInstResult?.endPosition ?? Vector2.zero(),
       initialVelocity: initialVelocity,
@@ -103,7 +109,13 @@ class Simulator {
       targetFinalAngularVelocity,
     );
 
+    double timeStamp = 0;
+    if (prevInstructionResult != null) {
+      timeStamp = prevInstructionResult.timeStamp + prevInstructionResult.outerTotalTime;
+    }
+
     return TurnResult(
+      timeStamp: timeStamp,
       left: instruction.left,
       startRotation: prevInstructionResult?.endRotation ?? 0,
       startPosition: prevInstructionResult?.endPosition ?? Vector2.zero(),
@@ -127,7 +139,13 @@ class Simulator {
 
     final calcResult = calculateMotion(0, angularAcceleration, instruction.turnDegree, targetMaxAngularVelocity, 0);
 
+    double timeStamp = 0;
+    if (prevInstructionResult != null) {
+      timeStamp = prevInstructionResult.timeStamp + prevInstructionResult.outerTotalTime;
+    }
+
     return RapidTurnResult(
+      timeStamp: timeStamp,
       trackWidth: robiConfig.trackWidth,
       left: instruction.left,
       startRotation: prevInstructionResult?.endRotation ?? 0,
@@ -191,7 +209,6 @@ class Simulator {
     );
   }
 }
-
 
 class CalculationResult {
   final double maxVelocity;

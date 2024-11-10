@@ -170,7 +170,8 @@ abstract class InstructionResult {
       innerConstantSpeedDistance,
       outerConstantSpeedDistance,
       innerDecelerationDistance,
-      outerDecelerationDistance;
+      outerDecelerationDistance,
+      timeStamp;
   final Vector2 startPosition, endPosition;
 
   late final double innerAccelerationTime = _calculateAccelerationTime(innerAcceleration, innerInitialVelocity, innerAccelerationDistance);
@@ -200,6 +201,7 @@ abstract class InstructionResult {
   }
 
   InstructionResult({
+    required this.timeStamp,
     required this.startRotation,
     required this.endRotation,
     required this.maxOuterVelocity,
@@ -235,6 +237,7 @@ class DriveResult extends InstructionResult {
   DriveResult({
     required super.startPosition,
     required super.startRotation,
+    required super.timeStamp,
     required this.maxVelocity,
     required this.finalVelocity,
     required this.acceleration,
@@ -337,6 +340,7 @@ class TurnResult extends InstructionResult {
     required this.left,
     required super.startRotation,
     required super.startPosition,
+    required super.timeStamp,
     required this.innerRadius,
     required this.outerRadius,
     required this.accelerationDegree,
@@ -435,6 +439,7 @@ class RapidTurnResult extends InstructionResult {
   final bool left;
 
   RapidTurnResult({
+    required super.timeStamp,
     required this.left,
     required super.startRotation,
     required this.angularAcceleration,

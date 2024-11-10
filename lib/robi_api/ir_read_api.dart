@@ -138,6 +138,7 @@ class IrCalculator {
       wheelPositions[i] = (lastLeftOffset, lastRightOffset);
 
       robiStates[i] = LeftRightRobiState(
+        timeStamp: i * irReadResult.resolution,
         position: (lastLeftOffset + lastRightOffset) / 2,
         rotation: rotationRad * radians2Degrees,
         leftVelocity: leftVel,

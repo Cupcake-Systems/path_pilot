@@ -18,11 +18,13 @@ class DriveInstructionEditor extends AbstractEditor {
     required super.removed,
     required super.entered,
     required super.exited,
+    required super.robiConfig,
   }) : super(instruction: instruction);
 
   @override
   Widget build(BuildContext context) {
     return RemovableWarningCard(
+      robiConfig: robiConfig,
       change: change,
       instruction: instruction,
       warningMessage: warningMessage,

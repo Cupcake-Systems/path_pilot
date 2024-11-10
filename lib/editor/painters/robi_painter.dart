@@ -52,13 +52,14 @@ enum RobiStateType {
 
 abstract class RobiState {
   final Vector2 position;
-  final double rotation;
+  final double rotation, timeStamp;
   @protected
   final double _innerVelocity, _outerVelocity, _innerAcceleration, _outerAcceleration;
 
   const RobiState({
     required this.position,
     required this.rotation,
+    required this.timeStamp,
     required double innerVelocity,
     required double outerVelocity,
     required double innerAcceleration,
@@ -69,6 +70,7 @@ abstract class RobiState {
         _outerAcceleration = outerAcceleration;
 
   static final RobiState zero = InnerOuterRobiState(
+    timeStamp: 0,
     position: zeroVec,
     rotation: 0,
     innerVelocity: 0,
@@ -79,6 +81,7 @@ abstract class RobiState {
 
   RobiState interpolate(RobiState other, double t) {
     return InnerOuterRobiState(
+      timeStamp: timeStamp * (1 - t) + other.timeStamp * t,
       position: position * (1 - t) + other.position * t,
       rotation: rotation * (1 - t) + other.rotation * t,
       innerVelocity: _innerVelocity * (1 - t) + other._innerVelocity * t,
@@ -90,6 +93,7 @@ abstract class RobiState {
 
   LeftRightRobiState asLeftRight() {
     return LeftRightRobiState(
+      timeStamp: timeStamp,
       position: position,
       rotation: rotation,
       leftVelocity: _innerVelocity,
@@ -101,6 +105,7 @@ abstract class RobiState {
 
   InnerOuterRobiState asInnerOuter() {
     return InnerOuterRobiState(
+      timeStamp: timeStamp,
       position: position,
       rotation: rotation,
       innerVelocity: _innerVelocity,
@@ -118,6 +123,7 @@ class LeftRightRobiState extends RobiState {
   LeftRightRobiState({
     required super.position,
     required super.rotation,
+    required super.timeStamp,
     required this.leftVelocity,
     required this.rightVelocity,
     required this.leftAcceleration,
@@ -130,6 +136,7 @@ class LeftRightRobiState extends RobiState {
         );
 
   static final LeftRightRobiState zero = LeftRightRobiState(
+    timeStamp: 0,
     position: zeroVec,
     rotation: 0,
     leftVelocity: 0,
@@ -146,6 +153,7 @@ class InnerOuterRobiState extends RobiState {
   InnerOuterRobiState({
     required super.position,
     required super.rotation,
+    required super.timeStamp,
     required this.innerVelocity,
     required this.outerVelocity,
     required this.innerAcceleration,
@@ -220,6 +228,7 @@ InnerOuterRobiState getRobiStateAtTimeInDriveResult(DriveResult res, double t) {
   final position = res.startPosition + polarToCartesian(res.startRotation, distanceTraveled);
 
   return InnerOuterRobiState(
+    timeStamp: res.timeStamp + t,
     position: position,
     rotation: res.startRotation,
     innerVelocity: velocity,
@@ -272,6 +281,7 @@ InnerOuterRobiState getRobiStateAtTimeInTurnResult(TurnResult res, double t) {
   }
 
   return InnerOuterRobiState(
+    timeStamp: res.timeStamp + t,
     position: position,
     rotation: rotation,
     innerVelocity: innerVelocity,
@@ -310,6 +320,7 @@ InnerOuterRobiState getRobiStateAtTimeInRapidTurnResult(RapidTurnResult res, dou
   }
 
   return InnerOuterRobiState(
+    timeStamp: res.timeStamp + t,
     position: res.startPosition,
     rotation: rotation,
     innerVelocity: velocity,
