@@ -84,7 +84,7 @@ class _FileBrowserState extends State<FileBrowser> {
                       ),
                       MenuItemButton(
                         leadingIcon: const Icon(Icons.check_circle),
-                        onPressed: () => launchUrlString("$repoUrl/issues?q=is%3Aissue"),
+                        onPressed: () => launchUrlString("$repoUrl/issues?q=is%3Aissue+label%3Abug"),
                         child: const MenuAcceleratorLabel('&Known Issues'),
                       ),
                       const Divider(height: 0),
