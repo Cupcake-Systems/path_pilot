@@ -85,11 +85,16 @@ class IrCalculatorResult {
   final List<(Vector2 left, Vector2 right)> wheelPositions;
   final List<LeftRightRobiState> robiStates;
   final int length;
+  final LeftRightRobiState maxLeftVelocity, maxRightVelocity, maxLeftAcceleration, maxRightAcceleration;
 
   IrCalculatorResult({
     required this.irData,
     required this.wheelPositions,
     required this.robiStates,
+    required this.maxLeftAcceleration,
+    required this.maxLeftVelocity,
+    required this.maxRightAcceleration,
+    required this.maxRightVelocity,
   }) : length = irData.length {
     assert(length == wheelPositions.length && length == wheelPositions.length);
   }
@@ -97,7 +102,6 @@ class IrCalculatorResult {
 
 class IrCalculator {
   static IrCalculatorResult calculate(final IrReadResult irReadResult, final RobiConfig robiConfig) {
-
     final halfTrackWidth = robiConfig.trackWidth / 2;
     final piOver2 = pi / 2;
 
@@ -116,6 +120,10 @@ class IrCalculator {
     final List<(IrReading, IrReading, IrReading)> irData = List.filled(length, (IrReading.zero, IrReading.zero, IrReading.zero));
     final List<(Vector2, Vector2)> wheelPositions = List.filled(length, (zeroVec, zeroVec));
     final List<LeftRightRobiState> robiStates = List.filled(length, LeftRightRobiState.zero);
+    LeftRightRobiState maxLeftVelocity = LeftRightRobiState.zero,
+        maxRightVelocity = LeftRightRobiState.zero,
+        maxLeftAcceleration = LeftRightRobiState.zero,
+        maxRightAcceleration = LeftRightRobiState.zero;
 
     for (int i = 0; i < length; i++) {
       final measurement = irReadResult.measurements[i];
@@ -147,6 +155,19 @@ class IrCalculator {
         rightAcceleration: rightAccel,
       );
 
+      if (maxLeftVelocity.leftVelocity > leftVel) {
+        maxLeftVelocity = robiStates[i];
+      }
+      if (maxRightVelocity.rightVelocity < rightVel) {
+        maxRightVelocity = robiStates[i];
+      }
+      if (maxLeftAcceleration.leftAcceleration > leftAccel) {
+        maxLeftAcceleration = robiStates[i];
+      }
+      if (maxRightAcceleration.rightAcceleration < rightAccel) {
+        maxRightAcceleration = robiStates[i];
+      }
+
       // IR Calculations
       final double mAlpha = rotationRad + piOver2 - atan(robiConfig.distanceWheelIr / halfTrackWidth);
       final double rAlpha = rotationRad + piOver2 - atan(robiConfig.distanceWheelIr / (halfTrackWidth - robiConfig.irDistance));
@@ -164,7 +185,15 @@ class IrCalculator {
       lastRightVel = rightVel;
     }
 
-    return IrCalculatorResult(irData: irData, wheelPositions: wheelPositions, robiStates: robiStates);
+    return IrCalculatorResult(
+      irData: irData,
+      wheelPositions: wheelPositions,
+      robiStates: robiStates,
+      maxLeftAcceleration: maxLeftAcceleration,
+      maxLeftVelocity: maxLeftVelocity,
+      maxRightAcceleration: maxRightAcceleration,
+      maxRightVelocity: maxRightVelocity,
+    );
   }
 
   static List<Vector2>? pathApproximation(IrCalculatorResult irCalculatorResult, int minBlackLevel, double tolerance) {
