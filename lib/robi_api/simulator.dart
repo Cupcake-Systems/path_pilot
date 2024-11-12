@@ -90,17 +90,7 @@ class Simulator {
     double linearToAngular(double l) => l / robiConfig.trackWidth * (180 / pi) * k1;
 
     final angularAcceleration = linearToAngular(instruction.acceleration);
-
-    double initialOuterVelocity = 0;
-    if (prevInstructionResult != null) {
-      if (prevInstructionResult is TurnResult) {
-        initialOuterVelocity = prevInstructionResult.finalInnerVelocity;
-      } else if (prevInstructionResult is DriveResult) {
-        initialOuterVelocity = prevInstructionResult.finalVelocity;
-      }
-    }
-
-    final initialAngularVelocity = linearToAngular(initialOuterVelocity);
+    final initialAngularVelocity = linearToAngular(prevInstructionResult?.lowestFinalVelocity ?? 0);
     final targetFinalAngularVelocity = linearToAngular(instruction.targetFinalVelocity);
     final targetAngularVelocity = linearToAngular(instruction.targetVelocity);
 
