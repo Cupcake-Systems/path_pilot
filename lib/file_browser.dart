@@ -5,12 +5,16 @@ import 'package:flutter/material.dart';
 import 'package:robi_line_drawer/constants.dart';
 import 'package:robi_line_drawer/editor/editor.dart';
 import 'package:robi_line_drawer/main.dart';
+import 'package:robi_line_drawer/robi_api/ir_read_api.dart';
 import 'package:robi_line_drawer/robi_api/robi_path_serializer.dart';
 import 'package:robi_line_drawer/robi_api/robi_utils.dart';
 import 'package:robi_line_drawer/settings/robi_config_settings.dart';
 import 'package:robi_line_drawer/settings/settings.dart';
 import 'package:robi_line_drawer/welcome_screen.dart';
 import 'package:url_launcher/url_launcher_string.dart';
+
+import 'app_storage.dart';
+import 'editor/ir_visualizer.dart';
 
 class FileBrowser extends StatefulWidget {
   const FileBrowser({super.key});
@@ -20,9 +24,15 @@ class FileBrowser extends StatefulWidget {
 }
 
 class _FileBrowserState extends State<FileBrowser> {
+  RobiConfig selectedRobiConfig = defaultRobiConfig;
+
+  // Instructions Editor
   File? openedFile;
-  Iterable<MissionInstruction>? loadedInstructions;
   String? errorMessage;
+  Iterable<MissionInstruction>? loadedInstructions;
+
+  // IR Readings analysis
+  IrReadResult? irReadResult;
 
   @override
   Widget build(BuildContext context) {
@@ -77,6 +87,23 @@ class _FileBrowserState extends State<FileBrowser> {
                   ),
                   SubmenuButton(
                     menuChildren: [
+                      for (final config in [defaultRobiConfig, ...RobiConfigStorage.configs])
+                        RadioMenuButton(
+                          value: config,
+                          groupValue: selectedRobiConfig,
+                          onChanged: (value) {
+                            if (value == null) return;
+                            setState(() {
+                              selectedRobiConfig = value;
+                            });
+                          },
+                          child: MenuAcceleratorLabel("&${config.name}"),
+                        ),
+                    ],
+                    child: const MenuAcceleratorLabel("&RobiConfig"),
+                  ),
+                  SubmenuButton(
+                    menuChildren: [
                       MenuItemButton(
                         leadingIcon: const Icon(Icons.bug_report),
                         onPressed: () => launchUrlString("$repoUrl/issues/new"),
@@ -127,17 +154,76 @@ class _FileBrowserState extends State<FileBrowser> {
           ],
         ),
         Expanded(
-          child: openedFile == null || loadedInstructions == null
-              ? WelcomeScreen(
-                  newFilePressed: newFile,
-                  openFilePressed: () => openFile(context),
-                  errorMessage: errorMessage,
-                )
-              : Editor(
-                  key: ObjectKey(openedFile),
-                  file: openedFile!,
-                  initialInstructions: loadedInstructions!.toList(),
+          child: DefaultTabController(
+            length: 2,
+            child: Scaffold(
+              appBar: PreferredSize(
+                preferredSize: const Size.fromHeight(40),
+                child: AppBar(
+                  flexibleSpace: const TabBar(
+                    tabs: [
+                      Tab(child: Text("Instructions")),
+                      Tab(child: Text("IR Readings")),
+                    ],
+                  ),
                 ),
+              ),
+              body: TabBarView(
+                children: [
+                  openedFile == null || loadedInstructions == null
+                      ? WelcomeScreen(
+                          newFilePressed: newFile,
+                          openFilePressed: () => openFile(context),
+                          errorMessage: errorMessage,
+                        )
+                      : Editor(
+                          key: ObjectKey(openedFile),
+                          file: openedFile!,
+                          initialInstructions: loadedInstructions!.toList(),
+                          selectedRobiConfig: selectedRobiConfig,
+                        ),
+                  if (irReadResult == null) ...[
+                    Center(
+                      child: ElevatedButton.icon(
+                        onPressed: () async {
+                          final result = await FilePicker.platform.pickFiles(
+                            type: FileType.custom,
+                            allowedExtensions: ["bin"],
+                          );
+                          if (result == null) return;
+                          final file = File(result.files.single.path!);
+                          setState(() {
+                            irReadResult = IrReadResult.fromFile(file);
+                          });
+                        },
+                        icon: const Icon(Icons.file_download_outlined),
+                        label: const Text("Import IR Reading"),
+                      ),
+                    ),
+                  ] else ...[
+                    Scaffold(
+                      body: IrVisualizerWidget(
+                        robiConfig: selectedRobiConfig,
+                        irReadResult: irReadResult,
+                      ),
+                      floatingActionButton: Padding(
+                        padding: const EdgeInsets.all(4),
+                        child: ElevatedButton.icon(
+                          onPressed: () {
+                            setState(() {
+                              irReadResult = null;
+                            });
+                          },
+                          icon: const Icon(Icons.delete),
+                          label: const Text("Remove IR Reading"),
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ),
         ),
       ],
     );
@@ -155,7 +241,7 @@ class _FileBrowserState extends State<FileBrowser> {
     if (result == null) return;
 
     setState(() {
-      openedFile =  File(result);
+      openedFile = File(result);
       loadedInstructions = [];
       errorMessage = null;
     });

@@ -1,9 +1,6 @@
-import 'dart:math';
-
-import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:robi_line_drawer/editor/editor.dart';
-import 'package:robi_line_drawer/editor/painters/robi_painter.dart';
+import 'package:robi_line_drawer/editor/instructions/instruction_details.dart';
 import 'package:vector_math/vector_math.dart' show Vector2;
 
 import '../../robi_api/robi_utils.dart';
@@ -13,6 +10,7 @@ abstract class AbstractEditor extends StatelessWidget {
   final int instructionIndex;
   final MissionInstruction instruction;
   final RobiConfig robiConfig;
+  final double progress;
 
   late final InstructionResult instructionResult;
   late final bool isLastInstruction;
@@ -36,6 +34,7 @@ abstract class AbstractEditor extends StatelessWidget {
     String? warning,
     this.entered,
     this.exited,
+    required this.progress,
   }) : _warning = warning {
     instructionResult = simulationResult.instructionResults[instructionIndex];
     isLastInstruction = instructionIndex == simulationResult.instructionResults.length - 1;
@@ -59,6 +58,7 @@ class RemovableWarningCard extends StatefulWidget {
   final Function()? exited;
   final Function(MissionInstruction instruction) change;
   final RobiConfig robiConfig;
+  final double progress;
 
   final Widget header;
   final List<TableRow> children;
@@ -80,6 +80,7 @@ class RemovableWarningCard extends StatefulWidget {
     this.warningMessage,
     required this.header,
     required this.robiConfig,
+    required this.progress,
   });
 
   @override
@@ -89,137 +90,26 @@ class RemovableWarningCard extends StatefulWidget {
 String vecToString(Vector2 vec, int decimalPlaces) => "(${vec.x.toStringAsFixed(decimalPlaces)}, ${vec.y.toStringAsFixed(decimalPlaces)})";
 
 class _RemovableWarningCardState extends State<RemovableWarningCard> {
-  static const iterations = 500;
-
   bool isExpanded = false;
-  late XAxisType xAxisMode = widget.instruction is RapidTurnResult ? XAxisType.time : XAxisType.position;
-  YAxisType yAxisMode = YAxisType.velocity;
-  late bool angular = widget.instruction is! DriveInstruction;
 
   @override
   Widget build(BuildContext context) {
-    final List<InnerOuterRobiState> chartStates = List.generate(
-      iterations,
-      (i) => getRobiStateAtTimeInInstructionResult(
-        widget.instructionResult,
-        i / (iterations - 1) * widget.instructionResult.totalTime,
-      ),
-      growable: false,
-    );
-    List<FlSpot> data1 = [];
-    List<FlSpot>? data2;
-
-    late final String xAxisTitle;
-    late final String yAxisTitle;
-
-    bool angularX = angular;
-    bool angularY = angular;
-
-    if (widget.instructionResult is RapidTurnResult) {
-      angularX = true;
-    }
-
-    switch (xAxisMode) {
-      case XAxisType.time:
-        xAxisTitle = "Time in s";
-        break;
-      case XAxisType.position:
-        if (angularX) {
-          xAxisTitle = "Rotation in °";
-        } else {
-          xAxisTitle = "Distance driven in cm";
-        }
-        break;
-    }
-
-    switch (yAxisMode) {
-      case YAxisType.position:
-        if (angularX) {
-          yAxisTitle = "Rotation in °";
-        } else {
-          yAxisTitle = "Distance driven in cm";
-        }
-        break;
-      case YAxisType.velocity:
-        yAxisTitle = "Velocity in ${angularY ? "°/s" : "cm/s"}";
-        break;
-      case YAxisType.acceleration:
-        yAxisTitle = "Acceleration in ${angularY ? "°/s²" : "cm/s²"}";
-        break;
-    }
-
-    double minY = 0;
-
-    if (isExpanded) {
-      if (angular) {
-        data1 = mergeData(
-          xValues(
-            widget.instructionResult,
-            chartStates,
-            xAxisMode,
-            angularX,
-          ),
-          yAngularValues(
-            widget.instructionResult,
-            chartStates,
-            yAxisMode,
-            angularY,
-          ),
-        );
-      } else {
-        data1 = mergeData(
-          xValues(
-            widget.instructionResult,
-            chartStates,
-            xAxisMode,
-            angularX,
-          ),
-          yInnerValues(
-            widget.instructionResult,
-            chartStates,
-            yAxisMode,
-          ),
-        );
-        if (widget.instructionResult is TurnResult) {
-          data2 = mergeData(
-            xValues(
-              widget.instructionResult,
-              chartStates,
-              xAxisMode,
-              angularX,
-            ),
-            yOuterValues(
-              widget.instructionResult,
-              chartStates,
-              yAxisMode,
-            ),
-          );
-        }
-      }
-
-      minY = 0;
-      if (data1.isNotEmpty) {
-        minY = data1.map((spot) => spot.y).reduce(min);
-      }
-      if (data2 != null && data2.isNotEmpty) {
-        minY = min(minY, data2.map((spot) => spot.y).reduce(min));
-      }
-      if (minY > 0) {
-        minY = 0;
-      }
-    }
-
     return MouseRegion(
-      onEnter: (event) {
-        widget.entered?.call(widget.instructionResult);
-      },
-      onExit: (event) {
-        widget.exited?.call();
-      },
+      onEnter: (event) => widget.entered?.call(widget.instructionResult),
+      onExit: (event) => widget.exited?.call(),
       child: Card(
+        clipBehavior: Clip.antiAlias,
         child: Column(
           children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 2),
+              child: LinearProgressIndicator(
+                value: widget.progress,
+                minHeight: 2,
+              ),
+            ),
             ExpansionTile(
+              tilePadding: const EdgeInsets.only(right: 20),
               onExpansionChanged: (value) => setState(() => isExpanded = value),
               collapsedShape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(10),
@@ -251,150 +141,55 @@ class _RemovableWarningCardState extends State<RemovableWarningCard> {
                     ),
               children: isExpanded
                   ? [
-                      Table(
-                        columnWidths: const {
-                          0: IntrinsicColumnWidth(),
-                          1: FlexColumnWidth(),
-                          2: IntrinsicColumnWidth(),
-                        },
-                        defaultVerticalAlignment: TableCellVerticalAlignment.middle,
-                        children: [
-                          TableRow(
-                            children: [
-                              const Text("Acceleration"),
-                              Slider(
-                                value: widget.instruction.acceleration,
-                                onChanged: (value) {
-                                  widget.instruction.acceleration = roundToDigits(value, 3);
-                                  widget.change(widget.instruction);
-                                },
-                              ),
-                              Text("${roundToDigits(widget.instruction.acceleration * 100, 2)}cm/s²"),
-                            ],
-                          ),
-                          TableRow(
-                            children: [
-                              const Text("Target Velocity"),
-                              Slider(
-                                value: widget.instruction.targetVelocity,
-                                onChanged: (value) {
-                                  widget.instruction.targetVelocity = roundToDigits(value, 3);
-                                  widget.change(widget.instruction);
-                                },
-                                min: 0.001,
-                              ),
-                              Text("${roundToDigits(widget.instruction.targetVelocity * 100, 2)}cm/s"),
-                            ],
-                          ),
-                          ...widget.children,
-                        ],
-                      ),
-                      const SizedBox(height: 10),
-                      const Divider(),
-                      const SizedBox(height: 10),
-                      Row(
-                        children: [
-                          SizedBox(
-                            height: 300,
-                            child: AspectRatio(
-                              aspectRatio: 2,
-                              child: LineChart(
-                                LineChartData(
-                                  borderData: FlBorderData(
-                                    border: Border.all(color: const Color(0xff37434d), width: 2),
-                                  ),
-                                  minY: minY,
-                                  lineTouchData: LineTouchData(
-                                    touchTooltipData: LineTouchTooltipData(
-                                      getTooltipItems: (List<LineBarSpot> touchedSpots) {
-                                        return touchedSpots.map((LineBarSpot touchedSpot) {
-                                          final spot = touchedSpot as FlSpot;
-                                          final end = touchedSpots.last == touchedSpot ? "" : "\n";
-                                          String leading = "";
-
-                                          if (touchedSpots.length == 2) {
-                                            leading = touchedSpot == touchedSpots.first ? "Inner " : "Outer ";
-                                          }
-
-                                          return LineTooltipItem(
-                                            "$leading$yAxisTitle: ${spot.y.toStringAsFixed(2)}$end",
-                                            const TextStyle(),
-                                          );
-                                        }).toList();
-                                      },
-                                    ),
-                                  ),
-                                  titlesData: FlTitlesData(
-                                    topTitles: const AxisTitles(),
-                                    rightTitles: const AxisTitles(),
-                                    leftTitles: AxisTitles(
-                                      axisNameWidget: Text(yAxisTitle),
-                                      sideTitles: const SideTitles(showTitles: true, reservedSize: 40),
-                                    ),
-                                    bottomTitles: AxisTitles(
-                                      axisNameWidget: Text(xAxisTitle),
-                                      axisNameSize: 20,
-                                      sideTitles: const SideTitles(showTitles: true, reservedSize: 30),
-                                    ),
-                                  ),
-                                  lineBarsData: [
-                                    LineChartBarData(
-                                      spots: data1,
-                                      color: data2 == null ? Colors.grey : Colors.red,
-                                      dotData: const FlDotData(show: false),
-                                    ),
-                                    if (data2 != null)
-                                      LineChartBarData(
-                                        spots: data2,
-                                        color: Colors.blue,
-                                        dotData: const FlDotData(show: false),
-                                      ),
-                                  ],
+                      Padding(
+                        padding: const EdgeInsets.only(right: 26),
+                        child: Table(
+                          columnWidths: const {
+                            0: IntrinsicColumnWidth(),
+                            1: FlexColumnWidth(),
+                            2: IntrinsicColumnWidth(),
+                          },
+                          defaultVerticalAlignment: TableCellVerticalAlignment.middle,
+                          children: [
+                            TableRow(
+                              children: [
+                                const Text("Acceleration"),
+                                Slider(
+                                  value: widget.instruction.acceleration,
+                                  onChanged: (value) {
+                                    widget.instruction.acceleration = roundToDigits(value, 3);
+                                    widget.change(widget.instruction);
+                                  },
                                 ),
-                              ),
+                                Text("${roundToDigits(widget.instruction.acceleration * 100, 2)}cm/s²"),
+                              ],
                             ),
-                          ),
-                          Flexible(
-                            child: Padding(
-                              padding: const EdgeInsets.all(16),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  if (widget.instructionResult is! DriveResult)
-                                    CheckboxListTile(
-                                      value: angular,
-                                      onChanged: (value) => setState(() => angular = value!),
-                                      title: const Text("Angular"),
-                                    ),
-                                  const Text("X-Axis"),
-                                  ListTile(
-                                    leading: Radio(value: XAxisType.time, groupValue: xAxisMode, onChanged: (value) => setState(() => xAxisMode = value!)),
-                                    title: const Text("Time"),
-                                  ),
-                                  ListTile(
-                                    leading: Radio(value: XAxisType.position, groupValue: xAxisMode, onChanged: (value) => setState(() => xAxisMode = value!)),
-                                    title: const Text("Position"),
-                                  ),
-                                  const Text("Y-Axis"),
-                                  ListTile(
-                                    leading: Radio(value: YAxisType.position, groupValue: yAxisMode, onChanged: (value) => setState(() => yAxisMode = value!)),
-                                    title: const Text("Position"),
-                                  ),
-                                  ListTile(
-                                    leading: Radio(value: YAxisType.velocity, groupValue: yAxisMode, onChanged: (value) => setState(() => yAxisMode = value!)),
-                                    title: const Text("Velocity"),
-                                  ),
-                                  ListTile(
-                                    leading: Radio(value: YAxisType.acceleration, groupValue: yAxisMode, onChanged: (value) => setState(() => yAxisMode = value!)),
-                                    title: const Text("Acceleration"),
-                                  ),
-                                ],
-                              ),
+                            TableRow(
+                              children: [
+                                const Text("Target Velocity"),
+                                Slider(
+                                  value: widget.instruction.targetVelocity,
+                                  onChanged: (value) {
+                                    widget.instruction.targetVelocity = roundToDigits(value, 3);
+                                    widget.change(widget.instruction);
+                                  },
+                                  min: 0.001,
+                                ),
+                                Text("${roundToDigits(widget.instruction.targetVelocity * 100, 2)}cm/s"),
+                              ],
                             ),
-                          )
-                        ],
+                            ...widget.children,
+                          ],
+                        ),
                       ),
-                      const SizedBox(height: 8),
+                      const SizedBox(height: 10),
+                      const Divider(height: 1),
+                      const SizedBox(height: 10),
+                      InstructionDetailsWidget(
+                        instructionResult: widget.instructionResult,
+                        robiConfig: widget.robiConfig,
+                        instructionProgress: widget.progress == 0 || widget.progress >= 1? null : widget.progress,
+                      ),
                     ]
                   : const [],
             ),
@@ -403,99 +198,4 @@ class _RemovableWarningCardState extends State<RemovableWarningCard> {
       ),
     );
   }
-
-  List<double> xValues(final InstructionResult res, final List<InnerOuterRobiState> states, final XAxisType xAxis, final bool angular) {
-    return states.map((state) {
-      if (xAxis == XAxisType.time) {
-        return state.timeStamp - res.timeStamp;
-      } else {
-        return angular ? (state.rotation - res.startRotation).abs() : res.startPosition.distanceTo(state.position) * 100;
-      }
-    }).toList();
-  }
-
-  List<double> yAngularValues(final InstructionResult res, final List<InnerOuterRobiState> states, final YAxisType yAxis, final bool angular) {
-    return states.map((state) {
-      double y = 0;
-
-      switch (yAxis) {
-        case YAxisType.position:
-          y = state.rotation;
-          break;
-        case YAxisType.velocity:
-          if (res is TurnResult) {
-            y = (state.outerVelocity - state.innerVelocity) / widget.robiConfig.trackWidth * (180 / pi);
-          } else if (res is RapidTurnResult) {
-            y = state.outerVelocity / (widget.robiConfig.trackWidth * pi) * 360;
-          }
-          break;
-        case YAxisType.acceleration:
-          if (res is TurnResult) {
-            y = (state.outerAcceleration - state.innerAcceleration) / widget.robiConfig.trackWidth * (180 / pi);
-          } else if (res is RapidTurnResult) {
-            y = state.outerAcceleration / (widget.robiConfig.trackWidth * pi) * 360;
-          }
-          break;
-      }
-
-      return y;
-    }).toList();
-  }
-
-  List<double> yOuterValues(final InstructionResult res, final List<InnerOuterRobiState> states, final YAxisType yAxis) {
-    return states.map((state) {
-      double y = 0;
-
-      switch (yAxis) {
-        case YAxisType.position:
-          y = state.position.distanceTo(res.startPosition);
-          break;
-        case YAxisType.velocity:
-          y = state.outerVelocity;
-          break;
-        case YAxisType.acceleration:
-          y = state.outerAcceleration;
-          break;
-      }
-
-      return y * 100;
-    }).toList();
-  }
-
-  List<double> yInnerValues(final InstructionResult res, final List<InnerOuterRobiState> states, final YAxisType yAxis) {
-    return states.map((state) {
-      double y = 0;
-
-      switch (yAxis) {
-        case YAxisType.position:
-          y = state.position.distanceTo(res.startPosition);
-          break;
-        case YAxisType.velocity:
-          y = state.innerVelocity;
-          break;
-        case YAxisType.acceleration:
-          y = state.innerAcceleration;
-          break;
-      }
-
-      return y * 100;
-    }).toList();
-  }
-
-  List<FlSpot> mergeData(final List<double> xValues, final List<double> yValues) => List.generate(
-        xValues.length,
-        (i) => FlSpot(xValues[i], yValues[i]),
-        growable: false,
-      );
-}
-
-enum XAxisType {
-  time,
-  position,
-}
-
-enum YAxisType {
-  position,
-  velocity,
-  acceleration,
 }

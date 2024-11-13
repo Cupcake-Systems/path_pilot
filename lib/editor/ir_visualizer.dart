@@ -1,25 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:robi_line_drawer/editor/painters/ir_read_painter.dart';
-import 'package:robi_line_drawer/editor/painters/robi_painter.dart';
-import 'package:robi_line_drawer/editor/visualizer.dart';
 import 'package:vector_math/vector_math.dart';
 
 import '../robi_api/ir_read_api.dart';
 import '../robi_api/robi_utils.dart';
+import 'interactable_visualizer.dart';
 import 'ir_line_approximation/approximation_settings_widget.dart';
 import 'ir_line_approximation/ir_reading_info.dart';
 
 class IrVisualizerWidget extends StatefulWidget {
   final IrReadResult? irReadResult;
   final RobiConfig robiConfig;
-  final void Function(List<Vector2> pathApproximation) onPathCreationClick;
   final double time;
   final bool enableTimeInput;
 
   const IrVisualizerWidget({
     super.key,
     required this.robiConfig,
-    required this.onPathCreationClick,
     required this.irReadResult,
     this.time = 0,
     this.enableTimeInput = true,
@@ -44,66 +41,51 @@ class _IrVisualizerWidgetState extends State<IrVisualizerWidget> {
       approximateIrPath(irCalculatorResult);
     }
 
-    return Column(
+    return Row(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        if (widget.irReadResult != null)
-          AspectRatio(
-            aspectRatio: 3 / 2,
-            child: IrVisualizer(
-              timeOffset: widget.time,
+        if (widget.irReadResult != null) ...[
+          Flexible(
+            child: InteractableIrVisualizer(
               enableTimeInput: widget.enableTimeInput,
-              scale: 10,
-              offset: Offset.zero,
-              transformChanged: (zoom, offset, lockToRobi) {},
               robiConfig: widget.robiConfig,
-              lockToRobi: false,
-              getStateAtTime: (t) {
-                final res = widget.irReadResult!.resolution;
-                final states = irCalculatorResult!.robiStates;
-
-                if (states.isEmpty) {
-                  return RobiState.zero;
-                } else if (states.length == 1) {
-                  return states.first;
-                }
-
-                for (int i = 0; i < states.length - 1; ++i) {
-                  if (t <= res * (i + 1)) {
-                    return states[i].interpolate(states[i + 1], (t - (res * i)) / res);
-                  }
-                }
-
-                return states.last;
-              },
               totalTime: widget.irReadResult!.totalTime,
-              irCalculatorResult: irCalculatorResult,
+              irCalculatorResult: irCalculatorResult!,
               irPathApproximation: irPathApproximation,
               irReadPainterSettings: irReadPainterSettings,
+              irReadResult: widget.irReadResult!,
             ),
           ),
-        const Divider(height: 0),
-        IrPathApproximationSettingsWidget(
-          onPathCreation: irPathApproximation == null ? null : () => widget.onPathCreationClick(irPathApproximation!),
-          onSettingsChange: (
-            settings,
-            irInclusionThreshold,
-            ramerDouglasPeuckerTolerance,
-          ) {
-            setState(() {
-              irReadPainterSettings = settings;
-              this.irInclusionThreshold = irInclusionThreshold;
-              this.ramerDouglasPeuckerTolerance = ramerDouglasPeuckerTolerance;
-              if (irCalculatorResult != null) approximateIrPath(irCalculatorResult);
-            });
-          },
-        ),
-        if (widget.irReadResult != null)
-          IrReadingInfoWidget(
-            selectedRobiConfig: widget.robiConfig,
-            irReadResult: widget.irReadResult!,
-            irCalculatorResult: irCalculatorResult!,
+        ] else ...[
+          const Center(),
+        ],
+        const VerticalDivider(width: 0),
+        Expanded(
+          child: ListView(
+            children: [
+              IrPathApproximationSettingsWidget(
+                onSettingsChange: (
+                  settings,
+                  irInclusionThreshold,
+                  ramerDouglasPeuckerTolerance,
+                ) {
+                  setState(() {
+                    irReadPainterSettings = settings;
+                    this.irInclusionThreshold = irInclusionThreshold;
+                    this.ramerDouglasPeuckerTolerance = ramerDouglasPeuckerTolerance;
+                    if (irCalculatorResult != null) approximateIrPath(irCalculatorResult);
+                  });
+                },
+              ),
+              if (widget.irReadResult != null)
+                IrReadingInfoWidget(
+                  selectedRobiConfig: widget.robiConfig,
+                  irReadResult: widget.irReadResult!,
+                  irCalculatorResult: irCalculatorResult!,
+                ),
+            ],
           ),
+        ),
       ],
     );
   }
@@ -115,4 +97,5 @@ class _IrVisualizerWidgetState extends State<IrVisualizerWidget> {
       ramerDouglasPeuckerTolerance,
     );
   }
+
 }

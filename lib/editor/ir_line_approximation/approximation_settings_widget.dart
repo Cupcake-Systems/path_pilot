@@ -14,12 +14,10 @@ class IrPathApproximationSettingsWidget extends StatefulWidget {
     int irInclusionThreshold,
     double ramerDouglasPeuckerTolerance,
   ) onSettingsChange;
-  final void Function()? onPathCreation;
 
   const IrPathApproximationSettingsWidget({
     super.key,
     required this.onSettingsChange,
-    required this.onPathCreation,
   });
 
   @override
@@ -143,15 +141,6 @@ class _IrPathApproximationSettingsWidgetState extends State<IrPathApproximationS
                             settingsChange();
                           },
                           max: 1024,
-                        ),
-                      ],
-                    ),
-                    TableRow(
-                      children: [
-                        const Text("Convert to Path"),
-                        OutlinedButton(
-                          onPressed: widget.onPathCreation,
-                          child: const Text("To Path"),
                         ),
                       ],
                     ),
