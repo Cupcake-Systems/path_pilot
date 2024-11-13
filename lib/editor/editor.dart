@@ -4,6 +4,7 @@ import 'dart:math';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_resizable_container/flutter_resizable_container.dart';
 import 'package:robi_line_drawer/editor/add_instruction_dialog.dart';
 import 'package:robi_line_drawer/editor/instructions/abstract.dart';
 import 'package:robi_line_drawer/editor/instructions/rapid_turn.dart';
@@ -51,9 +52,11 @@ class _EditorState extends State<Editor> with AutomaticKeepAliveClientMixin {
   @override
   Widget build(BuildContext context) {
     super.build(context);
-    return Row(
+    return ResizableContainer(
+      direction: Axis.horizontal,
+      divider: const ResizableDivider(thickness: 3),
       children: [
-        Flexible(
+        ResizableChild(
           child: InteractableInstructionsVisualizer(
             simulationResult: simulationResult,
             totalTime: simulationResult.totalTime,
@@ -64,8 +67,7 @@ class _EditorState extends State<Editor> with AutomaticKeepAliveClientMixin {
             time: time,
           ),
         ),
-        const VerticalDivider(width: 1),
-        Flexible(
+        ResizableChild(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [

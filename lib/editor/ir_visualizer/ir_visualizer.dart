@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_resizable_container/flutter_resizable_container.dart';
 import 'package:robi_line_drawer/editor/painters/ir_read_painter.dart';
 import 'package:vector_math/vector_math.dart';
 
@@ -41,12 +42,12 @@ class _IrVisualizerWidgetState extends State<IrVisualizerWidget> {
       approximateIrPath(irCalculatorResult);
     }
 
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
+    return ResizableContainer(
+      direction: Axis.horizontal,
+      divider: const ResizableDivider(thickness: 3),
       children: [
-        if (widget.irReadResult != null) ...[
-          Flexible(
-            child: InteractableIrVisualizer(
+          ResizableChild(
+            child: widget.irReadResult == null? Container(): InteractableIrVisualizer(
               enableTimeInput: widget.enableTimeInput,
               robiConfig: widget.robiConfig,
               totalTime: widget.irReadResult!.totalTime,
@@ -56,11 +57,7 @@ class _IrVisualizerWidgetState extends State<IrVisualizerWidget> {
               irReadResult: widget.irReadResult!,
             ),
           ),
-        ] else ...[
-          const Center(),
-        ],
-        const VerticalDivider(width: 0),
-        Expanded(
+        ResizableChild(
           child: ListView(
             children: [
               IrPathApproximationSettingsWidget(
