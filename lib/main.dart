@@ -7,11 +7,9 @@ import 'package:robi_line_drawer/app_storage.dart';
 import 'package:robi_line_drawer/constants.dart';
 import 'package:robi_line_drawer/editor/painters/robi_painter.dart';
 import 'package:robi_line_drawer/file_browser.dart';
-import 'package:universal_ble/universal_ble.dart';
 
 late final PackageInfo packageInfo;
 
-Map<String, void Function(String deviceId, bool connected)> bleConnectionChange = {};
 final rand = Random();
 
 Future<void> main() async {
@@ -20,13 +18,6 @@ Future<void> main() async {
   await AppData.init();
   packageInfo = await PackageInfo.fromPlatform();
   await RobiPainter.init();
-
-  UniversalBle.onConnectionChange = (deviceId, isConnected, String? error) {
-    if (error != null) return;
-    for (final element in bleConnectionChange.values) {
-      element(deviceId, isConnected);
-    }
-  };
 
   runApp(const MyApp());
 }
