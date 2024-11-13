@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:flutter/material.dart';
 import 'package:robi_line_drawer/robi_api/robi_utils.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -60,10 +61,14 @@ class RobiConfigStorage {
 class SettingsStorage {
   static const String _developerModeKey = "developerMode";
   static const String _visualizerFpsKey = "visualizerFps";
+  static const String _orientationKey = "orientation";
 
   static bool get developerMode => AppData._prefs.getBool(_developerModeKey) ?? false;
   static set developerMode(bool value) => AppData._prefs.setBool(_developerModeKey, value);
 
   static int get visualizerFps => AppData._prefs.getInt(_visualizerFpsKey) ?? 30;
   static set visualizerFps(int value) => AppData._prefs.setInt(_visualizerFpsKey, value);
+
+  static Axis get orientation => (AppData._prefs.getBool(_orientationKey) ?? true)? Axis.horizontal: Axis.vertical;
+  static set orientation(Axis orientation) => AppData._prefs.setBool(_orientationKey, orientation == Axis.horizontal);
 }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_resizable_container/flutter_resizable_container.dart';
+import 'package:robi_line_drawer/app_storage.dart';
 import 'package:robi_line_drawer/editor/painters/ir_read_painter.dart';
 import 'package:vector_math/vector_math.dart';
 
@@ -43,7 +44,7 @@ class _IrVisualizerWidgetState extends State<IrVisualizerWidget> {
     }
 
     return ResizableContainer(
-      direction: Axis.horizontal,
+      direction: SettingsStorage.orientation,
       divider: const ResizableDivider(thickness: 3),
       children: [
           ResizableChild(

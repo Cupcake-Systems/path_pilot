@@ -21,6 +21,29 @@ class _SettingsPageState extends State<SettingsPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  Text("Layout", style: Theme.of(context).textTheme.headlineSmall),
+                  const Divider(),
+                  ListTile(
+                    title: const Text("Orientation"),
+                    trailing: DropdownMenu(
+                      initialSelection: SettingsStorage.orientation,
+                      onSelected: (value) => setState(() => SettingsStorage.orientation = value!),
+                      dropdownMenuEntries: const [
+                        DropdownMenuEntry(value: Axis.horizontal, label: "Horizontal"),
+                        DropdownMenuEntry(value: Axis.vertical, label: "Vertical"),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
                   Text("Visualizer", style: Theme.of(context).textTheme.headlineSmall),
                   const Divider(),
                   ListTile(

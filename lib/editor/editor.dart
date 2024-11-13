@@ -53,7 +53,7 @@ class _EditorState extends State<Editor> with AutomaticKeepAliveClientMixin {
   Widget build(BuildContext context) {
     super.build(context);
     return ResizableContainer(
-      direction: Axis.horizontal,
+      direction: SettingsStorage.orientation,
       divider: const ResizableDivider(thickness: 3),
       children: [
         ResizableChild(
