@@ -38,8 +38,12 @@ class IrMeasurementWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     final measurement = irReadResult.measurements[index];
 
-    final leftVel = freqToVel(measurement.motorLeftFreq, robiConfig.wheelRadius)  * (measurement.leftFwd ? 1 : -1);
+    final leftVel = freqToVel(measurement.motorLeftFreq, robiConfig.wheelRadius) * (measurement.leftFwd ? 1 : -1);
     final rightVel = freqToVel(measurement.motorRightFreq, robiConfig.wheelRadius) * (measurement.rightFwd ? 1 : -1);
+
+    final leftGrey = (measurement.leftIr / 1024 * 255).toInt();
+    final middleGrey = (measurement.middleIr / 1024 * 255).toInt();
+    final rightGrey = (measurement.rightIr / 1024 * 255).toInt();
 
     return Card(
       child: Padding(
@@ -52,18 +56,44 @@ class IrMeasurementWidget extends StatelessWidget {
             Table(
               defaultColumnWidth: const IntrinsicColumnWidth(),
               children: [
-                TableRow(
-                  children: [
-                    const Text("IR Readings (Raw):    "),
-                    Text("${measurement.leftIr} | ${measurement.middleIr} | ${measurement.rightIr}"),
-                  ]
-                ),
-                TableRow(
-                  children: [
-                    const Text("Motor Speeds:    "),
-                    Text("${measurement.motorLeftFreq} Hz (${(leftVel * 100).toStringAsFixed(2)}cm/s) | ${measurement.motorRightFreq} Hz (${(rightVel * 100).toStringAsFixed(2)}cm/s)"),
-                  ]
-                )
+                TableRow(children: [
+                  const Text("IR Readings (Raw):    "),
+                  Row(
+                    children: [
+                      Text("L: ${measurement.leftIr} "),
+                      Container(
+                        width: 15,
+                        height: 15,
+                        decoration: BoxDecoration(
+                          color: Color.fromRGBO(leftGrey, leftGrey, leftGrey, 1),
+                          borderRadius: BorderRadius.circular(7.5),
+                        ),
+                      ),
+                      Text("   M: ${measurement.middleIr} "),
+                      Container(
+                        width: 15,
+                        height: 15,
+                        decoration: BoxDecoration(
+                          color: Color.fromRGBO(middleGrey, middleGrey, middleGrey, 1),
+                          borderRadius: BorderRadius.circular(7.5),
+                        ),
+                      ),
+                      Text("   R: ${measurement.rightIr} "),
+                      Container(
+                        width: 15,
+                        height: 15,
+                        decoration: BoxDecoration(
+                          color: Color.fromRGBO(rightGrey, rightGrey, rightGrey, 1),
+                          borderRadius: BorderRadius.circular(7.5),
+                        ),
+                      ),
+                    ],
+                  )
+                ]),
+                TableRow(children: [
+                  const Text("Motor Speeds:    "),
+                  Text("L: ${measurement.motorLeftFreq} Hz (${(leftVel * 100).toStringAsFixed(2)}cm/s)   R: ${measurement.motorRightFreq} Hz (${(rightVel * 100).toStringAsFixed(2)}cm/s)"),
+                ])
               ],
             )
           ],
