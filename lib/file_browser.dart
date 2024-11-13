@@ -14,7 +14,7 @@ import 'package:robi_line_drawer/welcome_screen.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 
 import 'app_storage.dart';
-import 'editor/ir_visualizer.dart';
+import 'editor/ir_visualizer/ir_visualizer.dart';
 
 class FileBrowser extends StatefulWidget {
   const FileBrowser({super.key});

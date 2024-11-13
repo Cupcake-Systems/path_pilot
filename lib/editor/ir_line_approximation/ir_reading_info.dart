@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:robi_line_drawer/editor/editor.dart';
+import 'package:robi_line_drawer/editor/ir_visualizer/ir_readings_visualizer.dart';
 import 'package:vector_math/vector_math.dart' show Vector2;
 
 import '../../robi_api/ir_read_api.dart';
@@ -34,19 +35,22 @@ class IrReadingInfoWidget extends StatelessWidget {
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(8.0),
-        child: Row(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text("IR Reading", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-                  Text("${irReadResult.measurements.length} readings"),
-                  Text("${irReadResult.resolution}s between each reading"),
-                  Text("Left track length: ${roundToDigits(leftTravelDistance, 2)}m"),
-                  Text("Right track length: ${roundToDigits(rightTravelDistance, 2)}m"),
-                ],
-              ),
+            const Text("IR Reading", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+            Text("${irReadResult.measurements.length} readings"),
+            Text("${irReadResult.resolution}s between each reading"),
+            Text("Left track length: ${roundToDigits(leftTravelDistance, 2)}m"),
+            Text("Right track length: ${roundToDigits(rightTravelDistance, 2)}m"),
+            const SizedBox(height: 8),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.of(context).push(MaterialPageRoute(
+                  builder: (context) => IrReadingsVisualizer(irReadResult: irReadResult, robiConfig: selectedRobiConfig),
+                ));
+              },
+              child: const Text("View readings"),
             ),
           ],
         ),

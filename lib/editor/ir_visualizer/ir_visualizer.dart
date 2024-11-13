@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:robi_line_drawer/editor/painters/ir_read_painter.dart';
 import 'package:vector_math/vector_math.dart';
 
-import '../robi_api/ir_read_api.dart';
-import '../robi_api/robi_utils.dart';
-import 'interactable_visualizer.dart';
-import 'ir_line_approximation/approximation_settings_widget.dart';
-import 'ir_line_approximation/ir_reading_info.dart';
+import '../../robi_api/ir_read_api.dart';
+import '../../robi_api/robi_utils.dart';
+import '../interactable_visualizer.dart';
+import '../ir_line_approximation/approximation_settings_widget.dart';
+import '../ir_line_approximation/ir_reading_info.dart';
 
 class IrVisualizerWidget extends StatefulWidget {
   final IrReadResult? irReadResult;
