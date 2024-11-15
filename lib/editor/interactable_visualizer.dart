@@ -19,7 +19,7 @@ class InteractableIrVisualizer extends StatefulWidget {
   final double totalTime;
 
   const InteractableIrVisualizer({
-    super.key,
+    super.key = const ValueKey('InteractableIrVisualizer'),
     required this.enableTimeInput,
     required this.robiConfig,
     required this.irCalculatorResult,
@@ -99,7 +99,7 @@ class InteractableInstructionsVisualizer extends StatefulWidget {
   final double? time;
 
   const InteractableInstructionsVisualizer({
-    super.key,
+    super.key = const ValueKey('InteractableInstructionsVisualizer'),
     required this.robiConfig,
     required this.totalTime,
     required this.simulationResult,

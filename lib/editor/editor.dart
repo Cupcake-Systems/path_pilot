@@ -60,7 +60,6 @@ class _EditorState extends State<Editor> with AutomaticKeepAliveClientMixin {
           child: InteractableInstructionsVisualizer(
             simulationResult: simulationResult,
             totalTime: simulationResult.totalTime,
-            key: ValueKey(simulationResult),
             robiConfig: widget.selectedRobiConfig,
             highlightedInstruction: highlightedInstruction,
             onTimeChanged: (newTime) => setState(() => time = newTime),
