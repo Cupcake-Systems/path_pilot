@@ -3,10 +3,10 @@ import 'dart:math';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:package_info_plus/package_info_plus.dart';
-import 'package:robi_line_drawer/app_storage.dart';
-import 'package:robi_line_drawer/constants.dart';
-import 'package:robi_line_drawer/editor/painters/robi_painter.dart';
-import 'package:robi_line_drawer/file_browser.dart';
+import 'package:path_pilot/app_storage.dart';
+import 'package:path_pilot/constants.dart';
+import 'package:path_pilot/editor/painters/robi_painter.dart';
+import 'package:path_pilot/file_browser.dart';
 
 late final PackageInfo packageInfo;
 
@@ -14,7 +14,7 @@ final rand = Random();
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  LicenseRegistry.addLicense(() => Stream<LicenseEntry>.value(const LicenseEntryWithLineBreaks(<String>["robi_line_drawer"], license)));
+  LicenseRegistry.addLicense(() => Stream<LicenseEntry>.value(const LicenseEntryWithLineBreaks(<String>["path_pilot"], license)));
   await AppData.init();
   packageInfo = await PackageInfo.fromPlatform();
   await RobiPainter.init();
@@ -28,7 +28,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Robi Line Drawer',
+      title: 'Path Pilot',
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.cyan, brightness: Brightness.dark),
         useMaterial3: true,

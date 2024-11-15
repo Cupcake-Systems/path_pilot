@@ -1,8 +1,8 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:robi_line_drawer/editor/add_instruction_dialog.dart';
-import 'package:robi_line_drawer/robi_api/robi_utils.dart';
+import 'package:path_pilot/editor/add_instruction_dialog.dart';
+import 'package:path_pilot/robi_api/robi_utils.dart';
 
 class InstructionContainer {
   late final UserInstruction type;

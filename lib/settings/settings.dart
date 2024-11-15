@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:robi_line_drawer/app_storage.dart';
+import 'package:path_pilot/app_storage.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});

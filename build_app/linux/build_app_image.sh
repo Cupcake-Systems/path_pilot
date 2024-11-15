@@ -5,7 +5,7 @@ cd "$(dirname "$0")"
 FLUTTER_BUILD_DIR="../../build/linux/x64/release/bundle"
 APP_DIR="../../build/linux/x64/release/AppDir"
 ICON_NAME="icon.png" # Replace with your icon file name
-DESKTOP_FILE_NAME="robi_line_drawer.desktop" # Replace with your desktop file name
+DESKTOP_FILE_NAME="path_pilot.desktop" # Replace with your desktop file name
 VERSION="1.0.0"
 
 # Step 1: Build Flutter app for Linux

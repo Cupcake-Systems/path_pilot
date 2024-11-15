@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:robi_line_drawer/robi_api/ir_read_api.dart';
-import 'package:robi_line_drawer/robi_api/robi_utils.dart';
+import 'package:path_pilot/robi_api/ir_read_api.dart';
+import 'package:path_pilot/robi_api/robi_utils.dart';
 
 class IrReadingsVisualizer extends StatelessWidget {
   final IrReadResult irReadResult;

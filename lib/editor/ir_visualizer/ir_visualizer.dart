@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_resizable_container/flutter_resizable_container.dart';
-import 'package:robi_line_drawer/app_storage.dart';
-import 'package:robi_line_drawer/editor/painters/ir_read_painter.dart';
+import 'package:path_pilot/app_storage.dart';
+import 'package:path_pilot/editor/painters/ir_read_painter.dart';
 import 'package:vector_math/vector_math.dart';
 
 import '../../robi_api/ir_read_api.dart';

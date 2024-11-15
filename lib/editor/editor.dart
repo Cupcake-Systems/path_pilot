@@ -5,11 +5,11 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_resizable_container/flutter_resizable_container.dart';
-import 'package:robi_line_drawer/editor/add_instruction_dialog.dart';
-import 'package:robi_line_drawer/editor/instructions/abstract.dart';
-import 'package:robi_line_drawer/editor/instructions/rapid_turn.dart';
-import 'package:robi_line_drawer/editor/interactable_visualizer.dart';
-import 'package:robi_line_drawer/robi_api/robi_utils.dart';
+import 'package:path_pilot/editor/add_instruction_dialog.dart';
+import 'package:path_pilot/editor/instructions/abstract.dart';
+import 'package:path_pilot/editor/instructions/rapid_turn.dart';
+import 'package:path_pilot/editor/interactable_visualizer.dart';
+import 'package:path_pilot/robi_api/robi_utils.dart';
 
 import '../app_storage.dart';
 import '../robi_api/exporter/exporter.dart';

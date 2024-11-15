@@ -1,7 +1,7 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
-import 'package:robi_line_drawer/editor/painters/abstract_painter.dart';
+import 'package:path_pilot/editor/painters/abstract_painter.dart';
 import 'package:vector_math/vector_math.dart' show Aabb2, Vector2;
 
 import '../../robi_api/ir_read_api.dart';

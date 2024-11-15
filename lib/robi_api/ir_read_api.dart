@@ -2,9 +2,9 @@ import 'dart:io';
 import 'dart:math';
 import 'dart:typed_data';
 
-import 'package:robi_line_drawer/editor/ir_line_approximation/ramers_douglas.dart';
-import 'package:robi_line_drawer/editor/painters/robi_painter.dart';
-import 'package:robi_line_drawer/robi_api/robi_utils.dart';
+import 'package:path_pilot/editor/ir_line_approximation/ramers_douglas.dart';
+import 'package:path_pilot/editor/painters/robi_painter.dart';
+import 'package:path_pilot/robi_api/robi_utils.dart';
 import 'package:vector_math/vector_math.dart';
 
 import '../helper/geometry.dart';
@@ -35,7 +35,7 @@ class Measurement {
         );
 
   /// Measurement binary structure documentation:
-  /// https://github.com/Finnomator/robi_line_drawer/wiki/IR-Read-Result-Binary-File-Definition#64-bit-measurement-format
+  /// https://github.com/Cupcake-Systems/path_pilot/wiki/IR-Read-Result-Binary-File-Definition#64-bit-measurement-format
   factory Measurement.fromLine(ByteData line) {
     final readAndFwdByte = line.getUint32(4);
     return Measurement(
@@ -58,7 +58,7 @@ class IrReadResult {
   IrReadResult({required this.resolution, required this.measurements});
 
   /// Binary file structure documentation:
-  /// https://github.com/Finnomator/robi_line_drawer/wiki/IR-Read-Result-Binary-File-Definition
+  /// https://github.com/Cupcake-Systems/path_pilot/wiki/IR-Read-Result-Binary-File-Definition
   factory IrReadResult.fromData(ByteBuffer data) {
     final dataLineCount = data.asByteData(2).lengthInBytes ~/ 8;
 

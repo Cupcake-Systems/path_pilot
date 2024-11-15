@@ -3,9 +3,9 @@ import 'dart:ui' as ui show Image;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:robi_line_drawer/editor/painters/abstract_painter.dart';
-import 'package:robi_line_drawer/robi_api/ir_read_api.dart';
-import 'package:robi_line_drawer/robi_api/robi_utils.dart';
+import 'package:path_pilot/editor/painters/abstract_painter.dart';
+import 'package:path_pilot/robi_api/ir_read_api.dart';
+import 'package:path_pilot/robi_api/robi_utils.dart';
 import 'package:vector_math/vector_math.dart' show Vector2, degrees2Radians, radians2Degrees;
 
 import '../../helper/geometry.dart';

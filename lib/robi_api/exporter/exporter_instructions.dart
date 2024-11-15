@@ -1,4 +1,4 @@
-import 'package:robi_line_drawer/editor/editor.dart';
+import 'package:path_pilot/editor/editor.dart';
 
 abstract class ExportedMissionInstruction {
   ExportedMissionInstruction({

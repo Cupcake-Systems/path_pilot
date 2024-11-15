@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:robi_line_drawer/editor/editor.dart';
-import 'package:robi_line_drawer/editor/instructions/instruction_details.dart';
+import 'package:path_pilot/editor/editor.dart';
+import 'package:path_pilot/editor/instructions/instruction_details.dart';
 import 'package:vector_math/vector_math.dart' show Vector2;
 
 import '../../robi_api/robi_utils.dart';

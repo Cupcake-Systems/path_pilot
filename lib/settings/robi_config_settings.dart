@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:robi_line_drawer/app_storage.dart';
-import 'package:robi_line_drawer/file_browser.dart';
+import 'package:path_pilot/app_storage.dart';
+import 'package:path_pilot/file_browser.dart';
 
 import '../editor/robi_config.dart';
 import '../robi_api/robi_utils.dart';

@@ -1,7 +1,7 @@
-name: robi_line_drawer
-description: "An app to draw lines for the robi to follow."
-repository: https://github.com/Finnomator/robi_line_drawer
-issue_tracker: https://github.com/Finnomator/robi_line_drawer/issues
+name: path_pilot
+description: "Create, upload, and analyze precise path instructions for line-following robots."
+repository: https://github.com/Cupcake-Systems/path_pilot
+issue_tracker: https://github.com/Cupcake-Systems/path_pilot/issues
 
 publish_to: 'none'
 

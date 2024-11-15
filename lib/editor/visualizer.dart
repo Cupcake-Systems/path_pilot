@@ -2,12 +2,12 @@ import 'dart:math';
 
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:robi_line_drawer/editor/painters/ir_read_painter.dart';
-import 'package:robi_line_drawer/editor/painters/line_painter.dart';
-import 'package:robi_line_drawer/editor/painters/robi_painter.dart';
-import 'package:robi_line_drawer/editor/painters/timeline_painter.dart';
-import 'package:robi_line_drawer/robi_api/ir_read_api.dart';
-import 'package:robi_line_drawer/robi_api/robi_utils.dart';
+import 'package:path_pilot/editor/painters/ir_read_painter.dart';
+import 'package:path_pilot/editor/painters/line_painter.dart';
+import 'package:path_pilot/editor/painters/robi_painter.dart';
+import 'package:path_pilot/editor/painters/timeline_painter.dart';
+import 'package:path_pilot/robi_api/ir_read_api.dart';
+import 'package:path_pilot/robi_api/robi_utils.dart';
 import 'package:vector_math/vector_math.dart' show Vector2;
 
 class InstructionsVisualizer extends Visualizer {

@@ -89,13 +89,13 @@ BEGIN
     BEGIN
         BLOCK "040904e4"
         BEGIN
-            VALUE "CompanyName", "com.example" "\0"
-            VALUE "FileDescription", "robi_line_drawer" "\0"
+            VALUE "CompanyName", "com.cupcake-systems" "\0"
+            VALUE "FileDescription", "path_pilot" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
-            VALUE "InternalName", "robi_line_drawer" "\0"
-            VALUE "LegalCopyright", "Copyright (C) 2024 com.example. All rights reserved." "\0"
-            VALUE "OriginalFilename", "robi_line_drawer.exe" "\0"
-            VALUE "ProductName", "robi_line_drawer" "\0"
+            VALUE "InternalName", "path_pilot" "\0"
+            VALUE "LegalCopyright", "Copyright (C) 2024 com.cupcake-systems. All rights reserved." "\0"
+            VALUE "OriginalFilename", "path_pilot.exe" "\0"
+            VALUE "ProductName", "path_pilot" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"
         END
     END

@@ -1,8 +1,8 @@
 import 'dart:math';
 
 import 'package:flutter/foundation.dart';
-import 'package:robi_line_drawer/editor/painters/robi_painter.dart';
-import 'package:robi_line_drawer/robi_api/exporter/exporter_instructions.dart';
+import 'package:path_pilot/editor/painters/robi_painter.dart';
+import 'package:path_pilot/robi_api/exporter/exporter_instructions.dart';
 import 'package:vector_math/vector_math.dart';
 
 import '../helper/geometry.dart';

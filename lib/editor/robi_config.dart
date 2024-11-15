@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:robi_line_drawer/app_storage.dart';
-import 'package:robi_line_drawer/file_browser.dart';
-import 'package:robi_line_drawer/robi_api/robi_utils.dart';
+import 'package:path_pilot/app_storage.dart';
+import 'package:path_pilot/file_browser.dart';
+import 'package:path_pilot/robi_api/robi_utils.dart';
 
 class RobiConfigurator extends StatelessWidget {
   final void Function(RobiConfig config) addedConfig;

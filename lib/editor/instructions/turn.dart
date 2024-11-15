@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:robi_line_drawer/editor/instructions/abstract.dart';
+import 'package:path_pilot/editor/instructions/abstract.dart';
 
 import '../../robi_api/robi_utils.dart';
 import '../editor.dart';

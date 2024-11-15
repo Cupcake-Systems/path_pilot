@@ -2,15 +2,15 @@ import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
-import 'package:robi_line_drawer/constants.dart';
-import 'package:robi_line_drawer/editor/editor.dart';
-import 'package:robi_line_drawer/main.dart';
-import 'package:robi_line_drawer/robi_api/ir_read_api.dart';
-import 'package:robi_line_drawer/robi_api/robi_path_serializer.dart';
-import 'package:robi_line_drawer/robi_api/robi_utils.dart';
-import 'package:robi_line_drawer/settings/robi_config_settings.dart';
-import 'package:robi_line_drawer/settings/settings.dart';
-import 'package:robi_line_drawer/welcome_screen.dart';
+import 'package:path_pilot/constants.dart';
+import 'package:path_pilot/editor/editor.dart';
+import 'package:path_pilot/main.dart';
+import 'package:path_pilot/robi_api/ir_read_api.dart';
+import 'package:path_pilot/robi_api/robi_path_serializer.dart';
+import 'package:path_pilot/robi_api/robi_utils.dart';
+import 'package:path_pilot/settings/robi_config_settings.dart';
+import 'package:path_pilot/settings/settings.dart';
+import 'package:path_pilot/welcome_screen.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 
 import 'app_storage.dart';
@@ -126,7 +126,7 @@ class _FileBrowserState extends State<FileBrowser> {
                         onPressed: () {
                           showAboutDialog(
                             context: context,
-                            applicationName: "Robi Line Drawer",
+                            applicationName: packageInfo.appName,
                             applicationVersion: packageInfo.version,
                             applicationLegalese: "© Copyright Finn Drünert 2024",
                             children: [
