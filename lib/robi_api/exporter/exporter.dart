@@ -4,6 +4,8 @@ import 'dart:io';
 import 'package:path_pilot/robi_api/exporter/exporter_instructions.dart';
 import 'package:path_pilot/robi_api/robi_utils.dart';
 
+import '../../file_browser.dart';
+
 class Exported {
   final RobiConfig config;
   final List<InstructionResult> instructionResults;
@@ -41,5 +43,5 @@ class Exporter {
     return gZipJson;
   }
 
-  static Future<File> saveToFile(File file, RobiConfig config, List<InstructionResult> instructions) => file.writeAsBytes(encodeAndCompress(config, instructions));
+  static Future<void> saveToFile(RobiConfig config, List<InstructionResult> instructions) => saveFile("Please select an output file:", "exported.json.gz", encodeAndCompress(config, instructions));
 }

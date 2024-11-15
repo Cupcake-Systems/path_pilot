@@ -1,7 +1,6 @@
 import 'dart:io';
 import 'dart:math';
 
-import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_resizable_container/flutter_resizable_container.dart';
@@ -212,13 +211,7 @@ class _EditorState extends State<Editor> with AutomaticKeepAliveClientMixin {
   }
 
   void exportClick() async {
-    final path = await FilePicker.platform.saveFile(
-      dialogTitle: "Please select an output file:",
-      fileName: "exported.json.gz",
-    );
-    if (path == null) return;
     Exporter.saveToFile(
-      File(path),
       widget.selectedRobiConfig,
       simulationResult.instructionResults,
     );

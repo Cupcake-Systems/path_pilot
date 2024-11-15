@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:path_pilot/constants.dart';
 import 'package:path_pilot/editor/editor.dart';
 import 'package:path_pilot/main.dart';
@@ -11,6 +12,7 @@ import 'package:path_pilot/robi_api/robi_utils.dart';
 import 'package:path_pilot/settings/robi_config_settings.dart';
 import 'package:path_pilot/settings/settings.dart';
 import 'package:path_pilot/welcome_screen.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 
 import 'app_storage.dart';
@@ -186,6 +188,7 @@ class _FileBrowserState extends State<FileBrowser> {
                     Center(
                       child: ElevatedButton.icon(
                         onPressed: () async {
+                          if (!await getExternalStoragePermission()) return;
                           final result = await FilePicker.platform.pickFiles(
                             type: FileType.custom,
                             allowedExtensions: ["bin"],
@@ -236,18 +239,19 @@ class _FileBrowserState extends State<FileBrowser> {
   }
 
   Future<void> newFile() async {
-    final result = await FilePicker.platform.saveFile(dialogTitle: "Please select an output file:", fileName: "new.robi_script.json");
-
+    final result = await saveFile("Please select an output file:", "new.robi_script.json", []);
     if (result == null) return;
 
     setState(() {
-      openedFile = File(result);
+      openedFile = result;
       loadedInstructions = [];
       errorMessage = null;
     });
   }
 
   Future<void> openFile(BuildContext context) async {
+    if (!await getExternalStoragePermission()) return;
+
     final result = await FilePicker.platform.pickFiles(
       type: FileType.custom,
       allowedExtensions: ["robi_script.json", ".json"],
@@ -275,3 +279,50 @@ class _FileBrowserState extends State<FileBrowser> {
 }
 
 const defaultRobiConfig = RobiConfig(0.032, 0.135, 0.075, 0.025, 0.01, "Default");
+
+Future<bool> getExternalStoragePermission() async {
+  if (!Platform.isAndroid) return true;
+
+  final info = await deviceInfo.androidInfo;
+  PermissionStatus status;
+
+  if (info.version.sdkInt < 30) {
+    status = await Permission.storage.status;
+
+    if (!status.isGranted) {
+      status = await Permission.storage.request();
+    }
+  } else {
+    status = await Permission.manageExternalStorage.status;
+
+    if (!status.isGranted) {
+      status = await Permission.manageExternalStorage.request();
+    }
+  }
+
+  return status.isGranted;
+}
+
+Future<File?> saveFile(String dialogTitle, String fileName, List<int> data) async {
+  if (Platform.isAndroid) {
+    if (!await getExternalStoragePermission()) return null;
+    final p = await FilePicker.platform.saveFile(
+      dialogTitle: dialogTitle,
+      fileName: fileName,
+      bytes: Uint8List.fromList(data),
+    );
+    if (p == null) return null;
+    return File(p);
+  }
+
+  final result = await FilePicker.platform.saveFile(
+    dialogTitle: dialogTitle,
+    fileName: fileName,
+  );
+
+  if (result == null) return null;
+
+  final f = File(result);
+  f.writeAsBytes(data);
+  return f;
+}

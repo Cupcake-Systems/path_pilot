@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:path_pilot/main.dart';
 import 'package:path_pilot/robi_api/robi_utils.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -69,6 +70,13 @@ class SettingsStorage {
   static int get visualizerFps => AppData._prefs.getInt(_visualizerFpsKey) ?? 30;
   static set visualizerFps(int value) => AppData._prefs.setInt(_visualizerFpsKey, value);
 
-  static Axis get orientation => (AppData._prefs.getBool(_orientationKey) ?? true)? Axis.horizontal: Axis.vertical;
+  static Axis get orientation {
+    final horizontal = AppData._prefs.getBool(_orientationKey);
+    if (horizontal == null) {
+      if (isPortrait) return Axis.vertical;
+      return Axis.horizontal;
+    }
+    return horizontal ? Axis.horizontal : Axis.vertical;
+  }
   static set orientation(Axis orientation) => AppData._prefs.setBool(_orientationKey, orientation == Axis.horizontal);
 }
