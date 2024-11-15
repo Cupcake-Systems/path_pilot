@@ -47,17 +47,19 @@ class _IrVisualizerWidgetState extends State<IrVisualizerWidget> {
       direction: SettingsStorage.orientation,
       divider: const ResizableDivider(thickness: 3),
       children: [
-          ResizableChild(
-            child: widget.irReadResult == null? Container(): InteractableIrVisualizer(
-              enableTimeInput: widget.enableTimeInput,
-              robiConfig: widget.robiConfig,
-              totalTime: widget.irReadResult!.totalTime,
-              irCalculatorResult: irCalculatorResult!,
-              irPathApproximation: irPathApproximation,
-              irReadPainterSettings: irReadPainterSettings,
-              irReadResult: widget.irReadResult!,
-            ),
-          ),
+        ResizableChild(
+          child: widget.irReadResult == null
+              ? Container()
+              : InteractableIrVisualizer(
+                  enableTimeInput: widget.enableTimeInput,
+                  robiConfig: widget.robiConfig,
+                  totalTime: widget.irReadResult!.totalTime,
+                  irCalculatorResult: irCalculatorResult!,
+                  irPathApproximation: irPathApproximation,
+                  irReadPainterSettings: irReadPainterSettings,
+                  irReadResult: widget.irReadResult!,
+                ),
+        ),
         ResizableChild(
           child: ListView(
             children: [
@@ -95,5 +97,4 @@ class _IrVisualizerWidgetState extends State<IrVisualizerWidget> {
       ramerDouglasPeuckerTolerance,
     );
   }
-
 }

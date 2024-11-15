@@ -26,6 +26,8 @@ class InstructionsVisualizer extends Visualizer {
     required super.onOffsetChanged,
     required super.onLockToRobiChanged,
     required super.onTimeChanged,
+    required super.play,
+    required super.onTogglePlay,
     super.enableTimeInput,
   }) : super(
           simulationResult: simulationResult,
@@ -51,6 +53,8 @@ class IrVisualizer extends Visualizer {
     required super.onOffsetChanged,
     required super.onLockToRobiChanged,
     required super.onTimeChanged,
+    required super.play,
+    required super.onTogglePlay,
   }) : super(
           irReadPainterSettings: irReadPainterSettings,
           irCalculatorResult: irCalculatorResult,
@@ -86,6 +90,9 @@ class Visualizer extends StatelessWidget {
   final double time;
   final void Function(double newTime, Offset newOffset) onTimeChanged;
 
+  final bool play;
+  final void Function(bool play) onTogglePlay;
+
   static const double minScale = 6;
   static const double maxScale = 12;
 
@@ -103,6 +110,8 @@ class Visualizer extends StatelessWidget {
     required this.onOffsetChanged,
     required this.onLockToRobiChanged,
     required this.onTimeChanged,
+    required this.play,
+    required this.onTogglePlay,
     this.enableTimeInput = true,
     this.simulationResult,
     this.irReadPainterSettings,
@@ -113,11 +122,6 @@ class Visualizer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    Offset newOffset = offset;
-    if (lockToRobi) {
-      newOffset = Offset(-robiState.position.x, robiState.position.y) * (pow(2, scale) - 1);
-    }
-
     return Column(
       children: [
         Expanded(
@@ -129,7 +133,7 @@ class Visualizer extends StatelessWidget {
               }
             },
             child: GestureDetector(
-              onPanUpdate: (details) => onOffsetChanged(newOffset + details.delta),
+              onPanUpdate: (details) => onOffsetChanged(offset + details.delta),
               child: RepaintBoundary(
                 child: CustomPaint(
                   painter: LinePainter(
@@ -142,7 +146,7 @@ class Visualizer extends StatelessWidget {
                     highlightedInstruction: highlightedInstruction,
                     irCalculatorResult: irCalculatorResult,
                     irPathApproximation: irPathApproximation,
-                    offset: newOffset,
+                    offset: offset,
                   ),
                   child: Container(),
                 ),
@@ -197,7 +201,7 @@ class Visualizer extends StatelessWidget {
                       ),
                     Slider(
                       value: time,
-                      onChanged: enableTimeInput ? (value) => onTimeChanged(value, newOffset) : null,
+                      onChanged: enableTimeInput ? (value) => onTimeChanged(value, offset) : null,
                       max: totalTime,
                       min: 0,
                     ),
@@ -212,16 +216,22 @@ class Visualizer extends StatelessWidget {
           child: Row(
             children: [
               ElevatedButton.icon(
-                onPressed: () => onOffsetChanged(Offset.zero),
-                label: const Text("Center"),
-                icon: const Icon(Icons.center_focus_weak),
+                onPressed: () => onTogglePlay(!play),
+                label: Text(play ? "Pause" : "Play"),
+                icon: Icon(play ? Icons.pause : Icons.play_arrow),
               ),
               const SizedBox(width: 10),
               ElevatedButton.icon(
                 onPressed: () => onLockToRobiChanged(!lockToRobi),
                 label: const Text("Lock"),
                 icon: Icon(lockToRobi ? Icons.check_box : Icons.check_box_outline_blank),
-              )
+              ),
+              const SizedBox(width: 10),
+              ElevatedButton.icon(
+                onPressed: () => onOffsetChanged(Offset.zero),
+                label: const Text("Center"),
+                icon: const Icon(Icons.center_focus_weak),
+              ),
             ],
           ),
         ),

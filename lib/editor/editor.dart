@@ -63,7 +63,6 @@ class _EditorState extends State<Editor> with AutomaticKeepAliveClientMixin {
             robiConfig: widget.selectedRobiConfig,
             highlightedInstruction: highlightedInstruction,
             onTimeChanged: (newTime) => setState(() => time = newTime),
-            time: time,
           ),
         ),
         ResizableChild(

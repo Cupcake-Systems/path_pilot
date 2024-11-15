@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:path_pilot/app_storage.dart';
 import 'package:path_pilot/editor/painters/ir_read_painter.dart';
 import 'package:path_pilot/editor/painters/robi_painter.dart';
 import 'package:path_pilot/editor/visualizer.dart';
@@ -18,6 +19,8 @@ class InteractableIrVisualizer extends StatefulWidget {
   final IrReadResult irReadResult;
   final double totalTime;
 
+  final void Function(double newTime)? onTimeChanged;
+
   const InteractableIrVisualizer({
     super.key = const ValueKey('InteractableIrVisualizer'),
     required this.enableTimeInput,
@@ -27,6 +30,7 @@ class InteractableIrVisualizer extends StatefulWidget {
     required this.irReadPainterSettings,
     required this.totalTime,
     required this.irReadResult,
+    this.onTimeChanged,
   });
 
   @override
@@ -38,18 +42,43 @@ class _InteractableIrVisualizerState extends State<InteractableIrVisualizer> {
   Offset offset = Offset.zero;
   Offset dragStartOffset = Offset.zero;
   bool lockToRobi = false;
-  double time = 0;
+  bool updateRobi = false;
+  double timeOffset = 0;
+
+  final deltaCounter = Stopwatch();
 
   @override
   Widget build(BuildContext context) {
+    double timeSnapshot = timeOffset + deltaCounter.elapsedMilliseconds / 1000;
+
+    if (timeSnapshot >= widget.totalTime) {
+      timeSnapshot = widget.totalTime;
+      pause();
+    }
+
+    final updateDelay = 1 / SettingsStorage.visualizerFps;
+    Future.delayed(Duration(milliseconds: (updateDelay * 1000).toInt()), () {
+      if (!updateRobi) return;
+      if (timeSnapshot + updateDelay > widget.totalTime) {
+        updateTime(widget.totalTime);
+        return;
+      }
+      updateTime(timeSnapshot + updateDelay);
+    });
+
+    final robiState = getStateAtTime(widget.irCalculatorResult, timeSnapshot);
+    if (lockToRobi) {
+      offset = Offset(-robiState.position.x, robiState.position.y) * (pow(2, scale) - 1);
+    }
+
     return IrVisualizer(
       scale: scale,
       offset: offset,
       robiConfig: widget.robiConfig,
       lockToRobi: lockToRobi,
       totalTime: widget.totalTime,
-      robiState: getStateAtTime(widget.irCalculatorResult, time),
-      time: time,
+      robiState: robiState,
+      time: timeSnapshot,
       onScaleChanged: (newScale) => setState(() {
         offset = offset * pow(2, newScale - scale).toDouble();
         scale = newScale;
@@ -60,12 +89,27 @@ class _InteractableIrVisualizerState extends State<InteractableIrVisualizer> {
       }),
       onLockToRobiChanged: (newLockToRobi) => setState(() => lockToRobi = newLockToRobi),
       onTimeChanged: (newTime, newOffset) => setState(() {
-        time = newTime;
-        offset = newOffset;
+        timeOffset = newTime;
+        pause();
+        deltaCounter.reset();
+        updateTime(newTime);
       }),
       irCalculatorResult: widget.irCalculatorResult,
       irPathApproximation: widget.irPathApproximation,
       irReadPainterSettings: widget.irReadPainterSettings,
+      play: updateRobi,
+      onTogglePlay: (p) {
+        if (timeSnapshot >= widget.totalTime) {
+          timeOffset = 0;
+          deltaCounter.reset();
+        }
+
+        if (p) {
+          setState(() => play());
+        } else {
+          setState(() => pause());
+        }
+      },
     );
   }
 
@@ -87,6 +131,24 @@ class _InteractableIrVisualizerState extends State<InteractableIrVisualizer> {
 
     return states.last;
   }
+
+  void play() {
+    deltaCounter.start();
+    updateRobi = true;
+  }
+
+  void pause() {
+    deltaCounter.stop();
+    updateRobi = false;
+  }
+
+  void updateTime(double time) {
+    if (widget.onTimeChanged == null) {
+      setState(() {});
+    } else {
+      widget.onTimeChanged!(time);
+    }
+  }
 }
 
 class InteractableInstructionsVisualizer extends StatefulWidget {
@@ -96,7 +158,6 @@ class InteractableInstructionsVisualizer extends StatefulWidget {
   final SimulationResult simulationResult;
 
   final void Function(double newTime)? onTimeChanged;
-  final double? time;
 
   const InteractableInstructionsVisualizer({
     super.key = const ValueKey('InteractableInstructionsVisualizer'),
@@ -105,7 +166,6 @@ class InteractableInstructionsVisualizer extends StatefulWidget {
     required this.simulationResult,
     this.highlightedInstruction,
     this.onTimeChanged,
-    this.time,
   });
 
   @override
@@ -117,22 +177,46 @@ class _InteractableInstructionsVisualizerState extends State<InteractableInstruc
   Offset offset = Offset.zero;
   Offset dragStartOffset = Offset.zero;
   bool lockToRobi = false;
-  double time = 0;
+  bool updateRobi = false;
+  double timeOffset = 0;
+
+  final deltaCounter = Stopwatch();
 
   @override
   Widget build(BuildContext context) {
-    final selectedTime = widget.time ?? time;
+    double timeSnapshot = timeOffset + deltaCounter.elapsedMilliseconds / 1000;
+
+    if (timeSnapshot >= widget.totalTime) {
+      timeSnapshot = widget.totalTime;
+      pause();
+    }
+
+    final updateDelay = 1 / SettingsStorage.visualizerFps;
+
+    Future.delayed(Duration(milliseconds: (updateDelay * 1000).toInt()), () {
+      if (!updateRobi) return;
+      if (timeSnapshot + updateDelay > widget.totalTime) {
+        updateTime(widget.totalTime);
+        return;
+      }
+      updateTime(timeSnapshot + updateDelay);
+    });
+
+    final robiState = widget.simulationResult.getStateAtTime(timeSnapshot);
+    if (lockToRobi) {
+      offset = Offset(-robiState.position.x, robiState.position.y) * (pow(2, scale) - 1);
+    }
 
     return InstructionsVisualizer(
       scale: scale,
       offset: offset,
       robiConfig: widget.robiConfig,
       lockToRobi: lockToRobi,
-      robiState: widget.simulationResult.getStateAtTime(selectedTime),
+      robiState: robiState,
       totalTime: widget.totalTime,
       highlightedInstruction: widget.highlightedInstruction,
       simulationResult: widget.simulationResult,
-      time:  selectedTime,
+      time: timeSnapshot,
       onScaleChanged: (newScale) => setState(() {
         offset = offset * pow(2, newScale - scale).toDouble();
         scale = newScale;
@@ -143,16 +227,42 @@ class _InteractableInstructionsVisualizerState extends State<InteractableInstruc
       }),
       onLockToRobiChanged: (newLockToRobi) => setState(() => lockToRobi = newLockToRobi),
       onTimeChanged: (newTime, newOffset) {
-        if (widget.onTimeChanged == null) {
-          setState(() {
-            time = newTime;
-            offset = newOffset;
-          });
+        timeOffset = newTime;
+        pause();
+        deltaCounter.reset();
+        updateTime(newTime);
+      },
+      play: updateRobi,
+      onTogglePlay: (p) {
+        if (timeSnapshot >= widget.totalTime) {
+          timeOffset = 0;
+          deltaCounter.reset();
+        }
+
+        if (p) {
+          setState(() => play());
         } else {
-          offset = newOffset;
-          widget.onTimeChanged!(newTime);
+          setState(() => pause());
         }
       },
     );
+  }
+
+  void play() {
+    deltaCounter.start();
+    updateRobi = true;
+  }
+
+  void pause() {
+    deltaCounter.stop();
+    updateRobi = false;
+  }
+
+  void updateTime(double time) {
+    if (widget.onTimeChanged == null) {
+      setState(() {});
+    } else {
+      widget.onTimeChanged!(time);
+    }
   }
 }
