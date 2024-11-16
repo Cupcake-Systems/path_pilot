@@ -11,10 +11,16 @@ get fileSystemShortcuts => getShortcuts();
 
 List<FilesystemPickerShortcut> getShortcuts() {
   if (Platform.isAndroid) {
+
+    final documentsDir = Directory("/storage/emulated/0/Documents");
+    final downloadDir = Directory("/storage/emulated/0/Download");
+
     return [
       FilesystemPickerShortcut(name: "Internal storage", path: Directory("/storage/emulated/0"), icon: Icons.storage),
-      FilesystemPickerShortcut(name: "Documents", path: Directory("/storage/emulated/0/Documents"), icon: Icons.description),
-      FilesystemPickerShortcut(name: "Downloads", path: Directory("/storage/emulated/0/Downloads"), icon: Icons.download),
+      if (documentsDir.existsSync())
+        FilesystemPickerShortcut(name: "Documents", path: documentsDir, icon: Icons.description),
+      if (downloadDir.existsSync())
+        FilesystemPickerShortcut(name: "Download", path: downloadDir, icon: Icons.download),
     ];
   } else if (Platform.isLinux) {
     final userName = Platform.environment["USER"];
