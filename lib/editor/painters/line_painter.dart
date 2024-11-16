@@ -81,11 +81,11 @@ class LinePainter extends CustomPainter {
       ..strokeWidth = 1
       ..color = white;
 
-    canvas.drawLine(Offset(size.width / 2 - 49, size.height - 20), Offset(size.width / 2 + 49, size.height - 20), paint);
-    canvas.drawLine(Offset(size.width / 2 - 50, size.height - 25), Offset(size.width / 2 - 50, size.height - 15), paint);
-    canvas.drawLine(Offset(size.width / 2 + 50, size.height - 25), Offset(size.width / 2 + 50, size.height - 15), paint);
+    canvas.drawLine(Offset(11, size.height - 15), Offset(109, size.height - 15), paint);
+    canvas.drawLine(Offset(10, size.height - 20), Offset(10, size.height - 10), paint);
+    canvas.drawLine(Offset(110, size.height - 20), Offset(110, size.height - 10), paint);
 
-    LinePainter.paintText("${(100.0 / scale).toStringAsFixed(2)}m", Offset(size.width / 2, size.height - 22), canvas, size);
+    LinePainter.paintText("${(100.0 / scale * 100).toStringAsFixed(2)}cm", Offset(60, size.height - 17), canvas, size);
   }
 
   void paintRobiState(Canvas canvas, Size size) {
@@ -109,7 +109,7 @@ Acc.: I ${innerAccelText}cm/s²${accelSpace}O ${(rs.outerAcceleration * 100).toI
 
     paintText(
       robiStateText,
-      Offset(5, size.height - 70),
+      const Offset(5, 5),
       canvas,
       size,
       center: false,

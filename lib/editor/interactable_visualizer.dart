@@ -1,5 +1,3 @@
-import 'dart:math';
-
 import 'package:flutter/material.dart';
 import 'package:path_pilot/app_storage.dart';
 import 'package:path_pilot/editor/painters/ir_read_painter.dart';
@@ -38,7 +36,7 @@ class InteractableIrVisualizer extends StatefulWidget {
 }
 
 class _InteractableIrVisualizerState extends State<InteractableIrVisualizer> {
-  double scale = 10;
+  double zoom = (Visualizer.maxZoom + Visualizer.minZoom) / 2;
   Offset offset = Offset.zero;
   Offset dragStartOffset = Offset.zero;
   bool lockToRobi = false;
@@ -68,26 +66,22 @@ class _InteractableIrVisualizerState extends State<InteractableIrVisualizer> {
 
     final robiState = getStateAtTime(widget.irCalculatorResult, timeSnapshot);
     if (lockToRobi) {
-      offset = Offset(-robiState.position.x, robiState.position.y) * (pow(2, scale) - 1);
+      offset = Offset(-robiState.position.x, robiState.position.y) * zoom;
     }
 
     return IrVisualizer(
-      scale: scale,
+      zoom: zoom,
       offset: offset,
       robiConfig: widget.robiConfig,
       lockToRobi: lockToRobi,
       totalTime: widget.totalTime,
       robiState: robiState,
       time: timeSnapshot,
-      onScaleChanged: (newScale) => setState(() {
-        offset = offset * pow(2, newScale - scale).toDouble();
-        scale = newScale;
-      }),
-      onOffsetChanged: (newOffset) => setState(() {
+      onZoomChanged: (newZoom, newOffset, newLockToRobi) => setState(() {
         offset = newOffset;
-        lockToRobi = false;
+        zoom = newZoom;
+        lockToRobi = newLockToRobi;
       }),
-      onLockToRobiChanged: (newLockToRobi) => setState(() => lockToRobi = newLockToRobi),
       onTimeChanged: (newTime, newOffset) => setState(() {
         timeOffset = newTime;
         pause();
@@ -173,7 +167,7 @@ class InteractableInstructionsVisualizer extends StatefulWidget {
 }
 
 class _InteractableInstructionsVisualizerState extends State<InteractableInstructionsVisualizer> {
-  double scale = 10;
+  double zoom = (Visualizer.maxZoom + Visualizer.minZoom) / 2;
   Offset offset = Offset.zero;
   Offset dragStartOffset = Offset.zero;
   bool lockToRobi = false;
@@ -204,11 +198,11 @@ class _InteractableInstructionsVisualizerState extends State<InteractableInstruc
 
     final robiState = widget.simulationResult.getStateAtTime(timeSnapshot);
     if (lockToRobi) {
-      offset = Offset(-robiState.position.x, robiState.position.y) * (pow(2, scale) - 1);
+      offset = Offset(-robiState.position.x, robiState.position.y) * zoom;
     }
 
     return InstructionsVisualizer(
-      scale: scale,
+      zoom: zoom,
       offset: offset,
       robiConfig: widget.robiConfig,
       lockToRobi: lockToRobi,
@@ -217,15 +211,11 @@ class _InteractableInstructionsVisualizerState extends State<InteractableInstruc
       highlightedInstruction: widget.highlightedInstruction,
       simulationResult: widget.simulationResult,
       time: timeSnapshot,
-      onScaleChanged: (newScale) => setState(() {
-        offset = offset * pow(2, newScale - scale).toDouble();
-        scale = newScale;
-      }),
-      onOffsetChanged: (newOffset) => setState(() {
+      onZoomChanged: (newZoom, newOffset, newLockToRobi) => setState(() {
         offset = newOffset;
-        lockToRobi = false;
+        zoom = newZoom;
+        lockToRobi = newLockToRobi;
       }),
-      onLockToRobiChanged: (newLockToRobi) => setState(() => lockToRobi = newLockToRobi),
       onTimeChanged: (newTime, newOffset) {
         timeOffset = newTime;
         pause();

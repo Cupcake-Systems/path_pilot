@@ -1,7 +1,9 @@
+import 'dart:io';
 import 'dart:math';
 
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:path_pilot/app_storage.dart';
 import 'package:path_pilot/editor/painters/ir_read_painter.dart';
 import 'package:path_pilot/editor/painters/line_painter.dart';
 import 'package:path_pilot/editor/painters/robi_painter.dart';
@@ -13,7 +15,7 @@ import 'package:vector_math/vector_math.dart' show Vector2;
 class InstructionsVisualizer extends Visualizer {
   const InstructionsVisualizer({
     super.key,
-    required super.scale,
+    required super.zoom,
     required super.offset,
     required super.robiConfig,
     required super.lockToRobi,
@@ -22,9 +24,7 @@ class InstructionsVisualizer extends Visualizer {
     required super.highlightedInstruction,
     required SimulationResult simulationResult,
     required super.time,
-    required super.onScaleChanged,
-    required super.onOffsetChanged,
-    required super.onLockToRobiChanged,
+    required super.onZoomChanged,
     required super.onTimeChanged,
     required super.play,
     required super.onTogglePlay,
@@ -38,7 +38,7 @@ class InstructionsVisualizer extends Visualizer {
 class IrVisualizer extends Visualizer {
   const IrVisualizer({
     super.key,
-    required super.scale,
+    required super.zoom,
     required super.offset,
     required super.robiConfig,
     required super.lockToRobi,
@@ -49,9 +49,7 @@ class IrVisualizer extends Visualizer {
     required IrReadPainterSettings irReadPainterSettings,
     required super.time,
     super.enableTimeInput = true,
-    required super.onScaleChanged,
-    required super.onOffsetChanged,
-    required super.onLockToRobiChanged,
+    required super.onZoomChanged,
     required super.onTimeChanged,
     required super.play,
     required super.onTogglePlay,
@@ -78,14 +76,12 @@ class Visualizer extends StatelessWidget {
   final IrCalculatorResult? irCalculatorResult;
   final List<Vector2>? irPathApproximation;
 
-  final double scale;
-  final void Function(double newScale) onScaleChanged;
+  final double zoom;
+  final void Function(double newZoom, Offset newOffset, bool lockToRobi) onZoomChanged;
 
   final Offset offset;
-  final void Function(Offset newOffset) onOffsetChanged;
 
   final bool lockToRobi;
-  final void Function(bool newLockToRobi) onLockToRobiChanged;
 
   final double time;
   final void Function(double newTime, Offset newOffset) onTimeChanged;
@@ -93,12 +89,16 @@ class Visualizer extends StatelessWidget {
   final bool play;
   final void Function(bool play) onTogglePlay;
 
-  static const double minScale = 6;
-  static const double maxScale = 12;
+  static const double minZoom = 100;
+  static const double maxZoom = 1000;
+  static final double log2 = log(2);
+
+  static final double minScale = log(minZoom + 1) / log2;
+  static final double maxScale = log(maxZoom + 1) / log2;
 
   const Visualizer({
     super.key,
-    required this.scale,
+    required this.zoom,
     required this.offset,
     required this.robiConfig,
     required this.lockToRobi,
@@ -106,9 +106,7 @@ class Visualizer extends StatelessWidget {
     required this.robiStateType,
     required this.robiState,
     required this.time,
-    required this.onScaleChanged,
-    required this.onOffsetChanged,
-    required this.onLockToRobiChanged,
+    required this.onZoomChanged,
     required this.onTimeChanged,
     required this.play,
     required this.onTogglePlay,
@@ -120,6 +118,9 @@ class Visualizer extends StatelessWidget {
     this.irPathApproximation,
   });
 
+  static double startZoom = (minZoom + maxZoom) / 2;
+  static final double panMultiplier = Platform.isAndroid ? 1.5 : 1;
+
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -127,19 +128,36 @@ class Visualizer extends StatelessWidget {
         Expanded(
           child: Listener(
             onPointerSignal: (event) {
-              if (event is PointerScrollEvent) {
-                final newScale = (scale - event.scrollDelta.dy / 500).clamp(minScale, maxScale);
-                onScaleChanged(newScale);
-              }
+              if (event is! PointerScrollEvent) return;
+              final oldScale = log(zoom + 1) / log2;
+              final newScale = (oldScale - event.scrollDelta.dy / 250).clamp(minScale, maxScale);
+              final newZoom = (pow(2, newScale) - 1).toDouble();
+              final scaleDelta = log(newZoom + 1) / log2 - oldScale;
+              final newOffset = offset * pow(2, scaleDelta).toDouble();
+              onZoomChanged(newZoom, newOffset, lockToRobi);
             },
             child: GestureDetector(
-              onPanUpdate: (details) => onOffsetChanged(offset + details.delta),
+              onScaleStart: (details) => startZoom = zoom,
+              onScaleUpdate: (details) {
+                double newZoom = zoom;
+                Offset newOffset = offset;
+
+                if (details.pointerCount > 1) {
+                  newZoom = (startZoom * details.scale).clamp(minZoom, maxZoom);
+                  final scaleDelta = (log(newZoom + 1) - log(zoom + 1)) / log2;
+                  final newOffset = offset * pow(2, scaleDelta).toDouble();
+                  onZoomChanged(newZoom, newOffset, lockToRobi);
+                } else {
+                  newOffset = offset + details.focalPointDelta * panMultiplier;
+                  onZoomChanged(newZoom, newOffset, false);
+                }
+              },
               child: RepaintBoundary(
                 child: CustomPaint(
                   painter: LinePainter(
                     robiStateType: robiStateType,
                     robiState: robiState,
-                    scale: pow(2, scale) - 1,
+                    scale: zoom,
                     robiConfig: robiConfig,
                     simulationResult: simulationResult,
                     irReadPainterSettings: irReadPainterSettings,
@@ -155,22 +173,24 @@ class Visualizer extends StatelessWidget {
           ),
         ),
         const Divider(height: 1),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8),
-          child: Row(
-            children: [
-              const Text("Zoom"),
-              Expanded(
-                child: Slider(
-                  value: scale,
-                  min: minScale,
-                  max: maxScale,
-                  onChanged: (value) => onScaleChanged(value),
+        if (SettingsStorage.developerMode) ...[
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            child: Row(
+              children: [
+                const Text("Zoom"),
+                Expanded(
+                  child: Slider(
+                    value: log(zoom + 1) / log2,
+                    min: minScale,
+                    max: maxScale,
+                    onChanged: (value) => onZoomChanged(pow(2, value) - 1, offset, lockToRobi),
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
+        ],
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 8),
           child: Row(
@@ -222,13 +242,13 @@ class Visualizer extends StatelessWidget {
               ),
               const SizedBox(width: 10),
               ElevatedButton.icon(
-                onPressed: () => onLockToRobiChanged(!lockToRobi),
+                onPressed: () => onZoomChanged(zoom, offset, !lockToRobi),
                 label: const Text("Lock"),
                 icon: Icon(lockToRobi ? Icons.check_box : Icons.check_box_outline_blank),
               ),
               const SizedBox(width: 10),
               ElevatedButton.icon(
-                onPressed: () => onOffsetChanged(Offset.zero),
+                onPressed: () => onZoomChanged(zoom, Offset.zero, false),
                 label: const Text("Center"),
                 icon: const Icon(Icons.center_focus_weak),
               ),

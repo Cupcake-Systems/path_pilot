@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_resizable_container/flutter_resizable_container.dart';
-import 'package:path_pilot/app_storage.dart';
 import 'package:path_pilot/editor/painters/ir_read_painter.dart';
-import 'package:vector_math/vector_math.dart';
+import 'package:path_pilot/file_browser.dart';
+import 'package:vector_math/vector_math.dart' show Vector2;
 
 import '../../robi_api/ir_read_api.dart';
 import '../../robi_api/robi_utils.dart';
@@ -11,10 +11,11 @@ import '../ir_line_approximation/approximation_settings_widget.dart';
 import '../ir_line_approximation/ir_reading_info.dart';
 
 class IrVisualizerWidget extends StatefulWidget {
-  final IrReadResult? irReadResult;
+  final IrReadResult irReadResult;
   final RobiConfig robiConfig;
   final double time;
   final bool enableTimeInput;
+  final SubViewMode subViewMode;
 
   const IrVisualizerWidget({
     super.key,
@@ -22,6 +23,7 @@ class IrVisualizerWidget extends StatefulWidget {
     required this.irReadResult,
     this.time = 0,
     this.enableTimeInput = true,
+    required this.subViewMode,
   });
 
   @override
@@ -29,6 +31,8 @@ class IrVisualizerWidget extends StatefulWidget {
 }
 
 class _IrVisualizerWidgetState extends State<IrVisualizerWidget> {
+  late final IrCalculatorResult irCalculatorResult = IrCalculator.calculate(widget.irReadResult, widget.robiConfig);
+
   double ramerDouglasPeuckerTolerance = 0.5;
   IrReadPainterSettings irReadPainterSettings = defaultIrReadPainterSettings();
   int irInclusionThreshold = 100;
@@ -37,64 +41,67 @@ class _IrVisualizerWidgetState extends State<IrVisualizerWidget> {
 
   @override
   Widget build(BuildContext context) {
-    late final IrCalculatorResult? irCalculatorResult;
-    if (widget.irReadResult != null) {
-      irCalculatorResult = IrCalculator.calculate(widget.irReadResult!, widget.robiConfig);
-      approximateIrPath(irCalculatorResult);
-    }
-
-    return ResizableContainer(
-      direction: SettingsStorage.orientation,
-      divider: const ResizableDivider(thickness: 3),
-      children: [
-        ResizableChild(
-          child: widget.irReadResult == null
-              ? Container()
-              : InteractableIrVisualizer(
-                  enableTimeInput: widget.enableTimeInput,
-                  robiConfig: widget.robiConfig,
-                  totalTime: widget.irReadResult!.totalTime,
-                  irCalculatorResult: irCalculatorResult!,
-                  irPathApproximation: irPathApproximation,
-                  irReadPainterSettings: irReadPainterSettings,
-                  irReadResult: widget.irReadResult!,
-                ),
-        ),
-        ResizableChild(
-          child: ListView(
-            children: [
-              IrPathApproximationSettingsWidget(
-                onSettingsChange: (
-                  settings,
-                  irInclusionThreshold,
-                  ramerDouglasPeuckerTolerance,
-                ) {
-                  setState(() {
-                    irReadPainterSettings = settings;
-                    this.irInclusionThreshold = irInclusionThreshold;
-                    this.ramerDouglasPeuckerTolerance = ramerDouglasPeuckerTolerance;
-                    if (irCalculatorResult != null) approximateIrPath(irCalculatorResult);
-                  });
-                },
-              ),
-              if (widget.irReadResult != null)
-                IrReadingInfoWidget(
-                  selectedRobiConfig: widget.robiConfig,
-                  irReadResult: widget.irReadResult!,
-                  irCalculatorResult: irCalculatorResult!,
-                ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  void approximateIrPath(IrCalculatorResult irCalculatorResult) {
     irPathApproximation = IrCalculator.pathApproximation(
       irCalculatorResult,
       irInclusionThreshold,
       ramerDouglasPeuckerTolerance,
     );
+
+    InteractableIrVisualizer? visualizer;
+    Widget? editor;
+
+    if (widget.subViewMode == SubViewMode.split || widget.subViewMode == SubViewMode.visualizer) {
+      visualizer = InteractableIrVisualizer(
+        enableTimeInput: widget.enableTimeInput,
+        robiConfig: widget.robiConfig,
+        totalTime: widget.irReadResult.totalTime,
+        irCalculatorResult: irCalculatorResult,
+        irPathApproximation: irPathApproximation,
+        irReadPainterSettings: irReadPainterSettings,
+        irReadResult: widget.irReadResult,
+      );
+    }
+    if (widget.subViewMode == SubViewMode.split || widget.subViewMode == SubViewMode.editor) {
+      editor = ListView(
+        children: [
+          IrPathApproximationSettingsWidget(
+            onSettingsChange: (
+              settings,
+              irInclusionThreshold,
+              ramerDouglasPeuckerTolerance,
+            ) {
+              setState(() {
+                irReadPainterSettings = settings;
+                this.irInclusionThreshold = irInclusionThreshold;
+                this.ramerDouglasPeuckerTolerance = ramerDouglasPeuckerTolerance;
+              });
+            },
+          ),
+          IrReadingInfoWidget(
+            selectedRobiConfig: widget.robiConfig,
+            irReadResult: widget.irReadResult,
+            irCalculatorResult: irCalculatorResult,
+          ),
+        ],
+      );
+    }
+
+    switch (widget.subViewMode) {
+      case SubViewMode.editor:
+        return editor!;
+      case SubViewMode.visualizer:
+        return visualizer!;
+      case SubViewMode.split:
+        final screenSize = MediaQuery.of(context).size;
+        final isPortrait = screenSize.width < screenSize.height;
+        return ResizableContainer(
+          direction: isPortrait ? Axis.vertical : Axis.horizontal,
+          divider: ResizableDivider(thickness: 3, color: Colors.grey[800]),
+          children: [
+            ResizableChild(child: visualizer!),
+            ResizableChild(child: editor!),
+          ],
+        );
+    }
   }
 }

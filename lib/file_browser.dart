@@ -1,11 +1,13 @@
+import 'dart:convert';
 import 'dart:io';
 
-import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:path_pilot/constants.dart';
 import 'package:path_pilot/editor/editor.dart';
+import 'package:path_pilot/helper/file_manager.dart';
 import 'package:path_pilot/main.dart';
+import 'package:path_pilot/robi_api/exporter/exporter.dart';
 import 'package:path_pilot/robi_api/ir_read_api.dart';
 import 'package:path_pilot/robi_api/robi_path_serializer.dart';
 import 'package:path_pilot/robi_api/robi_utils.dart';
@@ -15,7 +17,6 @@ import 'package:path_pilot/welcome_screen.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 
-import 'app_storage.dart';
 import 'editor/ir_visualizer/ir_visualizer.dart';
 
 class FileBrowser extends StatefulWidget {
@@ -27,219 +28,280 @@ class FileBrowser extends StatefulWidget {
 
 class _FileBrowserState extends State<FileBrowser> {
   RobiConfig selectedRobiConfig = defaultRobiConfig;
+  ViewMode viewMode = ViewMode.instructions;
+  SubViewMode subViewMode = Platform.isAndroid ? SubViewMode.editor : SubViewMode.split;
 
   // Instructions Editor
-  File? openedFile;
+  String? openedFile;
   String? errorMessage;
-  Iterable<MissionInstruction>? loadedInstructions;
+  List<MissionInstruction>? loadedInstructions;
+  SimulationResult? simulationResult;
 
   // IR Readings analysis
   IrReadResult? irReadResult;
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Row(
-          mainAxisSize: MainAxisSize.min,
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(viewMode == ViewMode.instructions ? "Instructions" : "IR Readings"),
+        bottom: const PreferredSize(preferredSize: Size.fromHeight(1), child: Divider(height: 1)),
+      ),
+      drawer: Drawer(
+        child: ListView(
           children: [
-            Expanded(
-              child: MenuBar(
-                children: [
-                  SubmenuButton(
-                    menuChildren: [
-                      MenuItemButton(
-                        leadingIcon: const Icon(Icons.add),
-                        onPressed: newFile,
-                        child: const MenuAcceleratorLabel('&New'),
-                      ),
-                      MenuItemButton(
-                        leadingIcon: const Icon(Icons.folder),
-                        onPressed: () => openFile(context),
-                        child: const MenuAcceleratorLabel('&Open'),
-                      ),
-                      const Divider(height: 0),
-                      MenuItemButton(
-                        leadingIcon: const Icon(Icons.build_circle),
-                        onPressed: () async {
-                          await Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (context) => const RobiConfigSettingsPage(),
-                            ),
-                          );
-                          setState(() {});
-                        },
-                        child: const MenuAcceleratorLabel('&Robi Configs'),
-                      ),
-                      const Divider(height: 0),
-                      MenuItemButton(
-                        leadingIcon: const Icon(Icons.settings),
-                        onPressed: () async {
-                          await Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (context) => const SettingsPage(),
-                            ),
-                          );
-                          setState(() {});
-                        },
-                        child: const MenuAcceleratorLabel('&Preferences'),
-                      ),
-                    ],
-                    child: const MenuAcceleratorLabel('&File'),
-                  ),
-                  SubmenuButton(
-                    menuChildren: [
-                      for (final config in [defaultRobiConfig, ...RobiConfigStorage.configs])
-                        RadioMenuButton(
-                          value: config,
-                          groupValue: selectedRobiConfig,
-                          onChanged: (value) {
-                            if (value == null) return;
-                            setState(() {
-                              selectedRobiConfig = value;
-                            });
-                          },
-                          child: MenuAcceleratorLabel("&${config.name}"),
-                        ),
-                    ],
-                    child: const MenuAcceleratorLabel("&RobiConfig"),
-                  ),
-                  SubmenuButton(
-                    menuChildren: [
-                      MenuItemButton(
-                        leadingIcon: const Icon(Icons.bug_report),
-                        onPressed: () => launchUrlString("$repoUrl/issues/new"),
-                        child: const MenuAcceleratorLabel('&Report A Bug'),
-                      ),
-                      MenuItemButton(
-                        leadingIcon: const Icon(Icons.check_circle),
-                        onPressed: () => launchUrlString("$repoUrl/issues?q=is%3Aissue+label%3Abug"),
-                        child: const MenuAcceleratorLabel('&Known Issues'),
-                      ),
-                      const Divider(height: 0),
-                      MenuItemButton(
-                        leadingIcon: const Icon(Icons.menu_book),
-                        onPressed: () => launchUrlString("$repoUrl/wiki"),
-                        child: const MenuAcceleratorLabel('&Wiki'),
-                      ),
-                      const Divider(height: 0),
-                      MenuItemButton(
-                        leadingIcon: const Icon(Icons.info),
-                        onPressed: () {
-                          showAboutDialog(
-                            context: context,
-                            applicationName: packageInfo.appName,
-                            applicationVersion: packageInfo.version,
-                            applicationLegalese: "© Copyright Finn Drünert 2024",
-                            children: [
-                              Card(
-                                clipBehavior: Clip.antiAlias,
-                                child: InkWell(
-                                  onTap: () => launchUrlString(repoUrl),
-                                  child: const Padding(
-                                    padding: EdgeInsets.all(8),
-                                    child: Text("GitHub Repo"),
-                                  ),
-                                ),
-                              )
-                            ],
-                          );
-                        },
-                        child: const MenuAcceleratorLabel('&About'),
-                      ),
-                    ],
-                    child: const MenuAcceleratorLabel("&Help"),
-                  ),
-                ],
+            const DrawerHeader(
+              child: Text("Path Pilot"),
+            ),
+            const Padding(
+              padding: EdgeInsets.all(8.0),
+              child: Text(
+                "View Mode",
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
               ),
+            ),
+            RadioListTile(
+              value: ViewMode.instructions,
+              groupValue: viewMode,
+              onChanged: (value) => setState(() => viewMode = ViewMode.instructions),
+              title: const Text("Instructions"),
+            ),
+            RadioListTile(
+              value: ViewMode.irReadings,
+              groupValue: viewMode,
+              onChanged: (value) => setState(() => viewMode = ViewMode.irReadings),
+              title: const Text("IR Readings"),
+            ),
+            const Padding(
+              padding: EdgeInsets.all(8.0),
+              child: Text("Sub View Mode", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+            ),
+            RadioListTile(
+              value: SubViewMode.editor,
+              groupValue: subViewMode,
+              onChanged: (value) => setState(() => subViewMode = SubViewMode.editor),
+              title: const Text("Editor"),
+            ),
+            RadioListTile(
+              value: SubViewMode.visualizer,
+              groupValue: subViewMode,
+              onChanged: (value) => setState(() => subViewMode = SubViewMode.visualizer),
+              title: const Text("Visualizer"),
+            ),
+            RadioListTile(
+              value: SubViewMode.split,
+              groupValue: subViewMode,
+              onChanged: (value) => setState(() => subViewMode = SubViewMode.split),
+              title: const Text("Split"),
+            ),
+            const Divider(),
+            const Padding(
+              padding: EdgeInsets.all(8.0),
+              child: Text("File", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+            ),
+            if (viewMode == ViewMode.instructions) ...[
+              ListTile(
+                leading: const Icon(Icons.add),
+                title: const Text("New"),
+                onTap: newFile,
+              ),
+              ListTile(
+                leading: const Icon(Icons.folder),
+                title: const Text("Open"),
+                onTap: openFile,
+              ),
+              if (openedFile != null && loadedInstructions != null) ...[
+                ListTile(
+                  leading: const Icon(Icons.save),
+                  onTap: saveFile,
+                  title: const Text('Save'),
+                  subtitle: Text(openedFile!),
+                ),
+                ListTile(
+                  leading: const Icon(Icons.save),
+                  onTap: saveAsFile,
+                  title: const Text('Save As'),
+                ),
+                ListTile(
+                  onTap: () {
+                    if (simulationResult == null || simulationResult!.instructionResults.isEmpty) {
+                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Nothing to export")));
+                      return;
+                    }
+                    Exporter.exportToFile(
+                      selectedRobiConfig,
+                      simulationResult!.instructionResults,
+                      context,
+                    );
+                  },
+                  leading: const Icon(Icons.file_upload_outlined),
+                  title: const Text("Export"),
+                ),
+              ],
+            ] else if (viewMode == ViewMode.irReadings) ...[
+              ListTile(
+                leading: const Icon(Icons.file_download_outlined),
+                title: const Text("Import IR Reading"),
+                onTap: importIrReading,
+              ),
+            ],
+            const Divider(),
+            ListTile(
+              leading: const Icon(Icons.build_circle),
+              title: const Text("Robi Configs"),
+              onTap: () async {
+                await Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => RobiConfigSettingsPage(
+                      onConfigSelected: (selectedConfig) => setState(() => selectedRobiConfig = selectedConfig),
+                      selectedConfig: selectedRobiConfig,
+                    ),
+                  ),
+                );
+                setState(() {});
+              },
+            ),
+            const Divider(),
+            ListTile(
+              leading: const Icon(Icons.bug_report),
+              onTap: () => launchUrlString("$repoUrl/issues/new"),
+              title: const Text('Report A Bug'),
+            ),
+            ListTile(
+              leading: const Icon(Icons.menu_book),
+              onTap: () => launchUrlString("$repoUrl/wiki"),
+              title: const Text('Wiki'),
+            ),
+            const Divider(),
+            ListTile(
+              leading: const Icon(Icons.info),
+              onTap: () {
+                showAboutDialog(
+                  context: context,
+                  applicationName: "Path Pilot",
+                  applicationVersion: packageInfo.version,
+                  applicationLegalese: "© Copyright Finn Drünert 2024",
+                  children: [
+                    const SizedBox(height: 25),
+                    ElevatedButton.icon(
+                      onPressed: () => launchUrlString(repoUrl),
+                      label: const Text("GitHub Repo"),
+                      icon: const Icon(Icons.open_in_new),
+                    )
+                  ],
+                );
+              },
+              title: const Text('About'),
+            ),
+            ListTile(
+              leading: const Icon(Icons.settings),
+              title: const Text("Preferences"),
+              onTap: () async {
+                await Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => const SettingsPage(),
+                  ),
+                );
+                setState(() {});
+              },
             ),
           ],
         ),
-        Expanded(
-          child: DefaultTabController(
-            length: 2,
-            child: Scaffold(
-              appBar: PreferredSize(
-                preferredSize: const Size.fromHeight(40),
-                child: AppBar(
-                  flexibleSpace: const TabBar(
-                    tabs: [
-                      Tab(child: Text("Instructions")),
-                      Tab(child: Text("IR Readings")),
-                    ],
-                  ),
-                ),
-              ),
-              body: TabBarView(
-                children: [
-                  openedFile == null || loadedInstructions == null
-                      ? WelcomeScreen(
-                          newFilePressed: newFile,
-                          openFilePressed: () => openFile(context),
-                          errorMessage: errorMessage,
-                        )
-                      : Editor(
-                          key: ObjectKey(openedFile),
-                          file: openedFile!,
-                          initialInstructions: loadedInstructions!.toList(),
-                          selectedRobiConfig: selectedRobiConfig,
-                        ),
-                  if (irReadResult == null) ...[
-                    Center(
-                      child: ElevatedButton.icon(
-                        onPressed: () async {
-                          if (!await getExternalStoragePermission()) return;
-                          final result = await FilePicker.platform.pickFiles(
-                            type: FileType.custom,
-                            allowedExtensions: ["bin"],
-                          );
-                          if (result == null) return;
-                          final file = File(result.files.single.path!);
-                          setState(() {
-                            irReadResult = IrReadResult.fromFile(file);
-                          });
-                        },
-                        icon: const Icon(Icons.file_download_outlined),
-                        label: const Text("Import IR Reading"),
-                      ),
-                    ),
-                  ] else ...[
-                    Scaffold(
-                      body: IrVisualizerWidget(
-                        robiConfig: selectedRobiConfig,
-                        irReadResult: irReadResult,
-                      ),
-                      floatingActionButton: Padding(
-                        padding: const EdgeInsets.all(4),
-                        child: ElevatedButton.icon(
-                          onPressed: () {
-                            setState(() {
-                              irReadResult = null;
-                            });
-                          },
-                          icon: const Icon(Icons.delete),
-                          label: const Text("Remove IR Reading"),
-                        ),
-                      ),
-                    ),
-                  ],
-                ],
-              ),
-            ),
-          ),
-        ),
-      ],
+      ),
+      body: getView(),
     );
   }
 
-  Future<Iterable<MissionInstruction>?> getInstructionsFromFile(File file) async {
-    final data = await file.readAsString();
+  Widget getView() {
+    switch (viewMode) {
+      case ViewMode.instructions:
+        if (openedFile == null || loadedInstructions == null) {
+          return WelcomeScreen(
+            newFilePressed: newFile,
+            openFilePressed: openFile,
+            errorMessage: errorMessage,
+          );
+        }
+        return Editor(
+          key: ObjectKey(openedFile),
+          subViewMode: subViewMode,
+          initialInstructions: loadedInstructions!.toList(),
+          selectedRobiConfig: selectedRobiConfig,
+          onInstructionsChanged: (newInstructions, newSimulationResult) {
+            loadedInstructions = newInstructions;
+            simulationResult = newSimulationResult;
+          },
+        );
+      case ViewMode.irReadings:
+        if (irReadResult == null) {
+          return Center(
+            child: ElevatedButton.icon(
+              onPressed: importIrReading,
+              icon: const Icon(Icons.file_download_outlined),
+              label: const Text("Import IR Reading"),
+            ),
+          );
+        }
+
+        return IrVisualizerWidget(
+          robiConfig: selectedRobiConfig,
+          irReadResult: irReadResult!,
+          subViewMode: subViewMode,
+        );
+    }
+  }
+
+  Future<void> importIrReading() async {
+    final result = await pickSingleFile(
+      context: context,
+      dialogTitle: "Select IR Reading File",
+      allowedExtensions: ["bin"],
+    );
+
+    if (result == null || !mounted) return;
+
+    final loaded = await IrReadResult.fromFile(result, context);
+
+    if (loaded == null) return;
+
+    setState(() {
+      irReadResult = loaded;
+    });
+  }
+
+  Future<Iterable<MissionInstruction>?> getInstructionsFromFile(String file) async {
+    final data = await readStringFromFileWithStatusMessage(file, context);
+    if (data == null) return null;
     final newInstructions = RobiPathSerializer.decode(data);
     return newInstructions;
   }
 
+  Future<void> saveFile() => RobiPathSerializer.saveToFile(openedFile!, loadedInstructions!, context);
+
+  Future<void> saveAsFile() async {
+    if (loadedInstructions == null) return;
+
+    final result = await pickFileAndWriteWithStatusMessage(
+      context: context,
+      bytes: utf8.encode(RobiPathSerializer.encode(loadedInstructions!)),
+      extension: ".robi_script.json",
+    );
+
+    if (result == null) return;
+
+    setState(() {
+      openedFile = result;
+      errorMessage = null;
+    });
+  }
+
   Future<void> newFile() async {
-    final result = await saveFile("Please select an output file:", "new.robi_script.json", []);
+    final result = await pickFileAndWriteWithStatusMessage(
+      bytes: Uint8List(0),
+      context: context,
+      extension: ".robi_script.json",
+    );
+
     if (result == null) return;
 
     setState(() {
@@ -249,20 +311,18 @@ class _FileBrowserState extends State<FileBrowser> {
     });
   }
 
-  Future<void> openFile(BuildContext context) async {
-    if (!await getExternalStoragePermission()) return;
-
-    final result = await FilePicker.platform.pickFiles(
-      type: FileType.custom,
-      allowedExtensions: ["robi_script.json", ".json"],
+  Future<void> openFile() async {
+    final result = await pickSingleFile(
+      context: context,
+      dialogTitle: "Select Robi Script File",
+      allowedExtensions: ["json", "robi_script.json"],
     );
     if (result == null) return;
 
-    final file = File(result.files.single.path!);
-    await tryLoadingInstructions(file);
+    await tryLoadingInstructions(result);
   }
 
-  Future<void> tryLoadingInstructions(File file) async {
+  Future<void> tryLoadingInstructions(String file) async {
     final instructions = await getInstructionsFromFile(file);
 
     setState(() {
@@ -273,12 +333,12 @@ class _FileBrowserState extends State<FileBrowser> {
         errorMessage = null;
         openedFile = file;
       }
-      loadedInstructions = instructions;
+      loadedInstructions = instructions?.toList();
     });
   }
 }
 
-const defaultRobiConfig = RobiConfig(0.032, 0.135, 0.075, 0.025, 0.01, "Default");
+const defaultRobiConfig = RobiConfig(wheelRadius: 0.032, trackWidth: 0.135, distanceWheelIr: 0.075, wheelWidth: 0.025, irDistance: 0.01, name: "Default");
 
 Future<bool> getExternalStoragePermission() async {
   if (!Platform.isAndroid) return true;
@@ -303,26 +363,13 @@ Future<bool> getExternalStoragePermission() async {
   return status.isGranted;
 }
 
-Future<File?> saveFile(String dialogTitle, String fileName, List<int> data) async {
-  if (Platform.isAndroid) {
-    if (!await getExternalStoragePermission()) return null;
-    final p = await FilePicker.platform.saveFile(
-      dialogTitle: dialogTitle,
-      fileName: fileName,
-      bytes: Uint8List.fromList(data),
-    );
-    if (p == null) return null;
-    return File(p);
-  }
+enum ViewMode {
+  instructions,
+  irReadings,
+}
 
-  final result = await FilePicker.platform.saveFile(
-    dialogTitle: dialogTitle,
-    fileName: fileName,
-  );
-
-  if (result == null) return null;
-
-  final f = File(result);
-  f.writeAsBytes(data);
-  return f;
+enum SubViewMode {
+  visualizer,
+  editor,
+  split,
 }

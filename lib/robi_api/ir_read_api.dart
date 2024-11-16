@@ -1,9 +1,10 @@
-import 'dart:io';
 import 'dart:math';
 import 'dart:typed_data';
 
+import 'package:flutter/material.dart';
 import 'package:path_pilot/editor/ir_line_approximation/ramers_douglas.dart';
 import 'package:path_pilot/editor/painters/robi_painter.dart';
+import 'package:path_pilot/helper/file_manager.dart';
 import 'package:path_pilot/robi_api/robi_utils.dart';
 import 'package:vector_math/vector_math.dart';
 
@@ -68,7 +69,18 @@ class IrReadResult {
     );
   }
 
-  factory IrReadResult.fromFile(File file) => IrReadResult.fromData(file.readAsBytesSync().buffer);
+  static Future<IrReadResult?> fromFile(String path, BuildContext context) async {
+    final bytes = await readBytesFromFileWithWithStatusMessage(path, context);
+    if (bytes == null) return null;
+    try {
+      return IrReadResult.fromData(bytes.buffer);
+    } on Exception {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Failed to decode data!")));
+      }
+      return null;
+    }
+  }
 }
 
 class IrReading {

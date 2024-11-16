@@ -38,7 +38,8 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.cyan, brightness: Brightness.dark),
         useMaterial3: true,
       ),
-      home: const Scaffold(body: SafeArea(child: FileBrowser())),
+      debugShowCheckedModeBanner: false,
+      home: const FileBrowser(),
     );
   }
 }

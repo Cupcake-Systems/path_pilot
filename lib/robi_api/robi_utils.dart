@@ -513,14 +513,14 @@ class RobiConfig {
   final double wheelRadius, trackWidth, distanceWheelIr, wheelWidth, irDistance;
   final String name;
 
-  const RobiConfig(
-    this.wheelRadius,
-    this.trackWidth,
-    this.distanceWheelIr,
-    this.wheelWidth,
-    this.irDistance,
-    this.name,
-  );
+  const RobiConfig({
+    required this.wheelRadius,
+    required this.trackWidth,
+    required this.distanceWheelIr,
+    required this.wheelWidth,
+    required this.irDistance,
+    required this.name,
+  });
 
   RobiConfig.fromJson(Map<String, dynamic> json)
       : wheelRadius = json["wheel_radius"],

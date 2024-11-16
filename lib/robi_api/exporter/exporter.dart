@@ -1,10 +1,11 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 
+import 'package:flutter/cupertino.dart';
+import 'package:path_pilot/helper/file_manager.dart';
 import 'package:path_pilot/robi_api/exporter/exporter_instructions.dart';
 import 'package:path_pilot/robi_api/robi_utils.dart';
-
-import '../../file_browser.dart';
 
 class Exported {
   final RobiConfig config;
@@ -37,11 +38,17 @@ class Exporter {
     return jsonEncode(exported);
   }
 
-  static List<int> encodeAndCompress(RobiConfig config, List<InstructionResult> instructions) {
+  static Uint8List encodeAndCompress(RobiConfig config, List<InstructionResult> instructions) {
     final enCodedJson = ascii.encode(encode(config, instructions));
     final gZipJson = gzipCompressor.encode(enCodedJson);
-    return gZipJson;
+    return Uint8List.fromList(gZipJson);
   }
 
-  static Future<void> saveToFile(RobiConfig config, List<InstructionResult> instructions) => saveFile("Please select an output file:", "exported.json.gz", encodeAndCompress(config, instructions));
+  static Future<void> exportToFile(RobiConfig config, List<InstructionResult> instructions, BuildContext context) {
+    return pickFileAndWriteWithStatusMessage(
+      bytes: encodeAndCompress(config, instructions),
+      context: context,
+      extension: ".json.gz",
+    );
+  }
 }

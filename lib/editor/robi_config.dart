@@ -1,24 +1,51 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
-import 'package:path_pilot/app_storage.dart';
-import 'package:path_pilot/file_browser.dart';
 import 'package:path_pilot/robi_api/robi_utils.dart';
 
-class RobiConfigurator extends StatelessWidget {
-  final void Function(RobiConfig config) addedConfig;
-  final RobiConfig? initialConfig;
+String? Function(String? value) notEmptyValidator = (value) {
+  if (value == null || value.isEmpty) return "Enter a value";
+  return null;
+};
 
-  const RobiConfigurator({super.key, required this.addedConfig, this.initialConfig});
+String? Function(String? value) numberValidator = (value) {
+  if (value == null || value.isEmpty) return "Enter a value";
+  if (double.tryParse(value) == null) return "Enter a number";
+  return null;
+};
+
+final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+
+class RobiConfigurator extends StatefulWidget {
+  final void Function(RobiConfig config) addedConfig;
+  final RobiConfig initialConfig;
+  final String title;
+
+  const RobiConfigurator({
+    super.key,
+    required this.addedConfig,
+    required this.initialConfig,
+    required this.title,
+  });
+
+  @override
+  State<RobiConfigurator> createState() => _RobiConfiguratorState();
+}
+
+class _RobiConfiguratorState extends State<RobiConfigurator> {
+  late double wheelRadius = widget.initialConfig.wheelRadius,
+      trackWidth = widget.initialConfig.trackWidth,
+      distanceWheelIr = widget.initialConfig.distanceWheelIr,
+      wheelWidth = widget.initialConfig.wheelWidth,
+      irDistance = widget.initialConfig.irDistance;
+
+  late String name = widget.initialConfig.name;
 
   @override
   Widget build(BuildContext context) {
-    final formKey = GlobalKey<FormState>();
-    final controllers = _initControllers();
-
-    return AlertDialog(
-      title: AppBar(
-        titleSpacing: 0,
-        title: const Text("New Robi Config"),
-        automaticallyImplyLeading: false,
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(widget.title),
         actions: [
           IconButton(
               icon: const Icon(Icons.help),
@@ -45,109 +72,100 @@ class RobiConfigurator extends StatelessWidget {
               }),
         ],
       ),
-      content: SingleChildScrollView(
+      body: Padding(
+        padding: const EdgeInsets.all(16),
         child: Form(
-          key: formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          autovalidateMode: AutovalidateMode.always,
+          key: _formKey,
+          child: ListView(
             children: [
-              _buildTextField(
-                controller: controllers['name']!,
-                label: "Configuration Name",
-                validator: (value) {
-                  if (value == null || value.isEmpty) return "Enter a value";
-                  return null;
+              TextFormField(
+                initialValue: name,
+                decoration: const InputDecoration(labelText: "Name"),
+                validator: notEmptyValidator,
+                onChanged: (value) {
+                  if (value.isNotEmpty) name = value;
                 },
               ),
-              const SizedBox(height: 8),
-              ..._buildMeasurementFields(controllers),
+              TextFormField(
+                initialValue: (wheelRadius * 100).toStringAsFixed(2),
+                decoration: const InputDecoration(labelText: "Wheel Radius (cm)"),
+                validator: numberValidator,
+                onChanged: (value) {
+                  final parsed = double.tryParse(value);
+                  if (parsed != null) wheelRadius = parsed / 100;
+                },
+              ),
+              TextFormField(
+                initialValue: (trackWidth * 100).toStringAsFixed(2),
+                decoration: const InputDecoration(labelText: "Track Width (cm)"),
+                validator: numberValidator,
+                onChanged: (value) {
+                  final parsed = double.tryParse(value);
+                  if (parsed != null) trackWidth = parsed / 100;
+                },
+              ),
+              TextFormField(
+                initialValue: (distanceWheelIr * 100).toStringAsFixed(2),
+                decoration: const InputDecoration(labelText: "Distance Wheel to IR (cm)"),
+                validator: numberValidator,
+                onChanged: (value) {
+                  final parsed = double.tryParse(value);
+                  if (parsed != null) distanceWheelIr = parsed / 100;
+                },
+              ),
+              TextFormField(
+                initialValue: (wheelWidth * 100).toStringAsFixed(2),
+                decoration: const InputDecoration(labelText: "Wheel Width (cm)"),
+                validator: numberValidator,
+                onChanged: (value) {
+                  final parsed = double.tryParse(value);
+                  if (parsed != null) wheelWidth = parsed / 100;
+                },
+              ),
+              TextFormField(
+                initialValue: (irDistance * 100).toStringAsFixed(2),
+                decoration: const InputDecoration(labelText: "IR Distance between sensors (cm)"),
+                validator: numberValidator,
+                onChanged: (value) {
+                  final parsed = double.tryParse(value);
+                  if (parsed != null) irDistance = parsed / 100;
+                },
+              ),
+              const SizedBox(height: 16),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  ElevatedButton.icon(
+                    onPressed: () {
+                      if (!_formKey.currentState!.validate()) return;
+                      widget.addedConfig(
+                        RobiConfig(
+                          name: name,
+                          wheelRadius: wheelRadius,
+                          trackWidth: trackWidth,
+                          distanceWheelIr: distanceWheelIr,
+                          wheelWidth: wheelWidth,
+                          irDistance: irDistance,
+                        ),
+                      );
+                      Navigator.pop(context);
+                    },
+                    label: const Text("Done"),
+                    icon: const Icon(Icons.done),
+                  ),
+                  if (!Platform.isAndroid) const SizedBox(height: 8),
+                  ElevatedButton.icon(
+                    onPressed: () => Navigator.pop(context),
+                    label: const Text("Cancel"),
+                    icon: const Icon(Icons.close),
+                  ),
+                ],
+              ),
             ],
           ),
         ),
       ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: const Text("Cancel"),
-        ),
-        TextButton(
-          onPressed: () {
-            if (!formKey.currentState!.validate()) return;
-            final config = RobiConfig(
-              double.parse(controllers['radius']!.text) / 100.0,
-              double.parse(controllers['track']!.text) / 100.0,
-              double.parse(controllers['distanceWheelIR']!.text) / 100.0,
-              double.parse(controllers['wheelWidth']!.text) / 100.0,
-              double.parse(controllers['irDistance']!.text) / 100.0,
-              controllers['name']!.text,
-            );
-            addedConfig(config);
-            Navigator.pop(context);
-          },
-          child: const Text("Done"),
-        ),
-      ],
     );
-  }
-
-  Map<String, TextEditingController> _initControllers() {
-    final initialConfig = this.initialConfig ?? defaultRobiConfig;
-
-    final name = this.initialConfig == null ? "Config ${RobiConfigStorage.length + 1}" : initialConfig.name;
-
-    return {
-      'radius': TextEditingController(text: "${initialConfig.wheelRadius * 100}"),
-      'track': TextEditingController(text: "${initialConfig.trackWidth * 100}"),
-      'distanceWheelIR': TextEditingController(text: "${initialConfig.distanceWheelIr * 100}"),
-      'wheelWidth': TextEditingController(text: "${initialConfig.wheelWidth * 100}"),
-      'irDistance': TextEditingController(text: "${initialConfig.irDistance * 100}"),
-      'name': TextEditingController(text: name),
-    };
-  }
-
-  Widget _buildTextField({
-    required TextEditingController controller,
-    required String label,
-    required FormFieldValidator<String> validator,
-  }) {
-    return TextFormField(
-      controller: controller,
-      decoration: InputDecoration(labelText: label),
-      validator: validator,
-    );
-  }
-
-  List<Widget> _buildMeasurementFields(Map<String, TextEditingController> controllers) {
-    const fields = [
-      {"label": "Wheel radius", "key": "radius"},
-      {"label": "Track width", "key": "track"},
-      {"label": "Vertical Distance Wheel to IR", "key": "distanceWheelIR"},
-      {"label": "Distance between IR sensors", "key": "irDistance"},
-      {"label": "Wheel width", "key": "wheelWidth"},
-    ];
-
-    return fields.map((field) {
-      final key = field['key']!;
-      final label = field['label']!;
-
-      return Padding(
-        padding: const EdgeInsets.symmetric(vertical: 4.0),
-        child: Row(
-          children: [
-            Expanded(
-              child: _buildTextField(
-                controller: controllers[key]!,
-                label: "$label (cm)",
-                validator: (value) {
-                  if (value == null || value.isEmpty) return "Enter a value";
-                  if (double.tryParse(value) == null) return "Enter a number";
-                  return null;
-                },
-              ),
-            ),
-          ],
-        ),
-      );
-    }).toList();
   }
 }

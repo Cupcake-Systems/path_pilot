@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
@@ -8,11 +7,10 @@ import 'package:path_pilot/editor/add_instruction_dialog.dart';
 import 'package:path_pilot/editor/instructions/abstract.dart';
 import 'package:path_pilot/editor/instructions/rapid_turn.dart';
 import 'package:path_pilot/editor/interactable_visualizer.dart';
+import 'package:path_pilot/file_browser.dart';
 import 'package:path_pilot/robi_api/robi_utils.dart';
 
 import '../app_storage.dart';
-import '../robi_api/exporter/exporter.dart';
-import '../robi_api/robi_path_serializer.dart';
 import '../robi_api/simulator.dart';
 import 'instructions/drive.dart';
 import 'instructions/turn.dart';
@@ -21,14 +19,16 @@ final inputFormatters = [FilteringTextInputFormatter.allow(RegExp(r'^(\d+)?\.?\d
 
 class Editor extends StatefulWidget {
   final List<MissionInstruction> initialInstructions;
-  final File file;
   final RobiConfig selectedRobiConfig;
+  final SubViewMode subViewMode;
+  final void Function(List<MissionInstruction> newInstructions, SimulationResult newSimulationResult) onInstructionsChanged;
 
   const Editor({
     super.key,
     required this.initialInstructions,
-    required this.file,
     required this.selectedRobiConfig,
+    required this.subViewMode,
+    required this.onInstructionsChanged,
   });
 
   @override
@@ -49,172 +49,160 @@ class _EditorState extends State<Editor> with AutomaticKeepAliveClientMixin {
   Duration? randomInstructionsGenerationDuration;
 
   @override
-  Widget build(BuildContext context) {
-    super.build(context);
-    return ResizableContainer(
-      direction: SettingsStorage.orientation,
-      divider: const ResizableDivider(thickness: 3),
-      children: [
-        ResizableChild(
-          child: InteractableInstructionsVisualizer(
-            simulationResult: simulationResult,
-            totalTime: simulationResult.totalTime,
-            robiConfig: widget.selectedRobiConfig,
-            highlightedInstruction: highlightedInstruction,
-            onTimeChanged: (newTime) => setState(() => time = newTime),
-          ),
-        ),
-        ResizableChild(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              MenuBar(
-                clipBehavior: Clip.antiAlias,
-                style: const MenuStyle(
-                  shape: WidgetStatePropertyAll(
-                    RoundedRectangleBorder(
-                      borderRadius: BorderRadius.vertical(
-                        bottom: Radius.circular(10),
-                      ),
-                    ),
-                  ),
-                ),
-                children: [
-                  MenuItemButton(
-                    leadingIcon: const Icon(Icons.save),
-                    onPressed: () async {
-                      await RobiPathSerializer.saveToFile(widget.file, instructions);
-                      if (!context.mounted) return;
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Saved')),
-                      );
-                    },
-                    child: const MenuAcceleratorLabel('&Save'),
-                  ),
-                  const VerticalDivider(width: 0),
-                  MenuItemButton(
-                    onPressed: simulationResult.instructionResults.isEmpty ? null : exportClick,
-                    trailingIcon: const Icon(Icons.file_upload_outlined),
-                    child: const MenuAcceleratorLabel("&Export"),
-                  ),
-                ],
-              ),
-              Expanded(
-                child: ReorderableListView.builder(
-                  header: const SizedBox(height: 3),
-                  itemCount: instructions.length,
-                  itemBuilder: (context, i) => instructionToEditor(i),
-                  onReorder: (int oldIndex, int newIndex) {
-                    if (oldIndex < newIndex) --newIndex;
-                    instructions.insert(newIndex, instructions.removeAt(oldIndex));
-                    rerunSimulationAndUpdate();
-                  },
-                ),
-              ),
-              Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Card.outlined(
-                          child: IconButton(
-                            style: IconButton.styleFrom(
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                            ),
-                            padding: const EdgeInsets.symmetric(vertical: 20),
-                            icon: const Icon(Icons.add),
-                            onPressed: () => showDialog(
-                              context: context,
-                              builder: (BuildContext context) => AddInstructionDialog(
-                                instructionAdded: (MissionInstruction instruction) {
-                                  instructions.insert(instructions.length, instruction);
-                                  rerunSimulationAndUpdate();
-                                },
-                                robiConfig: widget.selectedRobiConfig,
-                                simulationResult: simulationResult,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                      Card.outlined(
-                        child: IconButton(
-                          style: IconButton.styleFrom(
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                          ),
-                          padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 30),
-                          onPressed: () {
-                            time = 0;
-                            instructions.clear();
-                            rerunSimulationAndUpdate();
-                          },
-                          icon: const Icon(Icons.close),
-                        ),
-                      ),
-                    ],
-                  ),
-                  if (SettingsStorage.developerMode)
-                    Card.outlined(
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                        child: Row(
-                          children: [
-                            const Text("Generate Random Instructions"),
-                            const SizedBox(width: 10),
-                            Flexible(
-                              child: TextFormField(
-                                initialValue: randomInstructionsGenerationLength.toString(),
-                                onChanged: (value) {
-                                  final parsed = int.tryParse(value);
-                                  if (parsed == null) return;
-                                  randomInstructionsGenerationLength = parsed;
-                                },
-                                decoration: const InputDecoration(labelText: "Generation Length"),
-                                keyboardType: TextInputType.number,
-                                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                              ),
-                            ),
-                            const SizedBox(width: 10),
-                            if (randomInstructionsGenerationDuration != null) Text("(took ${randomInstructionsGenerationDuration!.inMilliseconds}ms)"),
-                            const SizedBox(width: 10),
-                            IconButton(
-                              onPressed: () {
-                                for (int i = 0; i < randomInstructionsGenerationLength; i++) {
-                                  instructions.add(MissionInstruction.generateRandom());
-                                }
-                                final sw = Stopwatch()..start();
-                                rerunSimulationAndUpdate();
-                                sw.stop();
-                                setState(() {
-                                  randomInstructionsGenerationDuration = sw.elapsed;
-                                });
-                              },
-                              icon: const Icon(Icons.send),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                ],
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
+  void initState() {
+    super.initState();
+    widget.onInstructionsChanged(instructions, simulationResult);
   }
 
-  void exportClick() async {
-    Exporter.saveToFile(
-      widget.selectedRobiConfig,
-      simulationResult.instructionResults,
-    );
+  @override
+  Widget build(BuildContext context) {
+    super.build(context);
+
+    InteractableInstructionsVisualizer? visualizer;
+    Widget? editor;
+
+    if (widget.subViewMode == SubViewMode.split || widget.subViewMode == SubViewMode.visualizer) {
+      visualizer = InteractableInstructionsVisualizer(
+        simulationResult: simulationResult,
+        totalTime: simulationResult.totalTime,
+        robiConfig: widget.selectedRobiConfig,
+        highlightedInstruction: highlightedInstruction,
+        onTimeChanged: (newTime) => setState(() => time = newTime),
+      );
+    }
+
+    if (widget.subViewMode == SubViewMode.split || widget.subViewMode == SubViewMode.editor) {
+      editor = Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Expanded(
+            child: instructions.isEmpty
+                ? const Center(
+                    child: Text("Add a first instruction to begin"),
+                  )
+                : ReorderableListView.builder(
+                    header: const SizedBox(height: 3),
+                    itemCount: instructions.length,
+                    itemBuilder: (context, i) => instructionToEditor(i),
+                    onReorder: (int oldIndex, int newIndex) {
+                      if (oldIndex < newIndex) --newIndex;
+                      instructions.insert(newIndex, instructions.removeAt(oldIndex));
+                      rerunSimulationAndUpdate();
+                    },
+                  ),
+          ),
+          Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: Card.outlined(
+                      child: IconButton(
+                        style: IconButton.styleFrom(
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                        icon: const Icon(Icons.add),
+                        onPressed: () => showDialog(
+                          context: context,
+                          builder: (BuildContext context) => AddInstructionDialog(
+                            instructionAdded: (MissionInstruction instruction) {
+                              instructions.insert(instructions.length, instruction);
+                              rerunSimulationAndUpdate();
+                            },
+                            robiConfig: widget.selectedRobiConfig,
+                            simulationResult: simulationResult,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  Card.outlined(
+                    child: IconButton(
+                      style: IconButton.styleFrom(
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      onPressed: () {
+                        time = 0;
+                        instructions.clear();
+                        rerunSimulationAndUpdate();
+                      },
+                      icon: const Icon(Icons.close),
+                    ),
+                  ),
+                ],
+              ),
+              if (SettingsStorage.developerMode)
+                Card.outlined(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                    child: Row(
+                      children: [
+                        const Text("Generate Random Instructions"),
+                        const SizedBox(width: 10),
+                        Flexible(
+                          child: TextFormField(
+                            initialValue: randomInstructionsGenerationLength.toString(),
+                            onChanged: (value) {
+                              final parsed = int.tryParse(value);
+                              if (parsed == null) return;
+                              randomInstructionsGenerationLength = parsed;
+                            },
+                            decoration: const InputDecoration(labelText: "Generation Length"),
+                            keyboardType: TextInputType.number,
+                            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        if (randomInstructionsGenerationDuration != null) Text("(took ${randomInstructionsGenerationDuration!.inMilliseconds}ms)"),
+                        const SizedBox(width: 10),
+                        IconButton(
+                          onPressed: () {
+                            for (int i = 0; i < randomInstructionsGenerationLength; i++) {
+                              instructions.add(MissionInstruction.generateRandom());
+                            }
+                            final sw = Stopwatch()..start();
+                            rerunSimulationAndUpdate();
+                            sw.stop();
+                            setState(() {
+                              randomInstructionsGenerationDuration = sw.elapsed;
+                            });
+                          },
+                          icon: const Icon(Icons.send),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ],
+      );
+    }
+
+    switch (widget.subViewMode) {
+      case SubViewMode.editor:
+        return editor!;
+      case SubViewMode.visualizer:
+        return visualizer!;
+      case SubViewMode.split:
+        final screenSize = MediaQuery.of(context).size;
+        final isPortrait = screenSize.width < screenSize.height;
+        return ResizableContainer(
+          direction: isPortrait ? Axis.vertical : Axis.horizontal,
+          divider: ResizableDivider(thickness: 3, color: Colors.grey[800]),
+          children: [
+            ResizableChild(child: visualizer!),
+            ResizableChild(child: editor!),
+          ],
+        );
+    }
   }
 
   void enteredCallback(InstructionResult instructionResult) {
@@ -325,6 +313,8 @@ class _EditorState extends State<Editor> with AutomaticKeepAliveClientMixin {
       simulationResult = simulator.calculate(instructions);
       time = time.clamp(0, simulationResult.totalTime);
     });
+
+    widget.onInstructionsChanged(instructions, simulationResult);
   }
 
   @override

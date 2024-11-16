@@ -31,6 +31,9 @@ class _InstructionDetailsWidgetState extends State<InstructionDetailsWidget> {
 
   @override
   Widget build(BuildContext context) {
+    final screenSize = MediaQuery.sizeOf(context);
+    bool isScreenWide = screenSize.width > screenSize.height;
+
     final List<InnerOuterRobiState> chartStates = List.generate(
       iterations,
       (i) => getRobiStateAtTimeInInstructionResult(
@@ -160,99 +163,103 @@ class _InstructionDetailsWidgetState extends State<InstructionDetailsWidget> {
     final color1 = data2 == null ? Colors.grey : Colors.red;
     final color2 = Colors.blue;
 
-    return SizedBox(
-      height: 400,
-      child: Row(
+    return IntrinsicHeight(
+      child: Flex(
+        direction: isScreenWide ? Axis.horizontal : Axis.vertical,
         children: [
           Flexible(
-            flex: 2,
-            child: LineChart(
-              LineChartData(
-                borderData: FlBorderData(
-                  border: Border.all(color: const Color(0xff37434d), width: 2),
-                ),
-                minY: minY,
-                lineTouchData: LineTouchData(
-                  touchTooltipData: LineTouchTooltipData(
-                    getTooltipItems: (List<LineBarSpot> touchedSpots) {
-                      return touchedSpots.map((LineBarSpot touchedSpot) {
-                        final spot = touchedSpot as FlSpot;
-                        final end = touchedSpots.last == touchedSpot ? "" : "\n";
-                        String leading = "";
+            fit: FlexFit.tight,
+            child: AspectRatio(
+              aspectRatio: 1.5,
+              child: LineChart(
+                LineChartData(
+                  borderData: FlBorderData(
+                    border: Border.all(color: const Color(0xff37434d), width: 2),
+                  ),
+                  minY: minY,
+                  lineTouchData: LineTouchData(
+                    touchTooltipData: LineTouchTooltipData(
+                      getTooltipItems: (List<LineBarSpot> touchedSpots) {
+                        return touchedSpots.map((LineBarSpot touchedSpot) {
+                          final spot = touchedSpot as FlSpot;
+                          final end = touchedSpots.last == touchedSpot ? "" : "\n";
+                          String leading = "";
 
-                        if (touchedSpots.length == 2) {
-                          leading = touchedSpot == touchedSpots.first ? "Inner " : "Outer ";
-                        }
+                          if (touchedSpots.length == 2) {
+                            leading = touchedSpot == touchedSpots.first ? "Inner " : "Outer ";
+                          }
 
-                        return LineTooltipItem(
-                          "$leading$yAxisTitle: ${spot.y.toStringAsFixed(2)}$end",
-                          const TextStyle(),
-                        );
-                      }).toList();
-                    },
-                  ),
-                ),
-                titlesData: FlTitlesData(
-                  topTitles: const AxisTitles(),
-                  rightTitles: const AxisTitles(),
-                  leftTitles: AxisTitles(
-                    axisNameWidget: Text(yAxisTitle),
-                    sideTitles: const SideTitles(showTitles: true, reservedSize: 40),
-                  ),
-                  bottomTitles: AxisTitles(
-                    axisNameWidget: Text(xAxisTitle),
-                    axisNameSize: 20,
-                    sideTitles: const SideTitles(showTitles: true, reservedSize: 30),
-                  ),
-                ),
-                lineBarsData: [
-                  LineChartBarData(
-                    isStepLineChart: yAxisMode == YAxisType.acceleration,
-                    spots: data1,
-                    color: color1,
-                    dotData: const FlDotData(show: false),
-                    belowBarData: BarAreaData(
-                      show: true,
-                      gradient: LinearGradient(
-                        begin: Alignment.centerLeft,
-                        end: Alignment.centerRight,
-                        colors: [color1.withOpacity(0.3), color1.withOpacity(0.3), Colors.transparent, Colors.transparent],
-                        stops: [0, widget.instructionProgress ?? 1, widget.instructionProgress ?? 1, 1],
-                      ),
+                          return LineTooltipItem(
+                            "$leading$yAxisTitle: ${spot.y.toStringAsFixed(2)}$end",
+                            const TextStyle(),
+                          );
+                        }).toList();
+                      },
                     ),
                   ),
-                  if (data2 != null)
+                  titlesData: FlTitlesData(
+                    topTitles: const AxisTitles(),
+                    rightTitles: const AxisTitles(),
+                    leftTitles: AxisTitles(
+                      axisNameWidget: Text(yAxisTitle),
+                      sideTitles: const SideTitles(showTitles: true, reservedSize: 40),
+                    ),
+                    bottomTitles: AxisTitles(
+                      axisNameWidget: Text(xAxisTitle),
+                      axisNameSize: 20,
+                      sideTitles: const SideTitles(showTitles: true, reservedSize: 30),
+                    ),
+                  ),
+                  lineBarsData: [
                     LineChartBarData(
                       isStepLineChart: yAxisMode == YAxisType.acceleration,
-                      spots: data2,
-                      color: color2,
+                      spots: data1,
+                      color: color1,
                       dotData: const FlDotData(show: false),
                       belowBarData: BarAreaData(
                         show: true,
                         gradient: LinearGradient(
                           begin: Alignment.centerLeft,
                           end: Alignment.centerRight,
-                          colors: [color2.withOpacity(0.3), color2.withOpacity(0.3), Colors.transparent, Colors.transparent],
+                          colors: [color1.withOpacity(0.3), color1.withOpacity(0.3), Colors.transparent, Colors.transparent],
                           stops: [0, widget.instructionProgress ?? 1, widget.instructionProgress ?? 1, 1],
                         ),
                       ),
                     ),
-                ],
-                extraLinesData: widget.instructionProgress == null
-                    ? null
-                    : ExtraLinesData(
-                        verticalLines: [
-                          VerticalLine(
-                            x: widget.instructionProgress! * maxX,
-                            color: Colors.grey,
-                            dashArray: [5, 5],
+                    if (data2 != null)
+                      LineChartBarData(
+                        isStepLineChart: yAxisMode == YAxisType.acceleration,
+                        spots: data2,
+                        color: color2,
+                        dotData: const FlDotData(show: false),
+                        belowBarData: BarAreaData(
+                          show: true,
+                          gradient: LinearGradient(
+                            begin: Alignment.centerLeft,
+                            end: Alignment.centerRight,
+                            colors: [color2.withOpacity(0.3), color2.withOpacity(0.3), Colors.transparent, Colors.transparent],
+                            stops: [0, widget.instructionProgress ?? 1, widget.instructionProgress ?? 1, 1],
                           ),
-                        ],
+                        ),
                       ),
+                  ],
+                  extraLinesData: widget.instructionProgress == null
+                      ? null
+                      : ExtraLinesData(
+                          verticalLines: [
+                            VerticalLine(
+                              x: widget.instructionProgress! * maxX,
+                              color: Colors.grey,
+                              dashArray: [5, 5],
+                            ),
+                          ],
+                        ),
+                ),
               ),
             ),
           ),
           Flexible(
+            fit: FlexFit.tight,
             child: Padding(
               padding: const EdgeInsets.all(16),
               child: Column(
@@ -265,25 +272,35 @@ class _InstructionDetailsWidgetState extends State<InstructionDetailsWidget> {
                       title: const Text("Angular"),
                     ),
                   const Text("X-Axis"),
-                  ListTile(
-                    leading: Radio(value: XAxisType.time, groupValue: xAxisMode, onChanged: (value) => setState(() => xAxisMode = value!)),
+                  RadioListTile(
+                    value: XAxisType.time,
+                    groupValue: xAxisMode,
+                    onChanged: (value) => setState(() => xAxisMode = value!),
                     title: const Text("Time"),
                   ),
-                  ListTile(
-                    leading: Radio(value: XAxisType.position, groupValue: xAxisMode, onChanged: (value) => setState(() => xAxisMode = value!)),
+                  RadioListTile(
+                    value: XAxisType.position,
+                    groupValue: xAxisMode,
+                    onChanged: (value) => setState(() => xAxisMode = value!),
                     title: const Text("Position"),
                   ),
                   const Text("Y-Axis"),
-                  ListTile(
-                    leading: Radio(value: YAxisType.position, groupValue: yAxisMode, onChanged: (value) => setState(() => yAxisMode = value!)),
+                  RadioListTile(
+                    value: YAxisType.position,
+                    groupValue: yAxisMode,
+                    onChanged: (value) => setState(() => yAxisMode = value!),
                     title: const Text("Position"),
                   ),
-                  ListTile(
-                    leading: Radio(value: YAxisType.velocity, groupValue: yAxisMode, onChanged: (value) => setState(() => yAxisMode = value!)),
+                  RadioListTile(
+                    value: YAxisType.velocity,
+                    groupValue: yAxisMode,
+                    onChanged: (value) => setState(() => yAxisMode = value!),
                     title: const Text("Velocity"),
                   ),
-                  ListTile(
-                    leading: Radio(value: YAxisType.acceleration, groupValue: yAxisMode, onChanged: (value) => setState(() => yAxisMode = value!)),
+                  RadioListTile(
+                    value: YAxisType.acceleration,
+                    groupValue: yAxisMode,
+                    onChanged: (value) => setState(() => yAxisMode = value!),
                     title: const Text("Acceleration"),
                   ),
                 ],
