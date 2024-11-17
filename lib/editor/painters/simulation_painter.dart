@@ -30,6 +30,7 @@ class SimulationPainter extends MyPainter {
     visibleArea.max + expansion,
   );
   late final double centerMaxDistance = visionCenter.distanceTo(expandedArea.max);
+  late final double centerMaxDistanceSquared = centerMaxDistance * centerMaxDistance;
 
   static const int curveGranularity = 10;
 
@@ -45,7 +46,7 @@ class SimulationPainter extends MyPainter {
   void paint() {
     for (int i = 0; i < simulationResult.rapidTurnResults.length; ++i) {
       final result = simulationResult.rapidTurnResults[i];
-      if (result.intersectsWithAabb(expandedArea)) {
+      if (result.isVisibleFast(visionCenter, centerMaxDistanceSquared) && result.intersectsWithAabb(expandedArea)) {
         drawRapidTurn(result);
       }
     }
