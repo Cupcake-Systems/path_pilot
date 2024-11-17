@@ -11,6 +11,9 @@ import 'package:vector_math/vector_math.dart' show Aabb2, Vector2;
 import 'abstract_painter.dart';
 
 const Color white = Color(0xFFFFFFFF);
+const double bottomPadding = 100;
+const double leftPadding = 18;
+const double rightPadding = 18;
 
 class LinePainter extends CustomPainter {
   final double scale;
@@ -81,11 +84,11 @@ class LinePainter extends CustomPainter {
       ..strokeWidth = 1
       ..color = white;
 
-    canvas.drawLine(Offset(11, size.height - 15), Offset(109, size.height - 15), paint);
-    canvas.drawLine(Offset(10, size.height - 20), Offset(10, size.height - 10), paint);
-    canvas.drawLine(Offset(110, size.height - 20), Offset(110, size.height - 10), paint);
+    canvas.drawLine(Offset(leftPadding + 1, size.height - bottomPadding), Offset(leftPadding + 99, size.height - bottomPadding), paint);
+    canvas.drawLine(Offset(leftPadding, size.height - bottomPadding - 5), Offset(leftPadding, size.height - bottomPadding + 5), paint);
+    canvas.drawLine(Offset(leftPadding + 100, size.height - bottomPadding - 5), Offset(leftPadding + 100, size.height - bottomPadding + 5), paint);
 
-    LinePainter.paintText("${(100.0 / scale * 100).toStringAsFixed(2)}cm", Offset(60, size.height - 17), canvas, size);
+    LinePainter.paintText("${(100.0 / scale * 100).toStringAsFixed(2)}cm", Offset(leftPadding + 50, size.height - bottomPadding - 3), canvas, size);
   }
 
   void paintRobiState(Canvas canvas, Size size) {
@@ -122,8 +125,8 @@ Acc.: I ${innerAccelText}cm/s²${accelSpace}O ${(rs.outerAcceleration * 100).toI
 
     List<Color> colors = [velToColor(0, maxTargetedVelocity), velToColor(maxTargetedVelocity, maxTargetedVelocity)];
 
-    final lineStart = Offset(size.width - 130, size.height - 20);
-    final lineEnd = Offset(size.width - 30, size.height - 20);
+    final lineStart = Offset(size.width - rightPadding - 100, size.height - bottomPadding);
+    final lineEnd = Offset(size.width - rightPadding, size.height - bottomPadding);
 
     final accelerationPaint = Paint()
       ..shader = RadialGradient(
@@ -145,8 +148,8 @@ Acc.: I ${innerAccelText}cm/s²${accelSpace}O ${(rs.outerAcceleration * 100).toI
         Paint()
           ..color = white
           ..strokeWidth = 1);
-    LinePainter.paintText("0m/s", lineStart.translate(0, -7), canvas, size);
-    LinePainter.paintText("${maxTargetedVelocity.toStringAsFixed(2)}m/s", lineEnd.translate(0, -7), canvas, size);
+    LinePainter.paintText("0", lineStart.translate(0, -7), canvas, size);
+    LinePainter.paintText("${(maxTargetedVelocity * 100).round()}cm/s", lineEnd.translate(-22, -7), canvas, size);
   }
 
   @override
