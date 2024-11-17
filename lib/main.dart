@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:path_pilot/app_storage.dart';
 import 'package:path_pilot/constants.dart';
@@ -22,6 +23,9 @@ Future<void> main() async {
   packageInfo = await PackageInfo.fromPlatform();
   await RobiPainter.init();
 
+  SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual, overlays: [
+    SystemUiOverlay.top,
+  ]);
 
   runApp(const MyApp());
 }
