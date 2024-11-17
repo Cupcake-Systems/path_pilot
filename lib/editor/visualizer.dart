@@ -119,7 +119,7 @@ class Visualizer extends StatelessWidget {
   });
 
   static double startZoom = (minZoom + maxZoom) / 2;
-  static final double panMultiplier = Platform.isAndroid ? 1.5 : 1;
+  static Offset startOffset = Offset.zero;
 
   @override
   Widget build(BuildContext context) {
@@ -137,19 +137,18 @@ class Visualizer extends StatelessWidget {
               onZoomChanged(newZoom, newOffset, lockToRobi);
             },
             child: GestureDetector(
-              onScaleStart: (details) => startZoom = zoom,
+              onScaleStart: (details) {
+                startZoom = zoom;
+                startOffset = details.localFocalPoint - offset;
+              },
               onScaleUpdate: (details) {
-                double newZoom = zoom;
-                Offset newOffset = offset;
-
                 if (details.pointerCount > 1) {
-                  newZoom = (startZoom * details.scale).clamp(minZoom, maxZoom);
+                  final newZoom = (startZoom * details.scale).clamp(minZoom, maxZoom);
                   final scaleDelta = (log(newZoom + 1) - log(zoom + 1)) / log2;
                   final newOffset = offset * pow(2, scaleDelta).toDouble();
                   onZoomChanged(newZoom, newOffset, lockToRobi);
                 } else {
-                  newOffset = offset + details.focalPointDelta * panMultiplier;
-                  onZoomChanged(newZoom, newOffset, false);
+                  onZoomChanged(zoom, details.localFocalPoint - startOffset, false);
                 }
               },
               child: RepaintBoundary(
