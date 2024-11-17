@@ -60,10 +60,14 @@ class RobiConfigStorage {
 class SettingsStorage {
   static const String _developerModeKey = "developerMode";
   static const String _visualizerFpsKey = "visualizerFps";
+  static const String _showMillisecondsKey = "showMilliseconds";
 
   static bool get developerMode => AppData._prefs.getBool(_developerModeKey) ?? false;
   static set developerMode(bool value) => AppData._prefs.setBool(_developerModeKey, value);
 
   static int get visualizerFps => AppData._prefs.getInt(_visualizerFpsKey) ?? 30;
   static set visualizerFps(int value) => AppData._prefs.setInt(_visualizerFpsKey, value);
+
+  static bool get showMilliseconds => AppData._prefs.getBool(_showMillisecondsKey) ?? false;
+  static set showMilliseconds(bool value) => AppData._prefs.setBool(_showMillisecondsKey, value);
 }

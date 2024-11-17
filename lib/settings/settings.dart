@@ -38,6 +38,13 @@ class _SettingsPageState extends State<SettingsPage> {
                       label: "${SettingsStorage.visualizerFps} FPS",
                     ),
                   ),
+                  ListTile(
+                    title: const Text("Show Milliseconds"),
+                    trailing: Switch(
+                      value: SettingsStorage.showMilliseconds,
+                      onChanged: (value) => setState(() => SettingsStorage.showMilliseconds = value),
+                    ),
+                  )
                 ],
               ),
             ),

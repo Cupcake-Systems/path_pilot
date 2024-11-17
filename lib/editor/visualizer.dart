@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'dart:math';
 
 import 'package:flutter/gestures.dart';
@@ -123,6 +122,10 @@ class Visualizer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+
+    final totalTimeString = printDuration(Duration(milliseconds: (totalTime * 1000).toInt()), SettingsStorage.showMilliseconds);
+    final timeString = printDuration(Duration(milliseconds: (time * 1000).toInt()), SettingsStorage.showMilliseconds);
+
     return Column(
       children: [
         Expanded(
@@ -194,7 +197,7 @@ class Visualizer extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 8),
           child: Row(
             children: [
-              Text("Time ${printDuration(Duration(milliseconds: (time * 1000).toInt()))} / ${printDuration(Duration(milliseconds: (totalTime * 1000).toInt()))}"),
+              Text("$timeString / $totalTimeString"),
               Expanded(
                 child: Stack(
                   alignment: Alignment.center,
@@ -260,10 +263,11 @@ class Visualizer extends StatelessWidget {
   }
 }
 
-String printDuration(Duration duration) {
+String printDuration(Duration duration, bool showMilliseconds) {
   String twoDigits(int n) => n.toString().padLeft(2, "0").substring(0, 2);
   String twoDigitMinutes = duration.inMinutes.remainder(60).abs().toString();
   String twoDigitSeconds = twoDigits(duration.inSeconds.remainder(60).abs());
+  if (!showMilliseconds) return "$twoDigitMinutes:$twoDigitSeconds";
   String twoDigitMilliseconds = twoDigits(duration.inMilliseconds.remainder(1000).abs());
   return "$twoDigitMinutes:$twoDigitSeconds:$twoDigitMilliseconds";
 }
