@@ -8,6 +8,7 @@ const defaultIrReadPainterSettings = IrReadPainterSettings(
   showTracks: false,
   ramerDouglasPeuckerTolerance: 0.5,
   irInclusionThreshold: 100,
+  showVelocityPath: false,
 );
 
 class IrPathApproximationSettingsWidget extends StatelessWidget {
@@ -54,6 +55,13 @@ class IrPathApproximationSettingsWidget extends StatelessWidget {
                   value: settings.showCalculatedPath,
                   onChanged: (value) => onSettingsChange(
                     settings.copyWith(showCalculatedPath: value),
+                  ),
+                ),
+                CheckboxListTile(
+                  title: const Text("Show velocity path", style: TextStyle(fontSize: 16)),
+                  value: settings.showVelocityPath,
+                  onChanged: (value) => onSettingsChange(
+                    settings.copyWith(showVelocityPath: value),
                   ),
                 ),
                 const SizedBox(height: 16),

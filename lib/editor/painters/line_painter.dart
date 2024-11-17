@@ -210,6 +210,8 @@ Acc.: I ${innerAccelText}cm/s²${accelSpace}O ${(rs.outerAcceleration * 100).toI
 
     if (simulationResult != null) {
       paintVelocityScale(canvas, size, simulationResult!.maxTargetedVelocity);
+    } else if (irCalculatorResult != null) {
+      paintVelocityScale(canvas, size, irCalculatorResult!.maxVelocity);
     }
   }
 }

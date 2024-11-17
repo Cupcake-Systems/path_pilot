@@ -12,8 +12,8 @@ Vector2 polarToCartesianRad(double rad, double radius) => Vector2(cos(rad) * rad
 double sinD(double deg) => sin(deg * degrees2Radians);
 
 double cosD(double deg) => cos(deg * degrees2Radians);
-Offset vecToOffset(final Vector2 vec) => Offset(vec.x, -vec.y);
 
+Offset vecToOffset(final Vector2 vec) => Offset(vec.x, -vec.y);
 
 Vector2 centerOfCircle(final double radius, final double angle, final bool left) {
   Vector2 center = polarToCartesian(angle + 90, radius);
@@ -60,3 +60,5 @@ bool isLineIntersectingAABB(final Aabb2 aabb2, final Vector2 p1, final Vector2 p
 
   return true;
 }
+
+bool isLineVisibleFast(final Aabb2 visibleArea, final Vector2 p1, final Vector2 p2) => isLineIntersectingAABB(visibleArea, p1, p2);

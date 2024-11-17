@@ -272,6 +272,7 @@ class SimulationPainter extends MyPainter {
 }
 
 Color velToColor(final double velocity, final double maxVelocity) {
+  assert (maxVelocity != 0);
   int r = ((1 - velocity / maxVelocity) * 255).round();
   int g = 255 - r;
   return Color.fromARGB(255, r, g, 0);

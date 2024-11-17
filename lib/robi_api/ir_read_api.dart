@@ -98,6 +98,7 @@ class IrCalculatorResult {
   final List<LeftRightRobiState> robiStates;
   final int length;
   final LeftRightRobiState maxLeftVelocity, maxRightVelocity, maxLeftAcceleration, maxRightAcceleration;
+  late final double maxVelocity = max(maxLeftVelocity.leftVelocity, maxRightVelocity.rightVelocity);
 
   IrCalculatorResult({
     required this.irData,
@@ -167,13 +168,13 @@ class IrCalculator {
         rightAcceleration: rightAccel,
       );
 
-      if (maxLeftVelocity.leftVelocity > leftVel) {
+      if (maxLeftVelocity.leftVelocity < leftVel) {
         maxLeftVelocity = robiStates[i];
       }
       if (maxRightVelocity.rightVelocity < rightVel) {
         maxRightVelocity = robiStates[i];
       }
-      if (maxLeftAcceleration.leftAcceleration > leftAccel) {
+      if (maxLeftAcceleration.leftAcceleration < leftAccel) {
         maxLeftAcceleration = robiStates[i];
       }
       if (maxRightAcceleration.rightAcceleration < rightAccel) {
