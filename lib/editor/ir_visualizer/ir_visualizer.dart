@@ -7,8 +7,8 @@ import 'package:vector_math/vector_math.dart' show Vector2;
 import '../../robi_api/ir_read_api.dart';
 import '../../robi_api/robi_utils.dart';
 import '../interactable_visualizer.dart';
-import '../ir_line_approximation/approximation_settings_widget.dart';
-import '../ir_line_approximation/ir_reading_info.dart';
+import 'approximation_settings_widget.dart';
+import 'ir_reading_info.dart';
 
 class IrVisualizerWidget extends StatefulWidget {
   final IrReadResult irReadResult;
@@ -33,9 +33,7 @@ class IrVisualizerWidget extends StatefulWidget {
 class _IrVisualizerWidgetState extends State<IrVisualizerWidget> {
   late final IrCalculatorResult irCalculatorResult = IrCalculator.calculate(widget.irReadResult, widget.robiConfig);
 
-  double ramerDouglasPeuckerTolerance = 0.5;
-  IrReadPainterSettings irReadPainterSettings = defaultIrReadPainterSettings();
-  int irInclusionThreshold = 100;
+  IrReadPainterSettings irReadPainterSettings = defaultIrReadPainterSettings;
 
   List<Vector2>? irPathApproximation;
 
@@ -43,8 +41,8 @@ class _IrVisualizerWidgetState extends State<IrVisualizerWidget> {
   Widget build(BuildContext context) {
     irPathApproximation = IrCalculator.pathApproximation(
       irCalculatorResult,
-      irInclusionThreshold,
-      ramerDouglasPeuckerTolerance,
+      irReadPainterSettings.irInclusionThreshold,
+      irReadPainterSettings.ramerDouglasPeuckerTolerance,
     );
 
     InteractableIrVisualizer? visualizer;
@@ -63,20 +61,12 @@ class _IrVisualizerWidgetState extends State<IrVisualizerWidget> {
     }
     if (widget.subViewMode == SubViewMode.split || widget.subViewMode == SubViewMode.editor) {
       editor = ListView(
+        padding: const EdgeInsets.all(16),
         children: [
           IrPathApproximationSettingsWidget(
-            onSettingsChange: (
-              settings,
-              irInclusionThreshold,
-              ramerDouglasPeuckerTolerance,
-            ) {
-              setState(() {
-                irReadPainterSettings = settings;
-                this.irInclusionThreshold = irInclusionThreshold;
-                this.ramerDouglasPeuckerTolerance = ramerDouglasPeuckerTolerance;
-              });
-            },
+            onSettingsChange: (settings) => setState(() => irReadPainterSettings = settings), settings: irReadPainterSettings,
           ),
+          const SizedBox(height: 16),
           IrReadingInfoWidget(
             selectedRobiConfig: widget.robiConfig,
             irReadResult: widget.irReadResult,

@@ -34,23 +34,25 @@ class IrReadingInfoWidget extends StatelessWidget {
 
     return Card(
       child: Padding(
-        padding: const EdgeInsets.all(8.0),
+        padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text("IR Reading", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 8),
             Text("${irReadResult.measurements.length} readings"),
             Text("${irReadResult.resolution}s between each reading"),
             Text("Left track length: ${roundToDigits(leftTravelDistance, 2)}m"),
             Text("Right track length: ${roundToDigits(rightTravelDistance, 2)}m"),
             const SizedBox(height: 8),
-            ElevatedButton(
+            ElevatedButton.icon(
               onPressed: () {
                 Navigator.of(context).push(MaterialPageRoute(
                   builder: (context) => IrReadingsVisualizer(irReadResult: irReadResult, robiConfig: selectedRobiConfig),
                 ));
               },
-              child: const Text("View readings"),
+              label: const Text("View readings"),
+              icon: const Icon(Icons.remove_red_eye),
             ),
           ],
         ),

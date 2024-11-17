@@ -2,13 +2,13 @@ import 'dart:math';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
-import 'package:path_pilot/editor/ir_line_approximation/ramers_douglas.dart';
 import 'package:path_pilot/editor/painters/robi_painter.dart';
 import 'package:path_pilot/helper/file_manager.dart';
 import 'package:path_pilot/robi_api/robi_utils.dart';
 import 'package:vector_math/vector_math.dart';
 
 import '../helper/geometry.dart';
+import 'ir_line_approximation/ramers_douglas.dart';
 
 class Measurement {
   final int motorLeftFreq, motorRightFreq, leftIr, middleIr, rightIr;

@@ -9,14 +9,33 @@ import '../../robi_api/robi_utils.dart';
 import 'line_painter.dart';
 
 class IrReadPainterSettings {
-  bool showTracks, showCalculatedPath;
-  int irReadingsThreshold;
+  final bool showTracks, showCalculatedPath;
+  final int irReadingsThreshold, irInclusionThreshold;
+  final double ramerDouglasPeuckerTolerance;
 
-  IrReadPainterSettings({
+  const IrReadPainterSettings({
     required this.irReadingsThreshold,
     required this.showCalculatedPath,
     required this.showTracks,
+    required this.ramerDouglasPeuckerTolerance,
+    required this.irInclusionThreshold,
   });
+
+  IrReadPainterSettings copyWith({
+    int? irReadingsThreshold,
+    bool? showCalculatedPath,
+    bool? showTracks,
+    double? ramerDouglasPeuckerTolerance,
+    int? irInclusionThreshold,
+  }) {
+    return IrReadPainterSettings(
+      irReadingsThreshold: irReadingsThreshold ?? this.irReadingsThreshold,
+      showCalculatedPath: showCalculatedPath ?? this.showCalculatedPath,
+      showTracks: showTracks ?? this.showTracks,
+      ramerDouglasPeuckerTolerance: ramerDouglasPeuckerTolerance ?? this.ramerDouglasPeuckerTolerance,
+      irInclusionThreshold: irInclusionThreshold ?? this.irInclusionThreshold,
+    );
+  }
 }
 
 class IrReadPainter extends MyPainter {
