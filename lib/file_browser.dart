@@ -50,8 +50,30 @@ class _FileBrowserState extends State<FileBrowser> {
       drawer: Drawer(
         child: ListView(
           children: [
-            const DrawerHeader(
-              child: Text("Path Pilot"),
+            DrawerHeader(
+              padding: EdgeInsets.zero,
+              decoration: const BoxDecoration(
+                border: Border(bottom: BorderSide(width: 1, color: Colors.grey)),
+              ),
+              child: ShaderMask(
+                shaderCallback: (bounds) {
+                  return const LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      Colors.white,       // Fully visible
+                      Colors.white,       // Keep visible for a longer area
+                      Colors.transparent, // Fades out
+                    ],
+                    stops: [0.0, 0.7, 1.0], // Control the fade areas
+                  ).createShader(Rect.fromLTWH(0, 0, bounds.width, bounds.height));
+                },
+                blendMode: BlendMode.dstIn,
+                child: Image.asset(
+                  "assets/repo_banner.webp",
+                  fit: BoxFit.cover,
+                ),
+              ),
             ),
             const Padding(
               padding: EdgeInsets.all(8.0),
@@ -94,7 +116,7 @@ class _FileBrowserState extends State<FileBrowser> {
               onChanged: (value) => setState(() => subViewMode = SubViewMode.split),
               title: const Text("Split"),
             ),
-            const Divider(),
+            const Divider(height: 1),
             const Padding(
               padding: EdgeInsets.all(8.0),
               child: Text("File", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
@@ -145,7 +167,7 @@ class _FileBrowserState extends State<FileBrowser> {
                 onTap: importIrReading,
               ),
             ],
-            const Divider(),
+            const Divider(height: 1),
             ListTile(
               leading: const Icon(Icons.build_circle),
               title: const Text("Robi Configs"),
@@ -161,7 +183,7 @@ class _FileBrowserState extends State<FileBrowser> {
                 setState(() {});
               },
             ),
-            const Divider(),
+            const Divider(height: 1),
             ListTile(
               leading: const Icon(Icons.bug_report),
               onTap: () => launchUrlString("$repoUrl/issues/new"),
@@ -172,7 +194,7 @@ class _FileBrowserState extends State<FileBrowser> {
               onTap: () => launchUrlString("$repoUrl/wiki"),
               title: const Text('Wiki'),
             ),
-            const Divider(),
+            const Divider(height: 1),
             ListTile(
               leading: const Icon(Icons.info),
               onTap: () {
