@@ -11,14 +11,13 @@ import '../../robi_api/robi_utils.dart';
 import 'line_painter.dart';
 
 class IrReadPainterSettings {
-  final bool showTracks, showCalculatedPath, showVelocityPath;
+  final bool showCalculatedPath, showVelocityPath;
   final int irReadingsThreshold, irInclusionThreshold;
   final double ramerDouglasPeuckerTolerance;
 
   const IrReadPainterSettings({
     required this.irReadingsThreshold,
     required this.showCalculatedPath,
-    required this.showTracks,
     required this.ramerDouglasPeuckerTolerance,
     required this.irInclusionThreshold,
     required this.showVelocityPath,
@@ -35,7 +34,6 @@ class IrReadPainterSettings {
     return IrReadPainterSettings(
       irReadingsThreshold: irReadingsThreshold ?? this.irReadingsThreshold,
       showCalculatedPath: showCalculatedPath ?? this.showCalculatedPath,
-      showTracks: showTracks ?? this.showTracks,
       ramerDouglasPeuckerTolerance: ramerDouglasPeuckerTolerance ?? this.ramerDouglasPeuckerTolerance,
       irInclusionThreshold: irInclusionThreshold ?? this.irInclusionThreshold,
       showVelocityPath: showVelocityPath ?? this.showVelocityPath,
@@ -95,25 +93,11 @@ class IrReadPainter extends MyPainter {
 
   @override
   void paint() {
-    final leftPath = Path();
-    final rightPath = Path();
-
-    (Vector2, Vector2) first = irCalculatorResult.wheelPositions.first;
-
-    leftPath.moveTo(first.$1.x, -first.$1.y);
-    rightPath.moveTo(first.$2.x, -first.$2.y);
-
     paintCache.strokeWidth = robiConfig.wheelWidth;
 
     for (int i = 0; i < irCalculatorResult.length; ++i) {
       final irPositions = irCalculatorResult.irData[i];
       final robiState = irCalculatorResult.robiStates[i];
-
-      if (settings.showTracks) {
-        final wheelPositions = irCalculatorResult.wheelPositions[i];
-        addLine(wheelPositions.$1, leftPath);
-        addLine(wheelPositions.$2, rightPath);
-      }
 
       if (settings.showVelocityPath && i < irCalculatorResult.length - 1) {
         final leftVel = robiState.leftVelocity;
@@ -145,11 +129,6 @@ class IrReadPainter extends MyPainter {
           drawCircle(ir.position, paintCache);
         }
       }
-    }
-
-    if (settings.showTracks) {
-      canvas.drawPath(rightPath, rightTrackPaint);
-      canvas.drawPath(leftPath, leftTrackPaint);
     }
 
     if (settings.showCalculatedPath) paintReducedLineEstimate();

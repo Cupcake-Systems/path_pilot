@@ -5,7 +5,6 @@ import '../painters/ir_read_painter.dart';
 const defaultIrReadPainterSettings = IrReadPainterSettings(
   irReadingsThreshold: 1024,
   showCalculatedPath: true,
-  showTracks: false,
   ramerDouglasPeuckerTolerance: 0.5,
   irInclusionThreshold: 100,
   showVelocityPath: false,
@@ -45,11 +44,6 @@ class IrPathApproximationSettingsWidget extends StatelessWidget {
                   style: TextStyle(color: Colors.grey, fontSize: 14),
                 ),
                 const SizedBox(height: 16),
-                CheckboxListTile(
-                  title: const Text("Show wheel track", style: TextStyle(fontSize: 16)),
-                  value: settings.showTracks,
-                  onChanged: (value) => onSettingsChange(settings.copyWith(showTracks: value)),
-                ),
                 CheckboxListTile(
                   title: const Text("Show calculated path", style: TextStyle(fontSize: 16)),
                   value: settings.showCalculatedPath,
