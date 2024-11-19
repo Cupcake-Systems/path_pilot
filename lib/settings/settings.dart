@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:path_pilot/app_storage.dart';
 
+const availableFrameRates = [10, 30, 60];
+
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
 
@@ -27,11 +29,18 @@ class _SettingsPageState extends State<SettingsPage> {
             trailing: DropdownButton<int>(
               value: SettingsStorage.visualizerFps,
               onChanged: (value) => setState(() => SettingsStorage.visualizerFps = value!),
-              items: const [
-                DropdownMenuItem(value: 10, child: Text("10 FPS")),
-                DropdownMenuItem(value: 30, child: Text("30 FPS")),
-                DropdownMenuItem(value: 60, child: Text("60 FPS")),
-              ],
+              items: [
+                if (!availableFrameRates.contains(SettingsStorage.visualizerFps))
+                  DropdownMenuItem(
+                    value: SettingsStorage.visualizerFps,
+                    child: Text("${SettingsStorage.visualizerFps} FPS"),
+                  ),
+                for (final frameRate in availableFrameRates)
+                  DropdownMenuItem(
+                    value: frameRate,
+                    child: Text("$frameRate FPS"),
+                  ),
+              ]
             ),
           ),
           const Divider(height: 1),
