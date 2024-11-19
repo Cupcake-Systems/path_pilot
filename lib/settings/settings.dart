@@ -46,7 +46,7 @@ class _SettingsPageState extends State<SettingsPage> {
           const Divider(height: 1),
           ListTile(
             title: const Text("Show Milliseconds"),
-            subtitle: const Text("Toggle whether to display milliseconds in the timeline."),
+            subtitle: const Text("Toggle whether to display milliseconds in timelines."),
             trailing: Switch(
               value: SettingsStorage.showMilliseconds,
               onChanged: (value) => setState(() => SettingsStorage.showMilliseconds = value),
