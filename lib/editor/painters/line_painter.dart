@@ -2,12 +2,14 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:path_pilot/editor/painters/ir_read_painter.dart';
+import 'package:path_pilot/editor/painters/obstacles_painter.dart';
 import 'package:path_pilot/editor/painters/robi_painter.dart';
 import 'package:path_pilot/editor/painters/simulation_painter.dart';
 import 'package:path_pilot/robi_api/ir_read_api.dart';
 import 'package:path_pilot/robi_api/robi_utils.dart';
 import 'package:vector_math/vector_math.dart' show Aabb2, Vector2;
 
+import '../obstacles/obstacle.dart';
 import 'abstract_painter.dart';
 
 const Color white = Color(0xFFFFFFFF);
@@ -26,6 +28,7 @@ class LinePainter extends CustomPainter {
   final List<Vector2>? irPathApproximation;
   final RobiState robiState;
   final RobiStateType robiStateType;
+  final List<Obstacle> obstacles;
 
   const LinePainter({
     super.repaint,
@@ -39,6 +42,7 @@ class LinePainter extends CustomPainter {
     required this.offset,
     required this.robiState,
     required this.robiStateType,
+    required this.obstacles
   });
 
   static void paintText(String text, Offset offset, Canvas canvas, Size size, {bool center = true, TextStyle? textStyle}) {
@@ -174,6 +178,11 @@ Acc.: I ${innerAccelText}cm/s²${accelSpace}O ${(rs.outerAcceleration * 100).toI
       Vector2(-offset.dx + center.dx, offset.dy + center.dy) / scale,
     );
 
+    final visibleAreaRect = Rect.fromPoints(
+      Offset(visibleArea.min.x, visibleArea.min.y),
+      Offset(visibleArea.max.x, visibleArea.max.y),
+    );
+
     if (irCalculatorResult != null) assert(irReadPainterSettings != null);
     final List<MyPainter> painters = [
       if (simulationResult != null)
@@ -193,6 +202,11 @@ Acc.: I ${innerAccelText}cm/s²${accelSpace}O ${(rs.outerAcceleration * 100).toI
           irCalculatorResult: irCalculatorResult!,
           pathApproximation: irPathApproximation,
         ),
+      ObstaclesPainter(
+        canvas: canvas,
+        obstacles: obstacles,
+        visibleArea: visibleAreaRect,
+      ),
       RobiPainter(
         robiState: robiState,
         canvas: canvas,

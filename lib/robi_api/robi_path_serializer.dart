@@ -58,13 +58,13 @@ class RobiPathSerializer {
     return containers.map((e) => e.toJson()).toList(growable: false);
   }
 
-  static Iterable<MissionInstruction>? decode(List json) {
-    if (json.isEmpty) return const Iterable.empty();
-    try {
-      final parsed = json.map((e) => InstructionContainer.fromJson(e).instruction);
-      return parsed;
-    } on Exception {
-      return null;
+  static Iterable<MissionInstruction> decode(List json) sync* {
+    for (final e in json) {
+      try {
+        yield InstructionContainer.fromJson(e).instruction;
+      } catch (e) {
+        // ignore
+      }
     }
   }
 }

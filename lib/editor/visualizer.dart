@@ -11,6 +11,8 @@ import 'package:path_pilot/robi_api/ir_read_api.dart';
 import 'package:path_pilot/robi_api/robi_utils.dart';
 import 'package:vector_math/vector_math.dart' show Vector2;
 
+import 'obstacles/obstacle.dart';
+
 class InstructionsVisualizer extends Visualizer {
   const InstructionsVisualizer({
     super.key,
@@ -27,6 +29,7 @@ class InstructionsVisualizer extends Visualizer {
     required super.onTimeChanged,
     required super.play,
     required super.onTogglePlay,
+    required super.obstacles,
     super.enableTimeInput,
   }) : super(
           simulationResult: simulationResult,
@@ -52,6 +55,7 @@ class IrVisualizer extends Visualizer {
     required super.onTimeChanged,
     required super.play,
     required super.onTogglePlay,
+    required super.obstacles,
   }) : super(
           irReadPainterSettings: irReadPainterSettings,
           irCalculatorResult: irCalculatorResult,
@@ -65,6 +69,7 @@ class Visualizer extends StatelessWidget {
   final bool enableTimeInput;
   final RobiStateType robiStateType;
   final RobiState robiState;
+  final List<Obstacle> obstacles;
 
   // For InstructionsVisualizer
   final SimulationResult? simulationResult;
@@ -109,6 +114,7 @@ class Visualizer extends StatelessWidget {
     required this.onTimeChanged,
     required this.play,
     required this.onTogglePlay,
+    required this.obstacles,
     this.enableTimeInput = true,
     this.simulationResult,
     this.irReadPainterSettings,
@@ -165,6 +171,7 @@ class Visualizer extends StatelessWidget {
                   irCalculatorResult: irCalculatorResult,
                   irPathApproximation: irPathApproximation,
                   offset: offset,
+                  obstacles: obstacles,
                 ),
                 child: Container(),
               ),

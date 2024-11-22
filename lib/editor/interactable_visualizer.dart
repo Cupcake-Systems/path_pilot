@@ -7,6 +7,7 @@ import 'package:path_pilot/robi_api/ir_read_api.dart';
 import 'package:vector_math/vector_math.dart';
 
 import '../robi_api/robi_utils.dart';
+import 'obstacles/obstacle.dart';
 
 class InteractableIrVisualizer extends StatefulWidget {
   final bool enableTimeInput;
@@ -16,6 +17,7 @@ class InteractableIrVisualizer extends StatefulWidget {
   final IrReadPainterSettings irReadPainterSettings;
   final IrReadResult irReadResult;
   final double totalTime;
+  final List<Obstacle> obstacles;
 
   final void Function(double newTime)? onTimeChanged;
 
@@ -28,6 +30,7 @@ class InteractableIrVisualizer extends StatefulWidget {
     required this.irReadPainterSettings,
     required this.totalTime,
     required this.irReadResult,
+    required this.obstacles,
     this.onTimeChanged,
   });
 
@@ -77,6 +80,7 @@ class _InteractableIrVisualizerState extends State<InteractableIrVisualizer> {
       totalTime: widget.totalTime,
       robiState: robiState,
       time: timeSnapshot,
+      obstacles: widget.obstacles,
       onZoomChanged: (newZoom, newOffset, newLockToRobi) => setState(() {
         offset = newOffset;
         zoom = newZoom;
@@ -150,6 +154,7 @@ class InteractableInstructionsVisualizer extends StatefulWidget {
   final double totalTime;
   final InstructionResult? highlightedInstruction;
   final SimulationResult simulationResult;
+  final List<Obstacle> obstacles;
 
   final void Function(double newTime)? onTimeChanged;
 
@@ -158,6 +163,7 @@ class InteractableInstructionsVisualizer extends StatefulWidget {
     required this.robiConfig,
     required this.totalTime,
     required this.simulationResult,
+    required this.obstacles,
     this.highlightedInstruction,
     this.onTimeChanged,
   });
@@ -202,6 +208,7 @@ class _InteractableInstructionsVisualizerState extends State<InteractableInstruc
     }
 
     return InstructionsVisualizer(
+      obstacles: widget.obstacles,
       zoom: zoom,
       offset: offset,
       robiConfig: widget.robiConfig,

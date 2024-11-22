@@ -7,6 +7,7 @@ import 'package:path_pilot/editor/add_instruction_dialog.dart';
 import 'package:path_pilot/editor/instructions/abstract.dart';
 import 'package:path_pilot/editor/instructions/rapid_turn.dart';
 import 'package:path_pilot/editor/interactable_visualizer.dart';
+import 'package:path_pilot/editor/obstacles/obstacle.dart';
 import 'package:path_pilot/file_browser.dart';
 import 'package:path_pilot/robi_api/robi_utils.dart';
 
@@ -22,6 +23,7 @@ class Editor extends StatefulWidget {
   final RobiConfig selectedRobiConfig;
   final SubViewMode subViewMode;
   final void Function(List<MissionInstruction> newInstructions, SimulationResult newSimulationResult) onInstructionsChanged;
+  final List<Obstacle> obstacles;
 
   const Editor({
     super.key,
@@ -29,6 +31,7 @@ class Editor extends StatefulWidget {
     required this.selectedRobiConfig,
     required this.subViewMode,
     required this.onInstructionsChanged,
+    required this.obstacles,
   });
 
   @override
@@ -68,6 +71,7 @@ class _EditorState extends State<Editor> with AutomaticKeepAliveClientMixin {
         robiConfig: widget.selectedRobiConfig,
         highlightedInstruction: highlightedInstruction,
         onTimeChanged: (newTime) => setState(() => time = newTime),
+        obstacles: widget.obstacles,
       );
     }
 

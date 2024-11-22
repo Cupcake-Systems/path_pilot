@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:path_pilot/constants.dart';
 import 'package:path_pilot/editor/editor.dart';
+import 'package:path_pilot/editor/obstacles/obstacle_creator_widget.dart';
 import 'package:path_pilot/helper/file_manager.dart';
 import 'package:path_pilot/helper/save_system.dart';
 import 'package:path_pilot/main.dart';
@@ -33,7 +34,7 @@ class _FileBrowserState extends State<FileBrowser> {
   // Instructions Editor
   String? openedFile;
   String? errorMessage;
-  SaveData? loadedData;
+  SaveData loadedData = SaveData.empty;
   SimulationResult? simulationResult;
 
   // IR Readings analysis
@@ -131,7 +132,7 @@ class _FileBrowserState extends State<FileBrowser> {
                 title: const Text("Open"),
                 onTap: openFile,
               ),
-              if (openedFile != null && loadedData != null) ...[
+              if (openedFile != null) ...[
                 ListTile(
                   leading: const Icon(Icons.save),
                   onTap: saveFile,
@@ -166,6 +167,24 @@ class _FileBrowserState extends State<FileBrowser> {
                 onTap: importIrReading,
               ),
             ],
+            ListTile(
+              leading: const Icon(Icons.add),
+              title: const Text("Add Obstacle"),
+              onTap: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => ObstacleCreator(
+                      obstacles: loadedData.obstacles,
+                      onObstaclesChange: (obstacles) {
+                        setState(() {
+                          loadedData = loadedData.copyWith(obstacles: obstacles);
+                        });
+                      },
+                    ),
+                  ),
+                );
+              },
+            ),
             const Divider(height: 1),
             ListTile(
               leading: const Icon(Icons.build_circle),
@@ -236,7 +255,7 @@ class _FileBrowserState extends State<FileBrowser> {
   Widget getView() {
     switch (viewMode) {
       case ViewMode.instructions:
-        if (openedFile == null || loadedData == null) {
+        if (openedFile == null) {
           return WelcomeScreen(
             newFilePressed: newFile,
             openFilePressed: openFile,
@@ -246,12 +265,13 @@ class _FileBrowserState extends State<FileBrowser> {
         return Editor(
           key: ObjectKey(openedFile),
           subViewMode: subViewMode,
-          initialInstructions: loadedData!.instructions,
+          initialInstructions: loadedData.instructions,
           selectedRobiConfig: selectedRobiConfig,
           onInstructionsChanged: (newInstructions, newSimulationResult) {
-            loadedData = loadedData!.copyWith(instructions: newInstructions);
+            loadedData = loadedData.copyWith(instructions: newInstructions);
             simulationResult = newSimulationResult;
           },
+          obstacles: loadedData.obstacles,
         );
       case ViewMode.irReadings:
         if (irReadResult == null) {
@@ -268,6 +288,7 @@ class _FileBrowserState extends State<FileBrowser> {
           robiConfig: selectedRobiConfig,
           irReadResult: irReadResult!,
           subViewMode: subViewMode,
+          obstacles: loadedData.obstacles,
         );
     }
   }
@@ -290,14 +311,12 @@ class _FileBrowserState extends State<FileBrowser> {
     });
   }
 
-  Future<File?> saveFile() => loadedData!.saveToFileWithStatusMessage(openedFile!, context);
+  Future<File?> saveFile() => loadedData.saveToFileWithStatusMessage(openedFile!, context);
 
   Future<void> saveAsFile() async {
-    if (loadedData == null) return;
-
     final result = await pickFileAndWriteWithStatusMessage(
       context: context,
-      bytes: loadedData!.toBytes(),
+      bytes: loadedData.toBytes(),
       extension: ".robi_script.json",
     );
 
@@ -346,8 +365,8 @@ class _FileBrowserState extends State<FileBrowser> {
       } else {
         errorMessage = null;
         openedFile = file;
+        loadedData = instructions;
       }
-      loadedData = instructions;
     });
   }
 }

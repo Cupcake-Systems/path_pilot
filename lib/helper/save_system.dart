@@ -3,24 +3,44 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:flutter/widgets.dart';
+import 'package:path_pilot/editor/obstacles/obstacle.dart';
 import 'package:path_pilot/helper/file_manager.dart';
 import 'package:path_pilot/robi_api/robi_path_serializer.dart';
 
+import '../editor/obstacles/obstacles_serializer.dart';
 import '../robi_api/robi_utils.dart';
 
 final class SaveData {
   final List<MissionInstruction> instructions;
+  final List<Obstacle> obstacles;
 
-  const SaveData({required this.instructions});
+  const SaveData({
+    required this.instructions,
+    required this.obstacles,
+  });
 
-  static const SaveData empty = SaveData(instructions: []);
+  static const SaveData empty = SaveData(instructions: [], obstacles: []);
 
   static SaveData? fromJson(String json) {
-    final data = jsonDecode(json);
     try {
-      final instructions = RobiPathSerializer.decode(data["instructions"]);
-      if (instructions == null) return null;
-      return SaveData(instructions: instructions.toList());
+      final data = jsonDecode(json);
+      final instructions = data["instructions"];
+      final obstacles = data["obstacles"];
+
+      List<MissionInstruction> decodedInstructions = [];
+      List<Obstacle> decodedObstacles = [];
+
+      if (instructions != null) {
+        decodedInstructions = RobiPathSerializer.decode(instructions).toList(growable: false);
+      }
+      if (obstacles != null) {
+        decodedObstacles = ObstaclesSerializer.decode(obstacles).toList(growable: false);
+      }
+
+      return SaveData(
+        instructions: decodedInstructions,
+        obstacles: decodedObstacles,
+      );
     } catch (e) {
       return null;
     }
@@ -35,6 +55,7 @@ final class SaveData {
   String toJson() {
     final saveData = {
       "instructions": RobiPathSerializer.encode(instructions),
+      "obstacles": ObstaclesSerializer.encode(obstacles),
     };
     return jsonEncode(saveData);
   }
@@ -47,7 +68,10 @@ final class SaveData {
     return writeStringToFileWithStatusMessage(path, toJson(), context);
   }
 
-  SaveData copyWith({List<MissionInstruction>? instructions}) {
-    return SaveData(instructions: instructions ?? this.instructions);
+  SaveData copyWith({List<MissionInstruction>? instructions, List<Obstacle>? obstacles}) {
+    return SaveData(
+      instructions: instructions ?? this.instructions,
+      obstacles: obstacles ?? this.obstacles,
+    );
   }
 }

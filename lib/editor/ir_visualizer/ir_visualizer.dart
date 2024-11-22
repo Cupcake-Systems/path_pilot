@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_resizable_container/flutter_resizable_container.dart';
+import 'package:path_pilot/editor/obstacles/obstacle.dart';
 import 'package:path_pilot/editor/painters/ir_read_painter.dart';
 import 'package:path_pilot/file_browser.dart';
 
@@ -15,6 +16,7 @@ class IrVisualizerWidget extends StatelessWidget {
   final double time;
   final bool enableTimeInput;
   final SubViewMode subViewMode;
+  final List<Obstacle> obstacles;
 
   const IrVisualizerWidget({
     super.key,
@@ -23,6 +25,7 @@ class IrVisualizerWidget extends StatelessWidget {
     this.time = 0,
     this.enableTimeInput = true,
     required this.subViewMode,
+    required this.obstacles,
   });
 
   @override
@@ -47,6 +50,7 @@ class IrVisualizerWidget extends StatelessWidget {
           ),
           irReadPainterSettings: irReadPainterSettings,
           irReadResult: irReadResult,
+          obstacles: obstacles,
         );
       }
       if (subViewMode == SubViewMode.split || subViewMode == SubViewMode.editor) {

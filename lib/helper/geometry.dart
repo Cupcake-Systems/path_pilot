@@ -62,3 +62,15 @@ bool isLineIntersectingAABB(final Aabb2 aabb2, final Vector2 p1, final Vector2 p
 }
 
 bool isLineVisibleFast(final Aabb2 visibleArea, final Vector2 p1, final Vector2 p2) => isLineIntersectingAABB(visibleArea, p1, p2);
+
+Rect copyRectWith(final Rect rect, {double? left, double? top, double? width, double? height}) => Rect.fromLTWH(
+    left ?? rect.left,
+    top ?? rect.top,
+    width ?? rect.width,
+    height ?? rect.height,
+  );
+
+Offset copyOffsetWith(final Offset offset, {double? dx, double? dy}) => Offset(
+    dx ?? offset.dx,
+    dy ?? offset.dy,
+  );
