@@ -19,7 +19,9 @@ class ObstaclesPainter extends MyPainter {
   void paint() {
     for (final obstacle in obstacles) {
       if (obstacle.isVisible(visibleArea)) {
+        canvas.save();
         obstacle.draw(canvas);
+        canvas.restore();
       }
     }
   }

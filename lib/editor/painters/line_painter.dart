@@ -42,7 +42,7 @@ class LinePainter extends CustomPainter {
     required this.offset,
     required this.robiState,
     required this.robiStateType,
-    required this.obstacles
+    required this.obstacles,
   });
 
   static void paintText(String text, Offset offset, Canvas canvas, Size size, {bool center = true, TextStyle? textStyle}) {
@@ -172,6 +172,7 @@ Acc.: I ${innerAccelText}cm/s²${accelSpace}O ${(rs.outerAcceleration * 100).toI
     final Offset center = Offset(size.width / 2, size.height / 2);
     canvas.translate(center.dx + offset.dx, center.dy + offset.dy);
     canvas.scale(scale);
+    canvas.save();
 
     final Aabb2 visibleArea = Aabb2.minMax(
       Vector2(-offset.dx - center.dx, offset.dy - center.dy) / scale,
@@ -213,8 +214,12 @@ Acc.: I ${innerAccelText}cm/s²${accelSpace}O ${(rs.outerAcceleration * 100).toI
       ),
     ];
 
+    canvas.restore();
+
     for (final painter in painters) {
+      canvas.save();
       painter.paint();
+      canvas.restore();
     }
 
     canvas.restore();
