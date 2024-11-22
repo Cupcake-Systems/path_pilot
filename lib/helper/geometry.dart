@@ -74,3 +74,8 @@ Offset copyOffsetWith(final Offset offset, {double? dx, double? dy}) => Offset(
     dx ?? offset.dx,
     dy ?? offset.dy,
   );
+
+Size copySizeWith(final Size size, {double? width, double? height}) => Size(
+    width ?? size.width,
+    height ?? size.height,
+  );

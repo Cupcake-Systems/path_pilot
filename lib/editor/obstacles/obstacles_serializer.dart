@@ -8,16 +8,20 @@ class ObstaclesSerializer {
           })
       .toList();
 
-  static Iterable<Obstacle> decode(List json) sync* {
+  static Stream<Obstacle> decode(List json) async* {
     for (final obstacleJson in json) {
       try {
         switch (getObstacleTypeFromString(obstacleJson["type"])) {
           case ObstacleType.rectangle:
             yield RectangleObstacle.fromJson(obstacleJson);
+            break;
           case ObstacleType.circle:
             yield CircleObstacle.fromJson(obstacleJson);
-          default:
-            throw UnsupportedError("Unknown obstacle type");
+            break;
+          case ObstacleType.image:
+            final json = await ImageObstacle.fromJson(obstacleJson);
+            if (json != null) yield json;
+            break;
         }
       } catch (e) {
         // ignore

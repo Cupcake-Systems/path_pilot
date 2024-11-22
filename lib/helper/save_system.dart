@@ -21,7 +21,7 @@ final class SaveData {
 
   static const SaveData empty = SaveData(instructions: [], obstacles: []);
 
-  static SaveData? fromJson(String json) {
+  static Future<SaveData?> fromJson(String json) async {
     try {
       final data = jsonDecode(json);
       final instructions = data["instructions"];
@@ -34,7 +34,7 @@ final class SaveData {
         decodedInstructions = RobiPathSerializer.decode(instructions).toList(growable: false);
       }
       if (obstacles != null) {
-        decodedObstacles = ObstaclesSerializer.decode(obstacles).toList(growable: false);
+        decodedObstacles = await ObstaclesSerializer.decode(obstacles).toList();
       }
 
       return SaveData(
