@@ -16,6 +16,7 @@ class RobiPainter extends MyPainter {
 
   static late final ui.Image robiUiImage;
   static late final double s;
+  static final imgPaint = Paint()..filterQuality = FilterQuality.high;
 
   static final b = Vector2(0.1045, 0.08);
   static final a = atan(b.y / b.x) * radians2Degrees;
@@ -41,7 +42,7 @@ class RobiPainter extends MyPainter {
 
     canvas.scale(s, s);
 
-    canvas.drawImage(robiUiImage, const Offset(0, 0), Paint()..filterQuality = FilterQuality.high);
+    canvas.drawImage(robiUiImage, Offset.zero, imgPaint);
   }
 }
 
