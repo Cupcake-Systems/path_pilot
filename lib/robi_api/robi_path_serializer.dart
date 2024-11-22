@@ -1,8 +1,4 @@
-import 'dart:convert';
-
-import 'package:flutter/cupertino.dart';
 import 'package:path_pilot/editor/add_instruction_dialog.dart';
-import 'package:path_pilot/helper/file_manager.dart';
 import 'package:path_pilot/robi_api/robi_utils.dart';
 
 class InstructionContainer {
@@ -54,23 +50,18 @@ class InstructionContainer {
 }
 
 class RobiPathSerializer {
-  static Future<void> saveToFile(String path, List<MissionInstruction> instructions, BuildContext context) {
-    return writeStringToFileWithStatusMessage(path, encode(instructions), context);
-  }
-
-  static String encode(List<MissionInstruction> instructions) {
+  static List<Map<String, dynamic>> encode(List<MissionInstruction> instructions) {
     final List<InstructionContainer> containers = [];
     for (final inst in instructions) {
       containers.add(InstructionContainer(inst));
     }
-    return jsonEncode(containers.map((e) => e.toJson()).toList());
+    return containers.map((e) => e.toJson()).toList(growable: false);
   }
 
-  static Iterable<MissionInstruction>? decode(String json) {
+  static Iterable<MissionInstruction>? decode(List json) {
     if (json.isEmpty) return const Iterable.empty();
     try {
-      final List decoded = jsonDecode(json);
-      final parsed = decoded.map((e) => InstructionContainer.fromJson(e).instruction);
+      final parsed = json.map((e) => InstructionContainer.fromJson(e).instruction);
       return parsed;
     } on Exception {
       return null;

@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -6,10 +5,10 @@ import 'package:flutter/services.dart';
 import 'package:path_pilot/constants.dart';
 import 'package:path_pilot/editor/editor.dart';
 import 'package:path_pilot/helper/file_manager.dart';
+import 'package:path_pilot/helper/save_system.dart';
 import 'package:path_pilot/main.dart';
 import 'package:path_pilot/robi_api/exporter/exporter.dart';
 import 'package:path_pilot/robi_api/ir_read_api.dart';
-import 'package:path_pilot/robi_api/robi_path_serializer.dart';
 import 'package:path_pilot/robi_api/robi_utils.dart';
 import 'package:path_pilot/settings/robi_config_settings.dart';
 import 'package:path_pilot/settings/settings.dart';
@@ -34,7 +33,7 @@ class _FileBrowserState extends State<FileBrowser> {
   // Instructions Editor
   String? openedFile;
   String? errorMessage;
-  List<MissionInstruction>? loadedInstructions;
+  SaveData? loadedData;
   SimulationResult? simulationResult;
 
   // IR Readings analysis
@@ -61,8 +60,8 @@ class _FileBrowserState extends State<FileBrowser> {
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                     colors: [
-                      Colors.white,       // Fully visible
-                      Colors.white,       // Keep visible for a longer area
+                      Colors.white, // Fully visible
+                      Colors.white, // Keep visible for a longer area
                       Colors.transparent, // Fades out
                     ],
                     stops: [0.0, 0.7, 1.0], // Control the fade areas
@@ -132,7 +131,7 @@ class _FileBrowserState extends State<FileBrowser> {
                 title: const Text("Open"),
                 onTap: openFile,
               ),
-              if (openedFile != null && loadedInstructions != null) ...[
+              if (openedFile != null && loadedData != null) ...[
                 ListTile(
                   leading: const Icon(Icons.save),
                   onTap: saveFile,
@@ -237,7 +236,7 @@ class _FileBrowserState extends State<FileBrowser> {
   Widget getView() {
     switch (viewMode) {
       case ViewMode.instructions:
-        if (openedFile == null || loadedInstructions == null) {
+        if (openedFile == null || loadedData == null) {
           return WelcomeScreen(
             newFilePressed: newFile,
             openFilePressed: openFile,
@@ -247,10 +246,10 @@ class _FileBrowserState extends State<FileBrowser> {
         return Editor(
           key: ObjectKey(openedFile),
           subViewMode: subViewMode,
-          initialInstructions: loadedInstructions!.toList(),
+          initialInstructions: loadedData!.instructions,
           selectedRobiConfig: selectedRobiConfig,
           onInstructionsChanged: (newInstructions, newSimulationResult) {
-            loadedInstructions = newInstructions;
+            loadedData = loadedData!.copyWith(instructions: newInstructions);
             simulationResult = newSimulationResult;
           },
         );
@@ -291,21 +290,14 @@ class _FileBrowserState extends State<FileBrowser> {
     });
   }
 
-  Future<Iterable<MissionInstruction>?> getInstructionsFromFile(String file) async {
-    final data = await readStringFromFileWithStatusMessage(file, context);
-    if (data == null) return null;
-    final newInstructions = RobiPathSerializer.decode(data);
-    return newInstructions;
-  }
-
-  Future<void> saveFile() => RobiPathSerializer.saveToFile(openedFile!, loadedInstructions!, context);
+  Future<File?> saveFile() => loadedData!.saveToFileWithStatusMessage(openedFile!, context);
 
   Future<void> saveAsFile() async {
-    if (loadedInstructions == null) return;
+    if (loadedData == null) return;
 
     final result = await pickFileAndWriteWithStatusMessage(
       context: context,
-      bytes: utf8.encode(RobiPathSerializer.encode(loadedInstructions!)),
+      bytes: loadedData!.toBytes(),
       extension: ".robi_script.json",
     );
 
@@ -328,7 +320,7 @@ class _FileBrowserState extends State<FileBrowser> {
 
     setState(() {
       openedFile = result;
-      loadedInstructions = [];
+      loadedData = SaveData.empty;
       errorMessage = null;
     });
   }
@@ -341,11 +333,11 @@ class _FileBrowserState extends State<FileBrowser> {
     );
     if (result == null) return;
 
-    await tryLoadingInstructions(result);
+    await tryLoadingSaveData(result);
   }
 
-  Future<void> tryLoadingInstructions(String file) async {
-    final instructions = await getInstructionsFromFile(file);
+  Future<void> tryLoadingSaveData(String file) async {
+    final instructions = await SaveData.fromFileWithStatusMessage(file, context);
 
     setState(() {
       if (instructions == null) {
@@ -355,7 +347,7 @@ class _FileBrowserState extends State<FileBrowser> {
         errorMessage = null;
         openedFile = file;
       }
-      loadedInstructions = instructions?.toList();
+      loadedData = instructions;
     });
   }
 }
