@@ -204,20 +204,21 @@ class Visualizer extends StatelessWidget {
                         Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const SizedBox(width: 24),
                             Expanded(
-                              child: RepaintBoundary(
-                                key: ValueKey(simulationResult.hashCode + highlightedInstruction.hashCode),
-                                child: CustomPaint(
-                                  size: const Size.fromHeight(15),
-                                  painter: TimelinePainter(
-                                    simResult: simulationResult!,
-                                    highlightedInstruction: highlightedInstruction,
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: 8),
+                                child: RepaintBoundary(
+                                  key: ValueKey(simulationResult.hashCode + highlightedInstruction.hashCode),
+                                  child: CustomPaint(
+                                    size: const Size.fromHeight(15),
+                                    painter: TimelinePainter(
+                                      simResult: simulationResult!,
+                                      highlightedInstruction: highlightedInstruction,
+                                    ),
                                   ),
                                 ),
                               ),
                             ),
-                            const SizedBox(width: 24),
                           ],
                         ),
                       SliderTheme(
