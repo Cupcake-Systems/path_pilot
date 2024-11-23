@@ -89,6 +89,7 @@ class _InteractableIrVisualizerState extends State<InteractableIrVisualizer> {
         zoom = newZoom;
         lockToRobi = newLockToRobi;
       }),
+      measurementTimeDelta: widget.irReadResult.resolution,
       onTimeChanged: (newTime, newOffset) => setState(() {
         timeOffset = newTime;
         pause();

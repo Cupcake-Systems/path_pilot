@@ -4,6 +4,7 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:path_pilot/app_storage.dart';
 import 'package:path_pilot/editor/painters/ir_read_painter.dart';
+import 'package:path_pilot/editor/painters/ir_read_timeline_painter.dart';
 import 'package:path_pilot/editor/painters/line_painter.dart';
 import 'package:path_pilot/editor/painters/robi_painter.dart';
 import 'package:path_pilot/editor/painters/timeline_painter.dart';
@@ -57,6 +58,7 @@ class IrVisualizer extends Visualizer {
     required super.play,
     required super.onTogglePlay,
     required super.obstacles,
+    required super.measurementTimeDelta,
   }) : super(
           irReadPainterSettings: irReadPainterSettings,
           irCalculatorResult: irCalculatorResult,
@@ -81,6 +83,7 @@ class Visualizer extends StatelessWidget {
   final IrCalculatorResult? irCalculatorResult;
   final List<Vector2>? irPathApproximation;
   final Measurement? currentMeasurement;
+  final double? measurementTimeDelta;
 
   final double zoom;
   final void Function(double newZoom, Offset newOffset, bool lockToRobi) onZoomChanged;
@@ -124,6 +127,7 @@ class Visualizer extends StatelessWidget {
     this.irCalculatorResult,
     this.irPathApproximation,
     this.currentMeasurement,
+    this.measurementTimeDelta,
   });
 
   static double startZoom = (minZoom + maxZoom) / 2;
@@ -204,27 +208,17 @@ class Visualizer extends StatelessWidget {
                   Stack(
                     alignment: Alignment.center,
                     children: [
-                      if (simulationResult != null && simulationResult!.instructionResults.length < 10001)
-                        Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Expanded(
-                              child: Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: 8),
-                                child: RepaintBoundary(
-                                  key: ValueKey(simulationResult.hashCode + highlightedInstruction.hashCode),
-                                  child: CustomPaint(
-                                    size: const Size.fromHeight(15),
-                                    painter: TimelinePainter(
-                                      simResult: simulationResult!,
-                                      highlightedInstruction: highlightedInstruction,
-                                    ),
-                                  ),
-                                ),
-                              ),
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Expanded(
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 8),
+                              child: timeLinePainter(),
                             ),
-                          ],
-                        ),
+                          ),
+                        ],
+                      ),
                       SliderTheme(
                         data: SliderThemeData(
                           thumbShape: SliderComponentShape.noThumb,
@@ -277,6 +271,36 @@ class Visualizer extends StatelessWidget {
         ),
       ],
     );
+  }
+
+  Widget timeLinePainter() {
+    const maxInstructions = 10000;
+    const timelineSize = Size.fromHeight(15);
+
+    if (simulationResult != null && simulationResult!.instructionResults.length <= maxInstructions) {
+      return RepaintBoundary(
+        key: ValueKey(simulationResult.hashCode + highlightedInstruction.hashCode),
+        child: CustomPaint(
+          size: timelineSize,
+          painter: TimelinePainter(
+            simResult: simulationResult!,
+            highlightedInstruction: highlightedInstruction,
+          ),
+        ),
+      );
+    } else if (irCalculatorResult != null && measurementTimeDelta != null && irCalculatorResult!.length <= maxInstructions) {
+      return RepaintBoundary(
+        key: ValueKey(irCalculatorResult.hashCode),
+        child: CustomPaint(
+          size: timelineSize,
+          painter: IrReadTimelinePainter(
+            totalTime: totalTime,
+            measurementsTimeDelta: measurementTimeDelta!,
+          ),
+        ),
+      );
+    }
+    return const SizedBox();
   }
 }
 
