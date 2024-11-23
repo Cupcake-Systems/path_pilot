@@ -114,8 +114,13 @@ class LinePainter extends CustomPainter {
     final leftDir = measurement.leftFwd ? "F" : "B";
     final rightDir = measurement.rightFwd ? "F" : "B";
 
-    String text = """
-IR: (${measurement.leftIr}, ${measurement.middleIr}, ${measurement.rightIr})
+    String noString = "";
+
+    if (measurement.readingIndex != null) {
+      noString = "Reading No.: ${measurement.readingIndex! + 1}\n";
+    }
+
+    String text = """${noString}IR: (${measurement.leftIr}, ${measurement.middleIr}, ${measurement.rightIr})
 Freq.: (${measurement.motorLeftFreq}, ${measurement.motorRightFreq})Hz
 Dir.: $leftDir, $rightDir""";
     paintText(

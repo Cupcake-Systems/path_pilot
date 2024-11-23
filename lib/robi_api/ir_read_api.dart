@@ -13,6 +13,7 @@ import 'ir_line_approximation/ramers_douglas.dart';
 final class Measurement {
   final int motorLeftFreq, motorRightFreq, leftIr, middleIr, rightIr;
   final bool leftFwd, rightFwd;
+  final int? readingIndex;
 
   const Measurement({
     required this.motorLeftFreq,
@@ -22,6 +23,7 @@ final class Measurement {
     required this.rightIr,
     required this.leftFwd,
     required this.rightFwd,
+    this.readingIndex,
   });
 
   static const zero = Measurement(
@@ -36,7 +38,7 @@ final class Measurement {
 
   /// Measurement binary structure documentation:
   /// https://github.com/Cupcake-Systems/path_pilot/wiki/IR-Read-Result-Binary-File-Definition#64-bit-measurement-format
-  factory Measurement.fromLine(ByteData line) {
+  factory Measurement.fromLine(ByteData line, [int? readingIndex]) {
     final readAndFwdByte = line.getUint32(4);
     return Measurement(
       motorLeftFreq: line.getUint16(0),
@@ -46,6 +48,7 @@ final class Measurement {
       rightIr: readAndFwdByte & 0x3FF,
       leftFwd: (readAndFwdByte & (1 << 31)) != 0,
       rightFwd: (readAndFwdByte & (1 << 30)) != 0,
+      readingIndex: readingIndex,
     );
   }
 }
@@ -64,7 +67,7 @@ class IrReadResult {
 
     return IrReadResult(
       resolution: data.asByteData(0, 2).getUint16(0) / 1000,
-      measurements: [for (int i = 0; i < dataLineCount; ++i) Measurement.fromLine(data.asByteData(2 + i * 8, 8))],
+      measurements: [for (int i = 0; i < dataLineCount; ++i) Measurement.fromLine(data.asByteData(2 + i * 8, 8), i)],
     );
   }
 
