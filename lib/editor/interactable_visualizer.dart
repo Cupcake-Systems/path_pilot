@@ -67,10 +67,12 @@ class _InteractableIrVisualizerState extends State<InteractableIrVisualizer> {
       updateTime(timeSnapshot + updateDelay);
     });
 
-    final robiState = getStateAtTime(widget.irCalculatorResult, timeSnapshot);
+    final robiState = getStateAtTime(widget.irCalculatorResult, widget.irReadResult.resolution, timeSnapshot);
     if (lockToRobi) {
       offset = Offset(-robiState.position.x, robiState.position.y) * zoom;
     }
+
+    final currentMeasurement = getMeasurementAtTime(widget.irReadResult, timeSnapshot);
 
     return IrVisualizer(
       zoom: zoom,
@@ -81,6 +83,7 @@ class _InteractableIrVisualizerState extends State<InteractableIrVisualizer> {
       robiState: robiState,
       time: timeSnapshot,
       obstacles: widget.obstacles,
+      currentMeasurement: currentMeasurement,
       onZoomChanged: (newZoom, newOffset, newLockToRobi) => setState(() {
         offset = newOffset;
         zoom = newZoom;
@@ -111,8 +114,8 @@ class _InteractableIrVisualizerState extends State<InteractableIrVisualizer> {
     );
   }
 
-  RobiState getStateAtTime(IrCalculatorResult irCalcResult, final double t) {
-    final res = widget.irReadResult.resolution;
+  static RobiState getStateAtTime(final IrCalculatorResult irCalcResult, final double measurementTimeDelta, final double t) {
+    final res = measurementTimeDelta;
     final states = irCalcResult.robiStates;
 
     if (states.isEmpty) {
@@ -128,6 +131,27 @@ class _InteractableIrVisualizerState extends State<InteractableIrVisualizer> {
     }
 
     return states.last;
+  }
+
+  static Measurement? getMeasurementAtTime(final IrReadResult irReadResult, final double t) {
+    final measurements = irReadResult.measurements;
+
+    if (measurements.isEmpty) {
+      return null;
+    } else if (measurements.length == 1) {
+      return measurements.first;
+    }
+
+    double ct = 0;
+
+    for (int i = 0; i < measurements.length; ++i) {
+      ct += irReadResult.resolution;
+      if (t <= ct) {
+        return measurements[i];
+      }
+    }
+
+    return null;
   }
 
   void play() {

@@ -10,7 +10,7 @@ import 'package:vector_math/vector_math.dart';
 import '../helper/geometry.dart';
 import 'ir_line_approximation/ramers_douglas.dart';
 
-class Measurement {
+final class Measurement {
   final int motorLeftFreq, motorRightFreq, leftIr, middleIr, rightIr;
   final bool leftFwd, rightFwd;
 
@@ -24,16 +24,15 @@ class Measurement {
     required this.rightFwd,
   });
 
-  Measurement.zero()
-      : this(
-          motorLeftFreq: 0,
-          motorRightFreq: 0,
-          leftIr: 0,
-          middleIr: 0,
-          rightIr: 0,
-          leftFwd: true,
-          rightFwd: true,
-        );
+  static const zero = Measurement(
+    motorLeftFreq: 0,
+    motorRightFreq: 0,
+    leftIr: 0,
+    middleIr: 0,
+    rightIr: 0,
+    leftFwd: true,
+    rightFwd: true,
+  );
 
   /// Measurement binary structure documentation:
   /// https://github.com/Cupcake-Systems/path_pilot/wiki/IR-Read-Result-Binary-File-Definition#64-bit-measurement-format

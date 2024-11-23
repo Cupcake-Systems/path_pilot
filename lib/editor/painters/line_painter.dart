@@ -14,6 +14,7 @@ import 'abstract_painter.dart';
 
 const Color white = Color(0xFFFFFFFF);
 const double bottomPadding = 100;
+const double topPadding = 10;
 const double leftPadding = 18;
 const double rightPadding = 18;
 
@@ -26,6 +27,7 @@ class LinePainter extends CustomPainter {
   final InstructionResult? highlightedInstruction;
   final IrCalculatorResult? irCalculatorResult;
   final List<Vector2>? irPathApproximation;
+  final Measurement? currentMeasurement;
   final RobiState robiState;
   final RobiStateType robiStateType;
   final List<Obstacle> obstacles;
@@ -43,16 +45,25 @@ class LinePainter extends CustomPainter {
     required this.robiState,
     required this.robiStateType,
     required this.obstacles,
+    required this.currentMeasurement,
   });
 
-  static void paintText(String text, Offset offset, Canvas canvas, Size size, {bool center = true, TextStyle? textStyle}) {
+  static void paintText(String text, Offset offset, Canvas canvas, Size size, {TextStyle? textStyle, TextAlign textAlign = TextAlign.start}) {
     final textSpan = TextSpan(text: text, style: textStyle);
-    final textPainter = TextPainter(text: textSpan, textDirection: TextDirection.ltr);
+    final textPainter = TextPainter(text: textSpan, textDirection: TextDirection.ltr, textAlign: textAlign);
     textPainter.layout(minWidth: 0, maxWidth: size.width);
-    if (center) {
-      textPainter.paint(canvas, Offset(offset.dx - textPainter.width / 2, offset.dy - textPainter.height));
-    } else {
-      textPainter.paint(canvas, offset);
+
+    switch (textAlign) {
+      case TextAlign.center:
+        textPainter.paint(canvas, offset.translate(-textPainter.width / 2, 0));
+        break;
+      case TextAlign.right:
+      case TextAlign.end:
+        textPainter.paint(canvas, offset.translate(-textPainter.width, 0));
+        break;
+      default:
+        textPainter.paint(canvas, offset);
+        break;
     }
   }
 
@@ -92,7 +103,32 @@ class LinePainter extends CustomPainter {
     canvas.drawLine(Offset(leftPadding, size.height - bottomPadding - 5), Offset(leftPadding, size.height - bottomPadding + 5), paint);
     canvas.drawLine(Offset(leftPadding + 100, size.height - bottomPadding - 5), Offset(leftPadding + 100, size.height - bottomPadding + 5), paint);
 
-    LinePainter.paintText("${(100.0 / scale * 100).toStringAsFixed(2)}cm", Offset(leftPadding + 50, size.height - bottomPadding - 3), canvas, size);
+    LinePainter.paintText("${(100.0 / scale * 100).toStringAsFixed(2)}cm", Offset(leftPadding + 50, size.height - bottomPadding - 22), canvas, size, textAlign: TextAlign.center);
+  }
+
+  void paintIrMeasurement(Canvas canvas, Size size) {
+    if (currentMeasurement == null) return;
+
+    final measurement = currentMeasurement!;
+
+    final leftDir = measurement.leftFwd ? "F" : "B";
+    final rightDir = measurement.rightFwd ? "F" : "B";
+
+    String text = """
+IR: (${measurement.leftIr}, ${measurement.middleIr}, ${measurement.rightIr})
+Freq.: (${measurement.motorLeftFreq}, ${measurement.motorRightFreq})Hz
+Dir.: $leftDir, $rightDir""";
+    paintText(
+      text,
+      Offset(size.width - rightPadding, topPadding),
+      canvas,
+      size,
+      textStyle: const TextStyle(
+        fontFamily: "RobotoMono",
+        fontSize: 12,
+      ),
+      textAlign: TextAlign.right,
+    );
   }
 
   void paintRobiState(Canvas canvas, Size size) {
@@ -116,10 +152,9 @@ Acc.: I ${innerAccelText}cm/s²${accelSpace}O ${(rs.outerAcceleration * 100).toI
 
     paintText(
       robiStateText,
-      const Offset(5, 5),
+      const Offset(leftPadding, topPadding),
       canvas,
       size,
-      center: false,
       textStyle: const TextStyle(fontFamily: "RobotoMono", fontSize: 12),
     );
   }
@@ -152,8 +187,8 @@ Acc.: I ${innerAccelText}cm/s²${accelSpace}O ${(rs.outerAcceleration * 100).toI
         Paint()
           ..color = white
           ..strokeWidth = 1);
-    LinePainter.paintText("0", lineStart.translate(0, -7), canvas, size);
-    LinePainter.paintText("${(maxTargetedVelocity * 100).round()}cm/s", lineEnd.translate(-22, -7), canvas, size);
+    LinePainter.paintText("0", lineStart.translate(0, -22), canvas, size, textAlign: TextAlign.center);
+    LinePainter.paintText("${(maxTargetedVelocity * 100).round()}cm/s", lineEnd.translate(1, -22), canvas, size, textAlign: TextAlign.right);
   }
 
   @override
@@ -225,6 +260,7 @@ Acc.: I ${innerAccelText}cm/s²${accelSpace}O ${(rs.outerAcceleration * 100).toI
     canvas.restore();
 
     paintRobiState(canvas, size);
+    paintIrMeasurement(canvas, size);
     paintScale(canvas, size);
 
     if (simulationResult != null) {

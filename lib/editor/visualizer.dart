@@ -49,6 +49,7 @@ class IrVisualizer extends Visualizer {
     required IrCalculatorResult irCalculatorResult,
     required super.irPathApproximation,
     required IrReadPainterSettings irReadPainterSettings,
+    required super.currentMeasurement,
     required super.time,
     super.enableTimeInput = true,
     required super.onZoomChanged,
@@ -79,6 +80,7 @@ class Visualizer extends StatelessWidget {
   final IrReadPainterSettings? irReadPainterSettings;
   final IrCalculatorResult? irCalculatorResult;
   final List<Vector2>? irPathApproximation;
+  final Measurement? currentMeasurement;
 
   final double zoom;
   final void Function(double newZoom, Offset newOffset, bool lockToRobi) onZoomChanged;
@@ -121,6 +123,7 @@ class Visualizer extends StatelessWidget {
     this.highlightedInstruction,
     this.irCalculatorResult,
     this.irPathApproximation,
+    this.currentMeasurement,
   });
 
   static double startZoom = (minZoom + maxZoom) / 2;
@@ -172,6 +175,7 @@ class Visualizer extends StatelessWidget {
                   irPathApproximation: irPathApproximation,
                   offset: offset,
                   obstacles: obstacles,
+                  currentMeasurement: currentMeasurement,
                 ),
                 child: Container(),
               ),
@@ -222,7 +226,7 @@ class Visualizer extends StatelessWidget {
                           ],
                         ),
                       SliderTheme(
-                        data:  SliderThemeData(
+                        data: SliderThemeData(
                           thumbShape: SliderComponentShape.noThumb,
                           trackHeight: 4,
                           overlayColor: Theme.of(context).colorScheme.primary,
@@ -261,7 +265,7 @@ class Visualizer extends StatelessWidget {
                         ],
                       ),
                       Padding(
-                        padding: const EdgeInsets.only(right:8.0),
+                        padding: const EdgeInsets.only(right: 8.0),
                         child: Text("$timeString / $totalTimeString"),
                       ),
                     ],
