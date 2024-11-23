@@ -142,16 +142,9 @@ class _InteractableIrVisualizerState extends State<InteractableIrVisualizer> {
       return measurements.first;
     }
 
-    double ct = 0;
+    if (t <= irReadResult.resolution) return measurements.first;
 
-    for (int i = 0; i < measurements.length; ++i) {
-      ct += irReadResult.resolution;
-      if (t <= ct) {
-        return measurements[i];
-      }
-    }
-
-    return null;
+    return measurements[(t / irReadResult.totalTime * measurements.length - 1).floor()];
   }
 
   void play() {
