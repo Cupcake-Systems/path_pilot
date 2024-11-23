@@ -37,11 +37,11 @@ class DriveInstructionEditor extends AbstractEditor {
       header: Card.filled(
         child: Padding(
           padding: const EdgeInsets.all(8.0),
-          child: Row(
+          child: Wrap(
             children: [
               Icon(userInstructionToIcon[UserInstruction.drive], size: 18),
               const SizedBox(width: 8),
-              Text("Drive ${(instruction.targetDistance * 100).round()}cm"),
+              Text("Drive ${(instruction.targetDistance * 100).round()}cm", overflow: TextOverflow.fade, maxLines: 2),
             ],
           ),
         ),

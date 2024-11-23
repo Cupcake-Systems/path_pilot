@@ -197,17 +197,18 @@ class _InstructionDetailsWidgetState extends State<InstructionDetailsWidget> {
                       },
                     ),
                   ),
+
                   titlesData: FlTitlesData(
                     topTitles: const AxisTitles(),
                     rightTitles: const AxisTitles(),
                     leftTitles: AxisTitles(
                       axisNameWidget: Text(yAxisTitle),
-                      sideTitles: const SideTitles(showTitles: true, reservedSize: 40),
+                      sideTitles: const SideTitles(showTitles: true, reservedSize: 40, maxIncluded: false, minIncluded: false),
                     ),
                     bottomTitles: AxisTitles(
                       axisNameWidget: Text(xAxisTitle),
                       axisNameSize: 20,
-                      sideTitles: const SideTitles(showTitles: true, reservedSize: 30),
+                      sideTitles: const SideTitles(showTitles: true, reservedSize: 30, maxIncluded: false, minIncluded: true),
                     ),
                   ),
                   lineBarsData: [
@@ -258,50 +259,55 @@ class _InstructionDetailsWidgetState extends State<InstructionDetailsWidget> {
               ),
             ),
           ),
-          Flexible(
-            fit: FlexFit.tight,
+          IntrinsicWidth(
             child: Padding(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.only(left: 8),
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
+                  if (!isScreenWide) const SizedBox(height: 20),
                   if (widget.instructionResult is! DriveResult)
                     CheckboxListTile(
                       value: angular,
                       onChanged: (value) => setState(() => angular = value!),
                       title: const Text("Angular"),
                     ),
-                  const Text("X-Axis"),
-                  RadioListTile(
-                    value: XAxisType.time,
-                    groupValue: xAxisMode,
-                    onChanged: (value) => setState(() => xAxisMode = value!),
-                    title: const Text("Time"),
+                  DropdownMenu<XAxisType>(
+                    width: 180,
+                    initialSelection: xAxisMode,
+                    label: const Text("X-Axis"),
+                    onSelected: (value) => setState(() => xAxisMode = value!),
+                    dropdownMenuEntries: [
+                      const DropdownMenuEntry<XAxisType>(
+                        value: XAxisType.time,
+                        label: "Time",
+                      ),
+                      const DropdownMenuEntry<XAxisType>(
+                        value: XAxisType.position,
+                        label: "Position",
+                      ),
+                    ],
                   ),
-                  RadioListTile(
-                    value: XAxisType.position,
-                    groupValue: xAxisMode,
-                    onChanged: (value) => setState(() => xAxisMode = value!),
-                    title: const Text("Position"),
-                  ),
-                  const Text("Y-Axis"),
-                  RadioListTile(
-                    value: YAxisType.position,
-                    groupValue: yAxisMode,
-                    onChanged: (value) => setState(() => yAxisMode = value!),
-                    title: const Text("Position"),
-                  ),
-                  RadioListTile(
-                    value: YAxisType.velocity,
-                    groupValue: yAxisMode,
-                    onChanged: (value) => setState(() => yAxisMode = value!),
-                    title: const Text("Velocity"),
-                  ),
-                  RadioListTile(
-                    value: YAxisType.acceleration,
-                    groupValue: yAxisMode,
-                    onChanged: (value) => setState(() => yAxisMode = value!),
-                    title: const Text("Acceleration"),
+                  const SizedBox(height: 16),
+                  DropdownMenu<YAxisType>(
+                    initialSelection: yAxisMode,
+                    width: 180,
+                    onSelected: (value) => setState(() => yAxisMode = value!),
+                    label: const Text("Y-Axis"),
+                    dropdownMenuEntries: [
+                      const DropdownMenuEntry<YAxisType>(
+                        value: YAxisType.position,
+                        label: "Position",
+                      ),
+                      const DropdownMenuEntry<YAxisType>(
+                        value: YAxisType.velocity,
+                        label: "Velocity",
+                      ),
+                      const DropdownMenuEntry<YAxisType>(
+                        value: YAxisType.acceleration,
+                        label: "Acceleration",
+                      ),
+                    ],
                   ),
                 ],
               ),

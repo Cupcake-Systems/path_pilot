@@ -36,11 +36,11 @@ class TurnInstructionEditor extends AbstractEditor {
       header: Card.filled(
         child: Padding(
           padding: const EdgeInsets.all(8.0),
-          child: Row(
+          child: Wrap(
             children: [
               Icon(instruction.left ? Icons.turn_left : Icons.turn_right, size: 18),
               const SizedBox(width: 8),
-              Text("${instruction.left ? "Left" : "Right"} Turn ${instruction.turnDegree.round()}°"),
+              Text("${instruction.left ? "Left" : "Right"} Turn ${instruction.turnDegree.round()}°", overflow: TextOverflow.fade, maxLines: 2),
             ],
           ),
         ),

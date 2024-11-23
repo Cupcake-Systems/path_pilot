@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:path_pilot/editor/editor.dart';
 import 'package:path_pilot/editor/instructions/instruction_details.dart';
@@ -109,40 +111,39 @@ class _RemovableWarningCardState extends State<RemovableWarningCard> {
               ),
             ),
             ExpansionTile(
-              tilePadding: const EdgeInsets.only(right: 20),
+              tilePadding: EdgeInsets.only(left: 8, right: Platform.isAndroid ? 8 : 30),
               onExpansionChanged: (value) => setState(() => isExpanded = value),
               collapsedShape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(10),
               ),
+              visualDensity: VisualDensity.compact,
+              childrenPadding: EdgeInsets.zero,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-              childrenPadding: const EdgeInsets.all(8),
               title: widget.header,
-              trailing: Padding(
-                padding: const EdgeInsets.only(right: 8),
-                child: IconButton(
-                  onPressed: widget.removed,
-                  icon: const Icon(Icons.delete),
-                ),
+              trailing: IconButton(
+                onPressed: widget.removed,
+                icon: const Icon(Icons.delete),
               ),
-              leading: Icon(isExpanded ? Icons.expand_less : Icons.expand_more),
               subtitle: widget.warningMessage == null
                   ? null
-                  : Container(
-                      padding: const EdgeInsets.all(10),
+                  : Card.filled(
                       margin: const EdgeInsets.symmetric(horizontal: 4),
-                      decoration: BoxDecoration(borderRadius: BorderRadius.circular(10), color: Colors.yellow.withAlpha(50)),
-                      child: Row(
-                        children: [
-                          const Icon(Icons.warning),
-                          const SizedBox(width: 10),
-                          Text(widget.warningMessage ?? ""),
-                        ],
+                      color: Colors.yellow.withAlpha(50),
+                      child: Padding(
+                        padding: const EdgeInsets.all(8),
+                        child: Wrap(
+                          children: [
+                            const Icon(Icons.warning, size: 18),
+                            const SizedBox(width: 10),
+                            Text(widget.warningMessage ?? "", overflow: TextOverflow.fade, maxLines: 2),
+                          ],
+                        ),
                       ),
                     ),
               children: isExpanded
                   ? [
                       Padding(
-                        padding: const EdgeInsets.only(right: 26),
+                        padding: Platform.isAndroid? const EdgeInsets.only(left: 16, bottom: 10, right: 16, top: 16) : const EdgeInsets.only(right: 30, left: 16, top: 16, bottom: 10),
                         child: Table(
                           columnWidths: const {
                             0: IntrinsicColumnWidth(),
@@ -182,13 +183,15 @@ class _RemovableWarningCardState extends State<RemovableWarningCard> {
                           ],
                         ),
                       ),
-                      const SizedBox(height: 10),
                       const Divider(height: 1),
                       const SizedBox(height: 10),
-                      InstructionDetailsWidget(
-                        instructionResult: widget.instructionResult,
-                        robiConfig: widget.robiConfig,
-                        instructionProgress: widget.progress == 0 || widget.progress >= 1? null : widget.progress,
+                      Padding(
+                        padding: Platform.isAndroid? const EdgeInsets.all(16): const EdgeInsets.only(left: 16, right: 30, top: 16, bottom: 16),
+                        child: InstructionDetailsWidget(
+                          instructionResult: widget.instructionResult,
+                          robiConfig: widget.robiConfig,
+                          instructionProgress: widget.progress == 0 || widget.progress >= 1 ? null : widget.progress,
+                        ),
                       ),
                     ]
                   : const [],

@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
@@ -166,7 +167,7 @@ class _ImageObstacleSettingsState extends State<ImageObstacleSettings> {
           icon: const Icon(Icons.image),
           label: const Text('Select image'),
         ),
-        const SizedBox(height: 10),
+        if (!Platform.isAndroid) const SizedBox(height: 10),
       ],
     );
   }

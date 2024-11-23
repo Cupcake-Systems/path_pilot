@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
@@ -122,7 +123,7 @@ class _ObstacleCreatorState extends State<ObstacleCreator> {
                   },
                   icon: const Icon(Icons.delete),
                 ),
-                const SizedBox(width: 20),
+                if (!Platform.isAndroid) const SizedBox(width: 20),
               ],
             ),
           );

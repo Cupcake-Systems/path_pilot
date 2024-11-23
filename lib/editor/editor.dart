@@ -9,6 +9,7 @@ import 'package:path_pilot/editor/instructions/rapid_turn.dart';
 import 'package:path_pilot/editor/interactable_visualizer.dart';
 import 'package:path_pilot/editor/obstacles/obstacle.dart';
 import 'package:path_pilot/file_browser.dart';
+import 'package:path_pilot/helper/dialogs.dart';
 import 'package:path_pilot/robi_api/robi_utils.dart';
 
 import '../app_storage.dart';
@@ -76,115 +77,124 @@ class _EditorState extends State<Editor> with AutomaticKeepAliveClientMixin {
     }
 
     if (widget.subViewMode == SubViewMode.split || widget.subViewMode == SubViewMode.editor) {
-      editor = Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
+      editor = Stack(
         children: [
-          Expanded(
-            child: instructions.isEmpty
-                ? const Center(
-                    child: Text("Add a first instruction to begin"),
-                  )
-                : ReorderableListView.builder(
-                    header: const SizedBox(height: 3),
-                    itemCount: instructions.length,
-                    itemBuilder: (context, i) => instructionToEditor(i),
-                    onReorder: (int oldIndex, int newIndex) {
-                      if (oldIndex < newIndex) --newIndex;
-                      instructions.insert(newIndex, instructions.removeAt(oldIndex));
-                      rerunSimulationAndUpdate();
-                    },
-                  ),
-          ),
-          Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Row(
+          instructions.isEmpty
+              ? const Center(
+                  child: Text("Add a first instruction to begin"),
+                )
+              : ReorderableListView.builder(
+                  header: const SizedBox(height: 3),
+                  itemCount: instructions.length,
+                  itemBuilder: (context, i) => instructionToEditor(i),
+                  onReorder: (int oldIndex, int newIndex) {
+                    if (oldIndex < newIndex) --newIndex;
+                    instructions.insert(newIndex, instructions.removeAt(oldIndex));
+                    rerunSimulationAndUpdate();
+                  },
+                ),
+          Align(
+            alignment: Alignment.bottomCenter,
+            child: Padding(
+              padding: const EdgeInsets.all(8),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Expanded(
-                    child: Card.outlined(
-                      child: IconButton(
-                        style: IconButton.styleFrom(
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                        ),
-                        icon: const Icon(Icons.add),
-                        onPressed: () => showDialog(
-                          context: context,
-                          builder: (BuildContext context) => AddInstructionDialog(
-                            instructionAdded: (MissionInstruction instruction) {
-                              instructions.insert(instructions.length, instruction);
-                              rerunSimulationAndUpdate();
-                            },
-                            robiConfig: widget.selectedRobiConfig,
-                            simulationResult: simulationResult,
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Card.outlined(
+                          child: IconButton(
+                            style: IconButton.styleFrom(
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                            ),
+                            icon: const Icon(Icons.add),
+                            onPressed: () => showDialog(
+                              context: context,
+                              builder: (BuildContext context) => AddInstructionDialog(
+                                instructionAdded: (MissionInstruction instruction) {
+                                  instructions.insert(instructions.length, instruction);
+                                  rerunSimulationAndUpdate();
+                                },
+                                robiConfig: widget.selectedRobiConfig,
+                                simulationResult: simulationResult,
+                              ),
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                  ),
-                  Card.outlined(
-                    child: IconButton(
-                      style: IconButton.styleFrom(
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
+                      Card.outlined(
+                        child: IconButton(
+                          style: IconButton.styleFrom(
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                          ),
+                          padding: const EdgeInsets.symmetric(horizontal: 20),
+                          onPressed: () async {
+                            if (!await confirmDialog(context, "Confirm Deletion", "Are you sure you want to delete all instructions?")) return;
+
+                            time = 0;
+                            instructions.clear();
+                            rerunSimulationAndUpdate();
+                          },
+                          icon: const Icon(Icons.delete_forever),
                         ),
                       ),
-                      padding: const EdgeInsets.symmetric(horizontal: 20),
-                      onPressed: () {
-                        time = 0;
-                        instructions.clear();
-                        rerunSimulationAndUpdate();
-                      },
-                      icon: const Icon(Icons.close),
-                    ),
+                    ],
                   ),
+                  if (SettingsStorage.developerMode) ...[
+                    Card.outlined(
+                      child: Padding(
+                        padding: const EdgeInsets.all(8),
+                        child: Column(
+                          children: [
+                            const Text("Generate Random Instructions"),
+                            Row(
+                              children: [
+                                Flexible(
+                                  child: TextFormField(
+                                    initialValue: randomInstructionsGenerationLength.toString(),
+                                    onChanged: (value) {
+                                      final parsed = int.tryParse(value);
+                                      if (parsed == null) return;
+                                      randomInstructionsGenerationLength = parsed;
+                                    },
+                                    decoration: const InputDecoration(labelText: "Generation Length"),
+                                    keyboardType: TextInputType.number,
+                                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                                  ),
+                                ),
+                                const SizedBox(width: 10),
+                                if (randomInstructionsGenerationDuration != null) Text("(took ${randomInstructionsGenerationDuration!.inMilliseconds}ms)"),
+                                const SizedBox(width: 10),
+                                IconButton(
+                                  onPressed: () {
+                                    for (int i = 0; i < randomInstructionsGenerationLength; i++) {
+                                      instructions.add(MissionInstruction.generateRandom());
+                                    }
+                                    final sw = Stopwatch()..start();
+                                    rerunSimulationAndUpdate();
+                                    sw.stop();
+                                    setState(() {
+                                      randomInstructionsGenerationDuration = sw.elapsed;
+                                    });
+                                  },
+                                  icon: const Icon(Icons.send),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
                 ],
               ),
-              if (SettingsStorage.developerMode)
-                Card.outlined(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                    child: Row(
-                      children: [
-                        const Text("Generate Random Instructions"),
-                        const SizedBox(width: 10),
-                        Flexible(
-                          child: TextFormField(
-                            initialValue: randomInstructionsGenerationLength.toString(),
-                            onChanged: (value) {
-                              final parsed = int.tryParse(value);
-                              if (parsed == null) return;
-                              randomInstructionsGenerationLength = parsed;
-                            },
-                            decoration: const InputDecoration(labelText: "Generation Length"),
-                            keyboardType: TextInputType.number,
-                            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                        if (randomInstructionsGenerationDuration != null) Text("(took ${randomInstructionsGenerationDuration!.inMilliseconds}ms)"),
-                        const SizedBox(width: 10),
-                        IconButton(
-                          onPressed: () {
-                            for (int i = 0; i < randomInstructionsGenerationLength; i++) {
-                              instructions.add(MissionInstruction.generateRandom());
-                            }
-                            final sw = Stopwatch()..start();
-                            rerunSimulationAndUpdate();
-                            sw.stop();
-                            setState(() {
-                              randomInstructionsGenerationDuration = sw.elapsed;
-                            });
-                          },
-                          icon: const Icon(Icons.send),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-            ],
+            ),
           ),
         ],
       );
