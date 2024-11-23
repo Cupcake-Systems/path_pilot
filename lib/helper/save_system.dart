@@ -49,6 +49,7 @@ final class SaveData {
   static Future<SaveData?> fromFileWithStatusMessage(String path, BuildContext context) async {
     final json = await readStringFromFileWithStatusMessage(path, context);
     if (json == null) return null;
+    if (json.isEmpty) return SaveData.empty;
     return fromJson(json);
   }
 
