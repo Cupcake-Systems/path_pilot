@@ -22,10 +22,7 @@ Future<void> main() async {
   await AppData.init();
   packageInfo = await PackageInfo.fromPlatform();
   await RobiPainter.init();
-
-  SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual, overlays: [
-    SystemUiOverlay.top,
-  ]);
+  await SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
 
   runApp(const MyApp());
 }
