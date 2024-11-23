@@ -167,6 +167,7 @@ class _FileBrowserState extends State<FileBrowser> {
                 onTap: importIrReading,
               ),
             ],
+            const Divider(height: 1),
             ListTile(
               leading: const Icon(Icons.add),
               title: const Text("Add Obstacle"),
