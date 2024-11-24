@@ -1,4 +1,6 @@
+import 'dart:async';
 import 'dart:convert';
+import 'dart:ui';
 
 import 'package:path_pilot/robi_api/robi_utils.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -56,18 +58,63 @@ class RobiConfigStorage {
   static RobiConfig get(int index) => _storedConfigs[index];
 }
 
-
 class SettingsStorage {
   static const String _developerModeKey = "developerMode";
   static const String _visualizerFpsKey = "visualizerFps";
   static const String _showMillisecondsKey = "showMilliseconds";
+  static const String _saveOnTriggerKey = "saveOnTrigger";
+  static const String _autoSaveIntervalKey = "autoSaveInterval";
+  static const String _autoSave = "autoSave";
+  static bool _autoSaveRunning = true;
+
+  static void startAutoSaveTimer(void Function() saveTrigger) async {
+    while (_autoSaveRunning) {
+      await Future.delayed(Duration(minutes: autoSaveInterval));
+      if (autoSave) {
+        saveTrigger();
+      }
+    }
+  }
+
+  static void stopAutoSaveTimer() => _autoSaveRunning = false;
+
+  static final Set<AppLifecycleState> _autoSaveTriggers =
+      AppData._prefs.getStringList(_saveOnTriggerKey)?.map((e) => AppLifecycleState.values.firstWhere((element) => element.name == e)).toSet() ?? {};
 
   static bool get developerMode => AppData._prefs.getBool(_developerModeKey) ?? false;
+
   static set developerMode(bool value) => AppData._prefs.setBool(_developerModeKey, value);
 
   static int get visualizerFps => AppData._prefs.getInt(_visualizerFpsKey) ?? 30;
+
   static set visualizerFps(int value) => AppData._prefs.setInt(_visualizerFpsKey, value);
 
   static bool get showMilliseconds => AppData._prefs.getBool(_showMillisecondsKey) ?? false;
+
   static set showMilliseconds(bool value) => AppData._prefs.setBool(_showMillisecondsKey, value);
+
+  static Set<AppLifecycleState> get saveTriggers => _autoSaveTriggers;
+
+  static void addSaveTrigger(AppLifecycleState state) {
+    _autoSaveTriggers.add(state);
+    _saveSaveTriggers();
+  }
+
+  static void removeSaveTrigger(AppLifecycleState state) {
+    _autoSaveTriggers.remove(state);
+    _saveSaveTriggers();
+  }
+
+  static Future<bool> _saveSaveTriggers() {
+    final List<String> stringList = _autoSaveTriggers.map((e) => e.name).toList();
+    return AppData._prefs.setStringList(_saveOnTriggerKey, stringList);
+  }
+
+  static int get autoSaveInterval => AppData._prefs.getInt(_autoSaveIntervalKey) ?? 2;
+
+  static set autoSaveInterval(int value) => AppData._prefs.setInt(_autoSaveIntervalKey, value);
+
+  static bool get autoSave => AppData._prefs.getBool(_autoSave) ?? true;
+
+  static set autoSave(bool value) => AppData._prefs.setBool(_autoSave, value);
 }

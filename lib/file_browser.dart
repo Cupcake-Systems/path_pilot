@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
+import 'package:path_pilot/app_storage.dart';
 import 'package:path_pilot/constants.dart';
 import 'package:path_pilot/editor/editor.dart';
 import 'package:path_pilot/editor/obstacles/obstacle_creator_widget.dart';
@@ -27,7 +28,7 @@ class FileBrowser extends StatefulWidget {
   State<FileBrowser> createState() => _FileBrowserState();
 }
 
-class _FileBrowserState extends State<FileBrowser> {
+class _FileBrowserState extends State<FileBrowser> with WidgetsBindingObserver {
   RobiConfig selectedRobiConfig = defaultRobiConfig;
   ViewMode viewMode = ViewMode.instructions;
   SubViewMode subViewMode = Platform.isAndroid ? SubViewMode.editor : SubViewMode.split;
@@ -42,6 +43,34 @@ class _FileBrowserState extends State<FileBrowser> {
 
   // IR Readings analysis
   IrReadResult? irReadResult;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    SettingsStorage.startAutoSaveTimer(
+      () {
+        if (!isSavedNotifier.isSaved) {
+          saveFile(false);
+        }
+      },
+    );
+  }
+
+  @override
+  void dispose() {
+    isSavedNotifier.dispose();
+    WidgetsBinding.instance.removeObserver(this);
+    SettingsStorage.stopAutoSaveTimer();
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (!isSavedNotifier.isSaved && SettingsStorage.saveTriggers.contains(state)) {
+      saveFile();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -338,8 +367,9 @@ class _FileBrowserState extends State<FileBrowser> {
     });
   }
 
-  Future<File?> saveFile() async {
-    final res = await loadedData.saveToFileWithStatusMessage(openedFile!, context);
+  Future<File?> saveFile([bool showStatusMessage = true]) async {
+    if (openedFile == null) return null;
+    final res = await loadedData.saveToFileWithStatusMessage(openedFile!, showStatusMessage? context : null);
     if (res != null) {
       isSavedNotifier.setSaved(true);
     }
