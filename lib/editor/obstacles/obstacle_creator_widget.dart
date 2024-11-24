@@ -162,6 +162,19 @@ class _ObstacleCreatorState extends State<ObstacleCreator> {
             },
             child: const Icon(Icons.file_download_outlined),
           ),
+          const SizedBox(width: 10),
+          FloatingActionButton(
+            heroTag: 'saveObstacles',
+            onPressed: () {
+              final saveData = SaveData(obstacles: obstacles, instructions: []);
+              pickFileAndWriteWithStatusMessage(
+                bytes: saveData.toBytes(),
+                context: context,
+                extension: ".robi_script.json",
+              );
+            },
+            child: const Icon(Icons.save),
+          ),
         ],
       ),
     );
