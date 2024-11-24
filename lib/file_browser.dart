@@ -169,8 +169,8 @@ class _FileBrowserState extends State<FileBrowser> {
             ],
             const Divider(height: 1),
             ListTile(
-              leading: const Icon(Icons.add),
-              title: const Text("Add Obstacle"),
+              leading: const Icon(Icons.square_rounded),
+              title: const Text("Obstacles"),
               onTap: () {
                 Navigator.of(context).push(
                   MaterialPageRoute(

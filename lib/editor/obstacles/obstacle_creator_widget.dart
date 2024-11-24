@@ -3,7 +3,9 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:path_pilot/editor/obstacles/obstacle_settings/circle_obstacle_settings.dart';
+import 'package:path_pilot/helper/file_manager.dart';
 
+import '../../helper/save_system.dart';
 import 'obstacle.dart';
 import 'obstacle_settings/image_obstacle_settings.dart';
 import 'obstacle_settings/rectangle_obstacle_settings.dart';
@@ -31,7 +33,7 @@ class _ObstacleCreatorState extends State<ObstacleCreator> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Obstacle Creator'),
+        title: const Text('Obstacles'),
       ),
       body: ReorderableListView.builder(
         itemCount: obstacles.length,
@@ -134,14 +136,37 @@ class _ObstacleCreatorState extends State<ObstacleCreator> {
           widget.onObstaclesChange(obstacles);
         },
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () async {
-          setState(() {
-            obstacles.add(RectangleObstacle.base());
-          });
-          widget.onObstaclesChange(obstacles);
-        },
-        child: const Icon(Icons.add),
+      floatingActionButton: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          FloatingActionButton(
+            heroTag: 'addObstacle',
+            onPressed: () async {
+              setState(() {
+                obstacles.add(RectangleObstacle.base());
+              });
+              widget.onObstaclesChange(obstacles);
+            },
+            child: const Icon(Icons.add),
+          ),
+          const SizedBox(width: 10),
+          FloatingActionButton(
+            heroTag: 'loadObstacles',
+            onPressed: () async {
+              final file = await pickSingleFile(context: context, allowedExtensions: ['json', 'robi_script.json']);
+              if (file == null || !context.mounted) return;
+              final saveData = await SaveData.fromFileWithStatusMessage(file, context);
+              if (saveData == null) return;
+              setState(() {
+                obstacles.addAll(saveData.obstacles);
+              });
+              widget.onObstaclesChange(obstacles);
+              if (!context.mounted) return;
+              ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('${saveData.obstacles.length} Obstacles loaded')));
+            },
+            child: const Icon(Icons.file_download_outlined),
+          ),
+        ],
       ),
     );
   }
