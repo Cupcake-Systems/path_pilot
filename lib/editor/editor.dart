@@ -94,6 +94,7 @@ class _EditorState extends State<Editor> with AutomaticKeepAliveClientMixin {
                     instructions.insert(newIndex, instructions.removeAt(oldIndex));
                     rerunSimulationAndUpdate();
                   },
+                  footer: const SizedBox(height: 200),
                 ),
           Align(
             alignment: Alignment.bottomCenter,
@@ -247,7 +248,7 @@ class _EditorState extends State<Editor> with AutomaticKeepAliveClientMixin {
 
     if (instruction is DriveInstruction) {
       return DriveInstructionEditor(
-        timeChangeNotifier : timeNotifier,
+        timeChangeNotifier: timeNotifier,
         robiConfig: widget.selectedRobiConfig,
         key: ObjectKey(instruction),
         instruction: instruction,
