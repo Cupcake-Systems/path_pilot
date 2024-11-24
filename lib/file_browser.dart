@@ -227,6 +227,7 @@ class _FileBrowserState extends State<FileBrowser> with WidgetsBindingObserver {
                         setState(() {
                           loadedData = loadedData.copyWith(obstacles: obstacles);
                         });
+                        isSavedNotifier.setSaved(false);
                       },
                     ),
                   ),
