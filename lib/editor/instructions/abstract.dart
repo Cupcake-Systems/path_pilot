@@ -12,7 +12,7 @@ abstract class AbstractEditor extends StatelessWidget {
   final int instructionIndex;
   final MissionInstruction instruction;
   final RobiConfig robiConfig;
-  final double progress;
+  final TimeChangeNotifier timeChangeNotifier;
 
   late final InstructionResult instructionResult;
   late final bool isLastInstruction;
@@ -36,7 +36,7 @@ abstract class AbstractEditor extends StatelessWidget {
     String? warning,
     this.entered,
     this.exited,
-    required this.progress,
+    required this.timeChangeNotifier,
   }) : _warning = warning {
     instructionResult = simulationResult.instructionResults[instructionIndex];
     isLastInstruction = instructionIndex == simulationResult.instructionResults.length - 1;
@@ -60,7 +60,7 @@ class RemovableWarningCard extends StatefulWidget {
   final Function()? exited;
   final Function(MissionInstruction instruction) change;
   final RobiConfig robiConfig;
-  final double progress;
+  final TimeChangeNotifier timeChangeNotifier;
 
   final Widget header;
   final List<TableRow> children;
@@ -82,7 +82,7 @@ class RemovableWarningCard extends StatefulWidget {
     this.warningMessage,
     required this.header,
     required this.robiConfig,
-    required this.progress,
+    required this.timeChangeNotifier,
   });
 
   @override
@@ -93,6 +93,8 @@ String vecToString(Vector2 vec, int decimalPlaces) => "(${vec.x.toStringAsFixed(
 
 class _RemovableWarningCardState extends State<RemovableWarningCard> {
   bool isExpanded = false;
+
+  double get progress => (widget.timeChangeNotifier.time - widget.instructionResult.timeStamp) / widget.instructionResult.totalTime;
 
   @override
   Widget build(BuildContext context) {
@@ -105,9 +107,14 @@ class _RemovableWarningCardState extends State<RemovableWarningCard> {
           children: [
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 2),
-              child: LinearProgressIndicator(
-                value: widget.progress,
-                minHeight: 2,
+              child: ListenableBuilder(
+                builder: (context, child) {
+                  return LinearProgressIndicator(
+                    value: progress,
+                    minHeight: 2,
+                  );
+                },
+                listenable: widget.timeChangeNotifier,
               ),
             ),
             ExpansionTile(
@@ -143,7 +150,7 @@ class _RemovableWarningCardState extends State<RemovableWarningCard> {
               children: isExpanded
                   ? [
                       Padding(
-                        padding: Platform.isAndroid? const EdgeInsets.only(left: 16, bottom: 10, right: 16, top: 16) : const EdgeInsets.only(right: 30, left: 16, top: 16, bottom: 10),
+                        padding: Platform.isAndroid ? const EdgeInsets.only(left: 16, bottom: 10, right: 16, top: 16) : const EdgeInsets.only(right: 30, left: 16, top: 16, bottom: 10),
                         child: Table(
                           columnWidths: const {
                             0: IntrinsicColumnWidth(),
@@ -186,11 +193,11 @@ class _RemovableWarningCardState extends State<RemovableWarningCard> {
                       const Divider(height: 1),
                       const SizedBox(height: 10),
                       Padding(
-                        padding: Platform.isAndroid? const EdgeInsets.all(16): const EdgeInsets.only(left: 16, right: 30, top: 16, bottom: 16),
+                        padding: Platform.isAndroid ? const EdgeInsets.all(16) : const EdgeInsets.only(left: 16, right: 30, top: 16, bottom: 16),
                         child: InstructionDetailsWidget(
                           instructionResult: widget.instructionResult,
                           robiConfig: widget.robiConfig,
-                          instructionProgress: widget.progress == 0 || widget.progress >= 1 ? null : widget.progress,
+                          timeChangeNotifier: widget.timeChangeNotifier,
                         ),
                       ),
                     ]

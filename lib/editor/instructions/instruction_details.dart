@@ -2,6 +2,7 @@ import 'dart:math';
 
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
+import 'package:path_pilot/editor/editor.dart';
 import 'package:path_pilot/robi_api/robi_utils.dart';
 
 import '../painters/robi_painter.dart';
@@ -9,13 +10,13 @@ import '../painters/robi_painter.dart';
 class InstructionDetailsWidget extends StatefulWidget {
   final InstructionResult instructionResult;
   final RobiConfig robiConfig;
-  final double? instructionProgress;
+  final TimeChangeNotifier timeChangeNotifier;
 
   const InstructionDetailsWidget({
     super.key,
     required this.instructionResult,
     required this.robiConfig,
-    this.instructionProgress,
+    required this.timeChangeNotifier,
   });
 
   @override
@@ -171,91 +172,98 @@ class _InstructionDetailsWidgetState extends State<InstructionDetailsWidget> {
             fit: FlexFit.tight,
             child: AspectRatio(
               aspectRatio: 1.5,
-              child: LineChart(
-                LineChartData(
-                  borderData: FlBorderData(
-                    border: Border.all(color: const Color(0xff37434d), width: 2),
-                  ),
-                  minY: minY,
-                  lineTouchData: LineTouchData(
-                    touchTooltipData: LineTouchTooltipData(
-                      getTooltipItems: (List<LineBarSpot> touchedSpots) {
-                        return touchedSpots.map((LineBarSpot touchedSpot) {
-                          final spot = touchedSpot as FlSpot;
-                          final end = touchedSpots.last == touchedSpot ? "" : "\n";
-                          String leading = "";
+              child: ListenableBuilder(
+                builder: (context, child) {
+                  double? progress = (widget.timeChangeNotifier.time - widget.instructionResult.timeStamp) / widget.instructionResult.totalTime;
+                  if (progress == 0 || progress >= 1) progress = null;
 
-                          if (touchedSpots.length == 2) {
-                            leading = touchedSpot == touchedSpots.first ? "Inner " : "Outer ";
-                          }
+                  return LineChart(
+                    LineChartData(
+                      borderData: FlBorderData(
+                        border: Border.all(color: const Color(0xff37434d), width: 2),
+                      ),
+                      minY: minY,
+                      lineTouchData: LineTouchData(
+                        touchTooltipData: LineTouchTooltipData(
+                          getTooltipItems: (List<LineBarSpot> touchedSpots) {
+                            return touchedSpots.map((LineBarSpot touchedSpot) {
+                              final spot = touchedSpot as FlSpot;
+                              final end = touchedSpots.last == touchedSpot ? "" : "\n";
+                              String leading = "";
 
-                          return LineTooltipItem(
-                            "$leading$yAxisTitle: ${spot.y.toStringAsFixed(2)}$end",
-                            const TextStyle(),
-                          );
-                        }).toList();
-                      },
-                    ),
-                  ),
+                              if (touchedSpots.length == 2) {
+                                leading = touchedSpot == touchedSpots.first ? "Inner " : "Outer ";
+                              }
 
-                  titlesData: FlTitlesData(
-                    topTitles: const AxisTitles(),
-                    rightTitles: const AxisTitles(),
-                    leftTitles: AxisTitles(
-                      axisNameWidget: Text(yAxisTitle),
-                      sideTitles: const SideTitles(showTitles: true, reservedSize: 40, maxIncluded: false, minIncluded: false),
-                    ),
-                    bottomTitles: AxisTitles(
-                      axisNameWidget: Text(xAxisTitle),
-                      axisNameSize: 20,
-                      sideTitles: const SideTitles(showTitles: true, reservedSize: 30, maxIncluded: false, minIncluded: true),
-                    ),
-                  ),
-                  lineBarsData: [
-                    LineChartBarData(
-                      isStepLineChart: yAxisMode == YAxisType.acceleration,
-                      spots: data1,
-                      color: color1,
-                      dotData: const FlDotData(show: false),
-                      belowBarData: BarAreaData(
-                        show: true,
-                        gradient: LinearGradient(
-                          begin: Alignment.centerLeft,
-                          end: Alignment.centerRight,
-                          colors: [color1.withOpacity(0.3), color1.withOpacity(0.3), Colors.transparent, Colors.transparent],
-                          stops: [0, widget.instructionProgress ?? 1, widget.instructionProgress ?? 1, 1],
+                              return LineTooltipItem(
+                                "$leading$yAxisTitle: ${spot.y.toStringAsFixed(2)}$end",
+                                const TextStyle(),
+                              );
+                            }).toList();
+                          },
                         ),
                       ),
-                    ),
-                    if (data2 != null)
-                      LineChartBarData(
-                        isStepLineChart: yAxisMode == YAxisType.acceleration,
-                        spots: data2,
-                        color: color2,
-                        dotData: const FlDotData(show: false),
-                        belowBarData: BarAreaData(
-                          show: true,
-                          gradient: LinearGradient(
-                            begin: Alignment.centerLeft,
-                            end: Alignment.centerRight,
-                            colors: [color2.withOpacity(0.3), color2.withOpacity(0.3), Colors.transparent, Colors.transparent],
-                            stops: [0, widget.instructionProgress ?? 1, widget.instructionProgress ?? 1, 1],
+                      titlesData: FlTitlesData(
+                        topTitles: const AxisTitles(),
+                        rightTitles: const AxisTitles(),
+                        leftTitles: AxisTitles(
+                          axisNameWidget: Text(yAxisTitle),
+                          sideTitles: const SideTitles(showTitles: true, reservedSize: 40, maxIncluded: false, minIncluded: false),
+                        ),
+                        bottomTitles: AxisTitles(
+                          axisNameWidget: Text(xAxisTitle),
+                          axisNameSize: 20,
+                          sideTitles: const SideTitles(showTitles: true, reservedSize: 30, maxIncluded: false, minIncluded: true),
+                        ),
+                      ),
+                      lineBarsData: [
+                        LineChartBarData(
+                          isStepLineChart: yAxisMode == YAxisType.acceleration,
+                          spots: data1,
+                          color: color1,
+                          dotData: const FlDotData(show: false),
+                          belowBarData: BarAreaData(
+                            show: true,
+                            gradient: LinearGradient(
+                              begin: Alignment.centerLeft,
+                              end: Alignment.centerRight,
+                              colors: [color1.withOpacity(0.3), color1.withOpacity(0.3), Colors.transparent, Colors.transparent],
+                              stops: [0, progress ?? 1, progress ?? 1, 1],
+                            ),
                           ),
                         ),
-                      ),
-                  ],
-                  extraLinesData: widget.instructionProgress == null
-                      ? null
-                      : ExtraLinesData(
-                          verticalLines: [
-                            VerticalLine(
-                              x: widget.instructionProgress! * maxX,
-                              color: Colors.grey,
-                              dashArray: [5, 5],
+                        if (data2 != null)
+                          LineChartBarData(
+                            isStepLineChart: yAxisMode == YAxisType.acceleration,
+                            spots: data2,
+                            color: color2,
+                            dotData: const FlDotData(show: false),
+                            belowBarData: BarAreaData(
+                              show: true,
+                              gradient: LinearGradient(
+                                begin: Alignment.centerLeft,
+                                end: Alignment.centerRight,
+                                colors: [color2.withOpacity(0.3), color2.withOpacity(0.3), Colors.transparent, Colors.transparent],
+                                stops: [0, progress ?? 1, progress ?? 1, 1],
+                              ),
                             ),
-                          ],
-                        ),
-                ),
+                          ),
+                      ],
+                      extraLinesData: progress == null
+                          ? null
+                          : ExtraLinesData(
+                              verticalLines: [
+                                VerticalLine(
+                                  x: progress * maxX,
+                                  color: Colors.grey,
+                                  dashArray: [5, 5],
+                                ),
+                              ],
+                            ),
+                    ),
+                  );
+                },
+                listenable: widget.timeChangeNotifier,
               ),
             ),
           ),

@@ -274,10 +274,7 @@ class _InteractableInstructionsVisualizerState extends State<InteractableInstruc
   }
 
   void updateTime(double time) {
-    if (widget.onTimeChanged == null) {
-      setState(() {});
-    } else {
-      widget.onTimeChanged!(time);
-    }
+    widget.onTimeChanged?.call(time);
+    setState(() {});
   }
 }

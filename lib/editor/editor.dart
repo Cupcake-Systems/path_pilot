@@ -46,7 +46,7 @@ class _EditorState extends State<Editor> with AutomaticKeepAliveClientMixin {
   late Simulator simulator = Simulator(widget.selectedRobiConfig);
 
   // Visualizer
-  double time = 0;
+  final timeNotifier = TimeChangeNotifier();
   InstructionResult? highlightedInstruction;
   late SimulationResult simulationResult = simulator.calculate(instructions);
 
@@ -73,7 +73,7 @@ class _EditorState extends State<Editor> with AutomaticKeepAliveClientMixin {
         totalTime: simulationResult.totalTime,
         robiConfig: widget.selectedRobiConfig,
         highlightedInstruction: highlightedInstruction,
-        onTimeChanged: (newTime) => setState(() => time = newTime),
+        onTimeChanged: (newTime) => timeNotifier.time = newTime,
         obstacles: widget.obstacles,
       );
     }
@@ -138,8 +138,7 @@ class _EditorState extends State<Editor> with AutomaticKeepAliveClientMixin {
                           padding: const EdgeInsets.symmetric(horizontal: 20),
                           onPressed: () async {
                             if (!await confirmDialog(context, "Confirm Deletion", "Are you sure you want to delete all instructions?")) return;
-
-                            time = 0;
+                            timeNotifier.time = 0;
                             instructions.clear();
                             rerunSimulationAndUpdate();
                           },
@@ -246,12 +245,9 @@ class _EditorState extends State<Editor> with AutomaticKeepAliveClientMixin {
       rerunSimulationAndUpdate();
     }
 
-    InstructionResult res = simulationResult.instructionResults[i];
-    double progress = (time - res.timeStamp) / res.totalTime;
-
     if (instruction is DriveInstruction) {
       return DriveInstructionEditor(
-        progress: progress,
+        timeChangeNotifier : timeNotifier,
         robiConfig: widget.selectedRobiConfig,
         key: ObjectKey(instruction),
         instruction: instruction,
@@ -264,7 +260,7 @@ class _EditorState extends State<Editor> with AutomaticKeepAliveClientMixin {
       );
     } else if (instruction is TurnInstruction) {
       return TurnInstructionEditor(
-        progress: progress,
+        timeChangeNotifier: timeNotifier,
         robiConfig: widget.selectedRobiConfig,
         key: ObjectKey(instruction),
         instruction: instruction,
@@ -277,7 +273,7 @@ class _EditorState extends State<Editor> with AutomaticKeepAliveClientMixin {
       );
     } else if (instruction is RapidTurnInstruction) {
       return RapidTurnInstructionEditor(
-        progress: progress,
+        timeChangeNotifier: timeNotifier,
         robiConfig: widget.selectedRobiConfig,
         key: ObjectKey(instruction),
         instruction: instruction,
@@ -327,8 +323,8 @@ class _EditorState extends State<Editor> with AutomaticKeepAliveClientMixin {
 
     setState(() {
       simulationResult = simulator.calculate(instructions);
-      time = time.clamp(0, simulationResult.totalTime);
     });
+    timeNotifier.time = timeNotifier.time.clamp(0, simulationResult.totalTime);
 
     widget.onInstructionsChanged(instructions, simulationResult);
   }
@@ -340,4 +336,15 @@ class _EditorState extends State<Editor> with AutomaticKeepAliveClientMixin {
 double roundToDigits(double num, int digits) {
   final e = pow(10, digits);
   return (num * e).roundToDouble() / e;
+}
+
+class TimeChangeNotifier extends ChangeNotifier {
+  double _time = 0;
+
+  double get time => _time;
+
+  set time(double newTime) {
+    _time = newTime;
+    notifyListeners();
+  }
 }
