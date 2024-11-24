@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:path_pilot/editor/obstacles/obstacle_settings/obstacle_settings_container.dart';
 
-import '../../../helper/geometry.dart';
 import '../obstacle.dart';
 
 class CircleObstacleSettings extends StatelessWidget {
@@ -21,21 +20,21 @@ class CircleObstacleSettings extends StatelessWidget {
       onObstacleChanged: onObstacleChanged,
       children: [
         TextFormField(
-          initialValue: (obstacle.center.dx * 100).toStringAsFixed(2),
+          initialValue: (obstacle.x * 100).toStringAsFixed(2),
           decoration: const InputDecoration(labelText: 'Center X in cm'),
           keyboardType: TextInputType.number,
           onChanged: (value) {
-            obstacle.center = copyOffsetWith(obstacle.center, dx: (double.tryParse(value) ?? 0) / 100);
+            obstacle.x = (double.tryParse(value) ?? 0) / 100;
             onObstacleChanged(obstacle);
           },
         ),
         const SizedBox(height: 10),
         TextFormField(
-          initialValue: (obstacle.center.dy * 100).toStringAsFixed(2),
+          initialValue: (obstacle.y * 100).toStringAsFixed(2),
           decoration: const InputDecoration(labelText: 'Center Y in cm'),
           keyboardType: TextInputType.number,
           onChanged: (value) {
-            obstacle.center = copyOffsetWith(obstacle.center, dy: (double.tryParse(value) ?? 0) / 100);
+            obstacle.y = (double.tryParse(value) ?? 0) / 100;
             onObstacleChanged(obstacle);
           },
         ),

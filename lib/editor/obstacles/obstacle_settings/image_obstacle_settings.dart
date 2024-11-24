@@ -5,8 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:path_pilot/editor/obstacles/obstacle.dart';
 import 'package:path_pilot/helper/file_manager.dart';
 
-import '../../../helper/geometry.dart';
-
 class ImageObstacleSettings extends StatefulWidget {
   final ImageObstacle obstacle;
   final void Function(ImageObstacle obstacle) onObstacleChanged;
@@ -26,10 +24,10 @@ class ImageObstacleSettings extends StatefulWidget {
 }
 
 class _ImageObstacleSettingsState extends State<ImageObstacleSettings> {
-  late bool lockAspectRatio = widget.obstacle.image == null || (imgAspectRatio - widget.obstacle.size.width / widget.obstacle.size.height).abs() < 1e-5;
+  late bool lockAspectRatio = widget.obstacle.image == null || (imgAspectRatio - widget.obstacle.w / widget.obstacle.h).abs() < 1e-5;
 
-  late final initialHeightText = (widget.obstacle.size.height * 100).toStringAsFixed(2);
-  late final initialWidthText = (widget.obstacle.size.width * 100).toStringAsFixed(2);
+  late final initialHeightText = (widget.obstacle.h * 100).toStringAsFixed(2);
+  late final initialWidthText = (widget.obstacle.w * 100).toStringAsFixed(2);
 
   late final heightController = TextEditingController(text: initialHeightText);
   late final widthController = TextEditingController(text: initialWidthText);
@@ -54,25 +52,25 @@ class _ImageObstacleSettingsState extends State<ImageObstacleSettings> {
             TableRow(
               children: [
                 TextFormField(
-                  initialValue: (widget.obstacle.offset.dx * 100).toStringAsFixed(2),
+                  initialValue: (widget.obstacle.x * 100).toStringAsFixed(2),
                   decoration: const InputDecoration(labelText: 'X in cm'),
                   keyboardType: TextInputType.number,
                   onChanged: (value) {
                     final parsed = double.tryParse(value);
                     if (parsed == null) return;
-                    widget.obstacle.offset = copyOffsetWith(widget.obstacle.offset, dx: parsed / 100);
+                    widget.obstacle.x = parsed / 100;
                     widget.onObstacleChanged(widget.obstacle);
                   },
                 ),
                 const SizedBox(width: 16),
                 TextFormField(
-                  initialValue: (widget.obstacle.offset.dy * 100).toStringAsFixed(2),
+                  initialValue: (widget.obstacle.y * 100).toStringAsFixed(2),
                   decoration: const InputDecoration(labelText: 'Y in cm'),
                   keyboardType: TextInputType.number,
                   onChanged: (value) {
                     final parsed = double.tryParse(value);
                     if (parsed == null) return;
-                    widget.obstacle.offset = copyOffsetWith(widget.obstacle.offset, dy: parsed / 100);
+                    widget.obstacle.y = parsed / 100;
                     widget.onObstacleChanged(widget.obstacle);
                   },
                 ),
@@ -95,10 +93,9 @@ class _ImageObstacleSettingsState extends State<ImageObstacleSettings> {
                     onChanged: (value) {
                       final parsed = double.tryParse(value);
                       if (parsed == null) return;
-                      widget.obstacle.size = copySizeWith(widget.obstacle.size, width: parsed / 100);
+                      widget.obstacle.w = parsed / 100;
                       if (lockAspectRatio) {
-                        widget.obstacle.size = copySizeWith(widget.obstacle.size, height: widget.obstacle.size.width / imgAspectRatio);
-                        heightController.text = (widget.obstacle.size.height * 100).toStringAsFixed(2);
+                        heightController.text = (widget.obstacle.h * 100).toStringAsFixed(2);
                       }
                       widget.onObstacleChanged(widget.obstacle);
                     },
@@ -109,8 +106,8 @@ class _ImageObstacleSettingsState extends State<ImageObstacleSettings> {
                       onPressed: () {
                         setState(() => lockAspectRatio = !lockAspectRatio);
                         if (lockAspectRatio) {
-                          widget.obstacle.size = copySizeWith(widget.obstacle.size, height: widget.obstacle.size.width / imgAspectRatio);
-                          heightController.text = (widget.obstacle.size.height * 100).toStringAsFixed(2);
+                          widget.obstacle.h = widget.obstacle.w / imgAspectRatio;
+                          heightController.text = (widget.obstacle.h * 100).toStringAsFixed(2);
                         }
                         widget.onObstacleChanged(widget.obstacle);
                       },
@@ -124,10 +121,10 @@ class _ImageObstacleSettingsState extends State<ImageObstacleSettings> {
                     onChanged: (value) {
                       final parsed = double.tryParse(value);
                       if (parsed == null) return;
-                      widget.obstacle.size = copySizeWith(widget.obstacle.size, height: parsed / 100);
+                      widget.obstacle.h = parsed / 100;
                       if (lockAspectRatio) {
-                        widget.obstacle.size = copySizeWith(widget.obstacle.size, width: widget.obstacle.size.height * imgAspectRatio);
-                        widthController.text = (widget.obstacle.size.width * 100).toStringAsFixed(2);
+                        widget.obstacle.w = widget.obstacle.h * imgAspectRatio;
+                        widthController.text = (widget.obstacle.w * 100).toStringAsFixed(2);
                       }
                       widget.onObstacleChanged(widget.obstacle);
                     },
@@ -157,11 +154,12 @@ class _ImageObstacleSettingsState extends State<ImageObstacleSettings> {
               }
               cachedImage = null;
               if (widget.obstacle.image == null) return;
-              widget.obstacle.size = Size(widget.obstacle.image!.width / 1e3, widget.obstacle.image!.height / 1e3);
+              widget.obstacle.w = widget.obstacle.image!.width / 1e3;
+              widget.obstacle.h = widget.obstacle.image!.height / 1e3;
             });
 
-            widthController.text = (widget.obstacle.size.width * 100).toStringAsFixed(2);
-            heightController.text = (widget.obstacle.size.height * 100).toStringAsFixed(2);
+            widthController.text = (widget.obstacle.w * 100).toStringAsFixed(2);
+            heightController.text = (widget.obstacle.h * 100).toStringAsFixed(2);
             widget.onObstacleChanged(widget.obstacle);
           },
           icon: const Icon(Icons.image),

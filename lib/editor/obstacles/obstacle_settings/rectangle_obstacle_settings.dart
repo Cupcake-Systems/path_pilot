@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:path_pilot/editor/obstacles/obstacle_settings/obstacle_settings_container.dart';
 
-import '../../../helper/geometry.dart';
 import '../obstacle.dart';
 
 class RectangleObstacleSettings extends StatelessWidget {
@@ -21,38 +20,38 @@ class RectangleObstacleSettings extends StatelessWidget {
       onObstacleChanged: onObstacleChanged,
       children: [
         TextFormField(
-          initialValue: (obstacle.rect.left * 100).toStringAsFixed(2),
+          initialValue: (obstacle.x * 100).toStringAsFixed(2),
           decoration: const InputDecoration(labelText: 'X in cm'),
           keyboardType: TextInputType.number,
           onChanged: (value) {
-            obstacle.rect = copyRectWith(obstacle.rect, left: (double.tryParse(value) ?? 0) / 100);
+            obstacle.x = (double.tryParse(value) ?? 0) / 100;
             onObstacleChanged(obstacle);
           },
         ),
         TextFormField(
-          initialValue: (obstacle.rect.top * 100).toStringAsFixed(2),
+          initialValue: (obstacle.y * 100).toStringAsFixed(2),
           decoration: const InputDecoration(labelText: 'Y in cm'),
           keyboardType: TextInputType.number,
           onChanged: (value) {
-            obstacle.rect = copyRectWith(obstacle.rect, top: (double.tryParse(value) ?? 0) / 100);
+            obstacle.y = (double.tryParse(value) ?? 0) / 100;
             onObstacleChanged(obstacle);
           },
         ),
         TextFormField(
-          initialValue: (obstacle.rect.width * 100).toStringAsFixed(2),
+          initialValue: (obstacle.w * 100).toStringAsFixed(2),
           decoration: const InputDecoration(labelText: 'Width in cm'),
           keyboardType: TextInputType.number,
           onChanged: (value) {
-            obstacle.rect = copyRectWith(obstacle.rect, width: (double.tryParse(value) ?? 0) / 100);
+            obstacle.w = (double.tryParse(value) ?? 0) / 100;
             onObstacleChanged(obstacle);
           },
         ),
         TextFormField(
-          initialValue: (obstacle.rect.height * 100).toStringAsFixed(2),
+          initialValue: (obstacle.h * 100).toStringAsFixed(2),
           decoration: const InputDecoration(labelText: 'Height in cm'),
           keyboardType: TextInputType.number,
           onChanged: (value) {
-            obstacle.rect = copyRectWith(obstacle.rect, height: (double.tryParse(value) ?? 0) / 100);
+            obstacle.h = (double.tryParse(value) ?? 0) / 100;
             onObstacleChanged(obstacle);
           },
         ),
