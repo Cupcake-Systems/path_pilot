@@ -16,7 +16,7 @@ class IrVisualizerWidget extends StatelessWidget {
   final double time;
   final bool enableTimeInput;
   final SubViewMode subViewMode;
-  final List<Obstacle> obstacles;
+  final List<Obstacle>? obstacles;
 
   const IrVisualizerWidget({
     super.key,

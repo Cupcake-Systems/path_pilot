@@ -30,6 +30,7 @@ class _FileBrowserState extends State<FileBrowser> {
   RobiConfig selectedRobiConfig = defaultRobiConfig;
   ViewMode viewMode = ViewMode.instructions;
   SubViewMode subViewMode = Platform.isAndroid ? SubViewMode.editor : SubViewMode.split;
+  bool showObstacles = true;
 
   // Instructions Editor
   String? openedFile;
@@ -185,6 +186,10 @@ class _FileBrowserState extends State<FileBrowser> {
                   ),
                 );
               },
+              trailing: Checkbox(
+                value: showObstacles,
+                onChanged: (value) => setState(() => showObstacles = value == true),
+              ),
             ),
             const Divider(height: 1),
             ListTile(
@@ -272,7 +277,7 @@ class _FileBrowserState extends State<FileBrowser> {
             loadedData = loadedData.copyWith(instructions: newInstructions);
             simulationResult = newSimulationResult;
           },
-          obstacles: loadedData.obstacles,
+          obstacles: showObstacles ? loadedData.obstacles : null,
         );
       case ViewMode.irReadings:
         if (irReadResult == null) {
@@ -289,7 +294,7 @@ class _FileBrowserState extends State<FileBrowser> {
           robiConfig: selectedRobiConfig,
           irReadResult: irReadResult!,
           subViewMode: subViewMode,
-          obstacles: loadedData.obstacles,
+          obstacles: showObstacles ? loadedData.obstacles : null,
         );
     }
   }

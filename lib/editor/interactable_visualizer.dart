@@ -17,7 +17,7 @@ class InteractableIrVisualizer extends StatefulWidget {
   final IrReadPainterSettings irReadPainterSettings;
   final IrReadResult irReadResult;
   final double totalTime;
-  final List<Obstacle> obstacles;
+  final List<Obstacle>? obstacles;
 
   final void Function(double newTime)? onTimeChanged;
 
@@ -172,7 +172,7 @@ class InteractableInstructionsVisualizer extends StatefulWidget {
   final double totalTime;
   final InstructionResult? highlightedInstruction;
   final SimulationResult simulationResult;
-  final List<Obstacle> obstacles;
+  final List<Obstacle>? obstacles;
 
   final void Function(double newTime)? onTimeChanged;
 

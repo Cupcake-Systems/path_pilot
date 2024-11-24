@@ -72,7 +72,7 @@ class Visualizer extends StatelessWidget {
   final bool enableTimeInput;
   final RobiStateType robiStateType;
   final RobiState robiState;
-  final List<Obstacle> obstacles;
+  final List<Obstacle>? obstacles;
 
   // For InstructionsVisualizer
   final SimulationResult? simulationResult;

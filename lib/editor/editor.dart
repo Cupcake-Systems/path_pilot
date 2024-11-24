@@ -24,7 +24,7 @@ class Editor extends StatefulWidget {
   final RobiConfig selectedRobiConfig;
   final SubViewMode subViewMode;
   final void Function(List<MissionInstruction> newInstructions, SimulationResult newSimulationResult) onInstructionsChanged;
-  final List<Obstacle> obstacles;
+  final List<Obstacle>? obstacles;
 
   const Editor({
     super.key,

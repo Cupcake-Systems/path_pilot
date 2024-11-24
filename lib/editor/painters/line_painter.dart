@@ -30,7 +30,7 @@ class LinePainter extends CustomPainter {
   final Measurement? currentMeasurement;
   final RobiState robiState;
   final RobiStateType robiStateType;
-  final List<Obstacle> obstacles;
+  final List<Obstacle>? obstacles;
 
   const LinePainter({
     super.repaint,
@@ -226,6 +226,12 @@ Acc.: I ${innerAccelText}cm/s²${accelSpace}O ${(rs.outerAcceleration * 100).toI
 
     if (irCalculatorResult != null) assert(irReadPainterSettings != null);
     final List<MyPainter> painters = [
+      if (obstacles != null)
+        ObstaclesPainter(
+          canvas: canvas,
+          obstacles: obstacles!,
+          visibleArea: visibleAreaRect,
+        ),
       if (simulationResult != null)
         SimulationPainter(
           simulationResult: simulationResult!,
@@ -243,11 +249,6 @@ Acc.: I ${innerAccelText}cm/s²${accelSpace}O ${(rs.outerAcceleration * 100).toI
           irCalculatorResult: irCalculatorResult!,
           pathApproximation: irPathApproximation,
         ),
-      ObstaclesPainter(
-        canvas: canvas,
-        obstacles: obstacles,
-        visibleArea: visibleAreaRect,
-      ),
       RobiPainter(
         robiState: robiState,
         canvas: canvas,
