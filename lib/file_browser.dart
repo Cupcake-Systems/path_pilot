@@ -129,7 +129,7 @@ class _FileBrowserState extends State<FileBrowser> {
                 onTap: newFile,
               ),
               ListTile(
-                leading: const Icon(Icons.folder),
+                leading: const Icon(Icons.folder_open),
                 title: const Text("Open"),
                 onTap: openFile,
               ),
@@ -141,7 +141,7 @@ class _FileBrowserState extends State<FileBrowser> {
                   subtitle: Text(openedFile!),
                 ),
                 ListTile(
-                  leading: const Icon(Icons.save),
+                  leading: const Icon(Icons.save_as),
                   onTap: saveAsFile,
                   title: const Text('Save As'),
                 ),
