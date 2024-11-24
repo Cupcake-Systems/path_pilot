@@ -3,11 +3,11 @@ import 'package:path_pilot/app_storage.dart';
 
 const availableFrameRates = [10, 30, 60];
 const availableAutoSaveIntervals = [1, 2, 5, 10, 15, 30];
-const availableSaveTriggers = [
+const availableSaveTriggers = {
   AppLifecycleState.paused,
   AppLifecycleState.inactive,
   AppLifecycleState.hidden,
-];
+};
 const saveTriggerNames = {
   AppLifecycleState.paused: "app pause",
   AppLifecycleState.inactive: "focus loss",

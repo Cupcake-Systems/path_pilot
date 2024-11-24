@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:ui';
 
 import 'package:path_pilot/robi_api/robi_utils.dart';
+import 'package:path_pilot/settings/settings.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class AppData {
@@ -65,9 +66,11 @@ class SettingsStorage {
   static const String _saveOnTriggerKey = "saveOnTrigger";
   static const String _autoSaveIntervalKey = "autoSaveInterval";
   static const String _autoSave = "autoSave";
-  static bool _autoSaveRunning = true;
+  static bool _autoSaveRunning = false;
 
   static void startAutoSaveTimer(void Function() saveTrigger) async {
+    if (_autoSaveRunning) return;
+    _autoSaveRunning = true;
     while (_autoSaveRunning) {
       await Future.delayed(Duration(minutes: autoSaveInterval));
       if (autoSave) {
@@ -79,7 +82,7 @@ class SettingsStorage {
   static void stopAutoSaveTimer() => _autoSaveRunning = false;
 
   static final Set<AppLifecycleState> _autoSaveTriggers =
-      AppData._prefs.getStringList(_saveOnTriggerKey)?.map((e) => AppLifecycleState.values.firstWhere((element) => element.name == e)).toSet() ?? {};
+      AppData._prefs.getStringList(_saveOnTriggerKey)?.map((e) => AppLifecycleState.values.firstWhere((element) => element.name == e)).toSet() ?? availableSaveTriggers;
 
   static bool get developerMode => AppData._prefs.getBool(_developerModeKey) ?? false;
 

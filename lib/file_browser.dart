@@ -68,7 +68,7 @@ class _FileBrowserState extends State<FileBrowser> with WidgetsBindingObserver {
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (!isSavedNotifier.isSaved && SettingsStorage.saveTriggers.contains(state)) {
-      saveFile();
+      saveFile(false);
     }
   }
 
