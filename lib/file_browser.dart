@@ -148,7 +148,10 @@ class _FileBrowserState extends State<FileBrowser> {
                 ListTile(
                   onTap: () {
                     if (simulationResult == null || simulationResult!.instructionResults.isEmpty) {
-                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Nothing to export")));
+                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                        content: Text("Nothing to export"),
+                        duration: Duration(seconds: 2),
+                      ));
                       return;
                     }
                     Exporter.exportToFile(
@@ -329,7 +332,7 @@ class _FileBrowserState extends State<FileBrowser> {
     if (result == null) return;
 
     setState(() {
-      openedFile = result;
+      openedFile = result.absolute.path;
       errorMessage = null;
     });
   }
@@ -344,7 +347,7 @@ class _FileBrowserState extends State<FileBrowser> {
     if (result == null) return;
 
     setState(() {
-      openedFile = result;
+      openedFile = result.absolute.path;
       loadedData = SaveData.empty;
       errorMessage = null;
     });

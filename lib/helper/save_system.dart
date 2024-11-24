@@ -65,7 +65,7 @@ final class SaveData {
     return utf8.encode(toJson());
   }
 
-  Future<File?> saveToFileWithStatusMessage(String path, BuildContext context) {
+  Future<File?> saveToFileWithStatusMessage(String path, BuildContext? context) {
     return writeStringToFileWithStatusMessage(path, toJson(), context);
   }
 

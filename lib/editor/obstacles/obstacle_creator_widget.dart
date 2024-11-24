@@ -155,22 +155,37 @@ class _ObstacleCreatorState extends State<ObstacleCreator> {
                     bytes: saveData.toBytes(),
                     context: context,
                     extension: ".robi_script.json",
+                    showFilePathInMessage: true,
+                    successMessage: "${saveData.obstacles.length} Obstacles saved",
                   );
                   if (res == null) return;
-                  setState(() => lastFilePath = res);
+                  setState(() => lastFilePath = res.absolute.path);
                 },
-                shape: const RoundedRectangleBorder(borderRadius: BorderRadius.horizontal(left: Radius.circular(10))),
+                shape: lastFilePath == null
+                    ? null
+                    : const RoundedRectangleBorder(
+                        borderRadius: BorderRadius.horizontal(left: Radius.circular(10)),
+                      ),
                 child: const Icon(Icons.save_as),
               ),
-              FloatingActionButton.small(
-                heroTag: 'saveObstacles',
-                onPressed: lastFilePath == null? null : () {
-                  final saveData = SaveData(obstacles: obstacles, instructions: []);
-                  writeStringToFileWithStatusMessage(lastFilePath!, saveData.toJson(), context);
-                },
-                shape: const RoundedRectangleBorder(borderRadius: BorderRadius.horizontal(right: Radius.circular(10))),
-                child: const Icon(Icons.save),
-              ),
+              if (lastFilePath != null) ...[
+                FloatingActionButton.small(
+                  heroTag: 'saveObstacles',
+                  onPressed: () {
+                    if (lastFilePath == null) return;
+                    final saveData = SaveData(obstacles: obstacles, instructions: []);
+                    writeStringToFileWithStatusMessage(
+                      lastFilePath!,
+                      saveData.toJson(),
+                      context,
+                      showFilePathInMessage: true,
+                      successMessage: "${saveData.obstacles.length} Obstacles saved",
+                    );
+                  },
+                  shape: const RoundedRectangleBorder(borderRadius: BorderRadius.horizontal(right: Radius.circular(10))),
+                  child: const Icon(Icons.save),
+                ),
+              ],
             ],
           ),
           FloatingActionButton.small(

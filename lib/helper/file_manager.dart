@@ -79,27 +79,54 @@ List<FilesystemPickerShortcut> getShortcuts() {
   }
 }
 
-Future<File?> writeStringToFileWithStatusMessage(String path, String content, BuildContext context) async {
+Future<File?> writeBytesToFileWithStatusMessage(
+  String path,
+  List<int> content,
+  BuildContext? context, {
+  bool showFilePathInMessage = false,
+  String? successMessage,
+}) async {
   try {
-    final f = await File(path).writeAsString(content);
-    if (context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("File written successfully")));
+    final f = await File(path).writeAsBytes(content);
+    if (context != null && context.mounted) {
+      String msg = successMessage ?? "File written successfully";
+      if (showFilePathInMessage) {
+        msg = "$msg to \"$path\"";
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(msg),
+          duration: const Duration(seconds: 2),
+        ),
+      );
     }
     return f;
   } catch (e) {
-    if (context.mounted) {
+    if (context != null && context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Failed to write to $path: $e")));
     }
     return null;
   }
 }
 
+Future<File?> writeStringToFileWithStatusMessage(
+  String path,
+  String content,
+  BuildContext? context, {
+  bool showFilePathInMessage = false,
+  String? successMessage,
+}) {
+  return writeBytesToFileWithStatusMessage(path, utf8.encode(content), context, showFilePathInMessage: showFilePathInMessage, successMessage: successMessage);
+}
+
 final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
 
-Future<String?> pickFileAndWriteWithStatusMessage({
+Future<File?> pickFileAndWriteWithStatusMessage({
   required Uint8List bytes,
   required BuildContext context,
   required String extension,
+  bool showFilePathInMessage = false,
+  String? successMessage,
 }) async {
   final hasPermission = await getExternalStoragePermission();
 
@@ -110,74 +137,69 @@ Future<String?> pickFileAndWriteWithStatusMessage({
     return null;
   }
 
-  try {
-    if (!extension.startsWith(".")) {
-      extension = ".$extension";
-    }
-
-    String? fileName = await showDialog<String?>(
-      context: context,
-      builder: (context) {
-        final controller = TextEditingController();
-        return AlertDialog(
-          title: const Text("Enter file name"),
-          content: Form(
-            key: _formKey,
-            child: TextFormField(
-              controller: controller,
-              decoration: InputDecoration(hintText: "File name", suffix: Text(extension)),
-              inputFormatters: [
-                FilteringTextInputFormatter.allow(RegExp(r"[a-zA-Z0-9\.\-_]")),
-              ],
-              validator: (s) {
-                if (s == null || s.isEmpty) {
-                  return "Please enter a file name";
-                }
-                return null;
-              },
-              autovalidateMode: AutovalidateMode.onUserInteraction,
-              onEditingComplete: () {
-                if (!_formKey.currentState!.validate()) return;
-                Navigator.of(context).pop(controller.text);
-              },
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(null),
-              child: const Text("Cancel"),
-            ),
-            TextButton(
-              onPressed: () {
-                if (!_formKey.currentState!.validate()) return;
-                Navigator.of(context).pop(controller.text);
-              },
-              child: const Text("Ok"),
-            ),
-          ],
-        );
-      },
-    );
-
-    if (fileName == null || fileName.isEmpty) return null;
-
-    final directoryPath = await FilePicker.platform.getDirectoryPath();
-
-    if (directoryPath == null) return null;
-
-    final filePath = "$directoryPath/$fileName$extension";
-
-    await File(filePath).writeAsBytes(bytes);
-    if (context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("File written successfully")));
-    }
-    return filePath;
-  } catch (e) {
-    if (context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Failed to write to file: $e")));
-    }
-    return null;
+  if (!extension.startsWith(".")) {
+    extension = ".$extension";
   }
+
+  String? fileName = await showDialog<String?>(
+    context: context,
+    builder: (context) {
+      final controller = TextEditingController();
+      return AlertDialog(
+        title: const Text("Enter file name"),
+        content: Form(
+          key: _formKey,
+          child: TextFormField(
+            controller: controller,
+            decoration: InputDecoration(hintText: "File name", suffix: Text(extension)),
+            inputFormatters: [
+              FilteringTextInputFormatter.allow(RegExp(r"[a-zA-Z0-9\.\-_]")),
+            ],
+            validator: (s) {
+              if (s == null || s.isEmpty) {
+                return "Please enter a file name";
+              }
+              return null;
+            },
+            autovalidateMode: AutovalidateMode.onUserInteraction,
+            onEditingComplete: () {
+              if (!_formKey.currentState!.validate()) return;
+              Navigator.of(context).pop(controller.text);
+            },
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(null),
+            child: const Text("Cancel"),
+          ),
+          TextButton(
+            onPressed: () {
+              if (!_formKey.currentState!.validate()) return;
+              Navigator.of(context).pop(controller.text);
+            },
+            child: const Text("Ok"),
+          ),
+        ],
+      );
+    },
+  );
+
+  if (fileName == null || fileName.isEmpty) return null;
+
+  final directoryPath = await FilePicker.platform.getDirectoryPath();
+
+  if (directoryPath == null) return null;
+
+  final filePath = "$directoryPath/$fileName$extension";
+
+  return writeBytesToFileWithStatusMessage(
+    filePath,
+    bytes,
+    context.mounted ? context : null,
+    showFilePathInMessage: showFilePathInMessage,
+    successMessage: successMessage,
+  );
 }
 
 Directory? lastDirectory;
