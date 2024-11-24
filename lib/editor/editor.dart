@@ -24,6 +24,7 @@ class Editor extends StatefulWidget {
   final RobiConfig selectedRobiConfig;
   final SubViewMode subViewMode;
   final void Function(List<MissionInstruction> newInstructions, SimulationResult newSimulationResult) onInstructionsChanged;
+  final void Function(SimulationResult result) firstSimulationResult;
   final List<Obstacle>? obstacles;
 
   const Editor({
@@ -33,6 +34,7 @@ class Editor extends StatefulWidget {
     required this.subViewMode,
     required this.onInstructionsChanged,
     required this.obstacles,
+    required this.firstSimulationResult,
   });
 
   @override
@@ -55,7 +57,7 @@ class _EditorState extends State<Editor> with AutomaticKeepAliveClientMixin {
   @override
   void initState() {
     super.initState();
-    widget.onInstructionsChanged(instructions, simulationResult);
+    widget.firstSimulationResult(simulationResult);
   }
 
   @override

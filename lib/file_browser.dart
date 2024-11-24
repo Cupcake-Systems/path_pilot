@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:intl/intl.dart';
 import 'package:path_pilot/constants.dart';
 import 'package:path_pilot/editor/editor.dart';
 import 'package:path_pilot/editor/obstacles/obstacle_creator_widget.dart';
@@ -31,6 +32,7 @@ class _FileBrowserState extends State<FileBrowser> {
   ViewMode viewMode = ViewMode.instructions;
   SubViewMode subViewMode = Platform.isAndroid ? SubViewMode.editor : SubViewMode.split;
   bool showObstacles = true;
+  final isSavedNotifier = IsSavedNotifier();
 
   // Instructions Editor
   String? openedFile;
@@ -134,11 +136,23 @@ class _FileBrowserState extends State<FileBrowser> {
                 onTap: openFile,
               ),
               if (openedFile != null) ...[
-                ListTile(
-                  leading: const Icon(Icons.save),
-                  onTap: saveFile,
-                  title: const Text('Save'),
-                  subtitle: Text(openedFile!),
+                ListenableBuilder(
+                  builder: (context, child) {
+                    String saveText = "";
+
+                    if (isSavedNotifier.lastSave != null) {
+                      saveText = "Last saved: ${DateFormat('kk:mm:ss - dd.MM.yy').format(isSavedNotifier.lastSave!)}\n";
+                    }
+
+                    return ListTile(
+                      leading: const Icon(Icons.save),
+                      onTap: saveFile,
+                      title: const Text('Save'),
+                      subtitle: Text("$saveText$openedFile"),
+                      enabled: !isSavedNotifier.isSaved,
+                    );
+                  },
+                  listenable: isSavedNotifier,
                 ),
                 ListTile(
                   leading: const Icon(Icons.save_as),
@@ -279,6 +293,10 @@ class _FileBrowserState extends State<FileBrowser> {
           onInstructionsChanged: (newInstructions, newSimulationResult) {
             loadedData = loadedData.copyWith(instructions: newInstructions);
             simulationResult = newSimulationResult;
+            isSavedNotifier.setSaved(false);
+          },
+          firstSimulationResult: (result) {
+            simulationResult = result;
           },
           obstacles: showObstacles ? loadedData.obstacles : null,
         );
@@ -320,7 +338,13 @@ class _FileBrowserState extends State<FileBrowser> {
     });
   }
 
-  Future<File?> saveFile() => loadedData.saveToFileWithStatusMessage(openedFile!, context);
+  Future<File?> saveFile() async {
+    final res = await loadedData.saveToFileWithStatusMessage(openedFile!, context);
+    if (res != null) {
+      isSavedNotifier.setSaved(true);
+    }
+    return res;
+  }
 
   Future<void> saveAsFile() async {
     final result = await pickFileAndWriteWithStatusMessage(
@@ -330,6 +354,8 @@ class _FileBrowserState extends State<FileBrowser> {
     );
 
     if (result == null) return;
+
+    isSavedNotifier.setSaved(true);
 
     setState(() {
       openedFile = result.absolute.path;
@@ -346,6 +372,8 @@ class _FileBrowserState extends State<FileBrowser> {
 
     if (result == null) return;
 
+    isSavedNotifier.setSaved(true);
+
     setState(() {
       openedFile = result.absolute.path;
       loadedData = SaveData.empty;
@@ -361,10 +389,12 @@ class _FileBrowserState extends State<FileBrowser> {
     );
     if (result == null) return;
 
-    await tryLoadingSaveData(result);
+    if (await tryLoadingSaveData(result)) {
+      isSavedNotifier.setSaved(true);
+    }
   }
 
-  Future<void> tryLoadingSaveData(String file) async {
+  Future<bool> tryLoadingSaveData(String file) async {
     final instructions = await SaveData.fromFileWithStatusMessage(file, context);
 
     setState(() {
@@ -377,6 +407,8 @@ class _FileBrowserState extends State<FileBrowser> {
         loadedData = instructions;
       }
     });
+
+    return instructions != null;
   }
 }
 
@@ -414,4 +446,19 @@ enum SubViewMode {
   visualizer,
   editor,
   split,
+}
+
+class IsSavedNotifier extends ChangeNotifier {
+  bool _isSaved = false;
+  DateTime? _lastSave;
+
+  DateTime? get lastSave => _lastSave;
+
+  bool get isSaved => _isSaved;
+
+  void setSaved(bool saved) {
+    _isSaved = saved;
+    if (saved) _lastSave = DateTime.now();
+    notifyListeners();
+  }
 }

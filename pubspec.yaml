@@ -22,10 +22,11 @@ dependencies:
   package_info_plus: ^8.0.0
   flutter_resizable_container: ^3.0.0
   permission_handler: ^11.3.1
-  device_info_plus: ^11.1.1
+  device_info_plus: ^10.1.2
   filesystem_picker: ^4.1.0
   flex_color_picker: ^3.6.0
   flutter_expandable_fab: ^2.3.0
+  intl: ^0.20.0
 
 dev_dependencies:
   flutter_test:
