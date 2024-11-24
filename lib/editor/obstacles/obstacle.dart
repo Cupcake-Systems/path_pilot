@@ -2,6 +2,7 @@ import 'dart:io';
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
+import 'package:vector_math/vector_math.dart' show Aabb2, Vector2;
 
 abstract class Obstacle {
   final Paint paint;
@@ -40,7 +41,7 @@ abstract class Obstacle {
 
   String get details;
 
-  bool isVisible(final Rect visibleArea);
+  bool isVisible(final Aabb2 visibleArea);
 }
 
 class RectangleObstacle extends Obstacle {
@@ -84,7 +85,7 @@ class RectangleObstacle extends Obstacle {
   String get details => "Top left corner: (${(x * 100).toStringAsFixed(2)}, ${(y * 100).toStringAsFixed(2)})cm\nWidth: ${(w * 100).toStringAsFixed(2)}cm\nHeight: ${(h * 100).toStringAsFixed(2)}cm";
 
   @override
-  bool isVisible(Rect visibleArea) => true;
+  bool isVisible(Aabb2 visibleArea) => true;
 }
 
 class CircleObstacle extends Obstacle {
@@ -124,7 +125,7 @@ class CircleObstacle extends Obstacle {
   String get details => "Center: (${(x * 100).toStringAsFixed(2)}, ${(y * 100).toStringAsFixed(2)})cm\nRadius: ${(radius * 100).toStringAsFixed(2)}cm";
 
   @override
-  bool isVisible(Rect visibleArea) {
+  bool isVisible(Aabb2 visibleArea) {
     return true;
   }
 }
@@ -222,7 +223,7 @@ Image location: $_imagePath""";
       ))!;
 
   @override
-  bool isVisible(Rect visibleArea) => true;
+  bool isVisible(Aabb2 visibleArea) => true;
 
   @override
   Map<String, dynamic> toJson() {

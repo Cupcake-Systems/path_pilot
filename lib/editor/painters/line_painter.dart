@@ -219,20 +219,13 @@ Acc.: I ${innerAccelText}cm/s²${accelSpace}O ${(rs.outerAcceleration * 100).toI
       Vector2(-offset.dx + center.dx, offset.dy + center.dy) / scale,
     );
 
-    final visibleAreaRect = Rect.fromLTWH(
-      (-offset.dx - center.dx) / scale,
-      (offset.dy + center.dy) / scale,
-      size.width / scale,
-      size.height / scale,
-    );
-
     if (irCalculatorResult != null) assert(irReadPainterSettings != null);
     final List<MyPainter> painters = [
       if (obstacles != null)
         ObstaclesPainter(
           canvas: canvas,
           obstacles: obstacles!,
-          visibleArea: visibleAreaRect,
+          visibleArea: visibleArea,
         ),
       if (simulationResult != null)
         SimulationPainter(
