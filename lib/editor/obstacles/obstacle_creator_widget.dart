@@ -26,8 +26,7 @@ class ObstacleCreator extends StatefulWidget {
 
 class _ObstacleCreatorState extends State<ObstacleCreator> {
   late final List<Obstacle> obstacles = List.from(widget.obstacles);
-
-  final Map<Obstacle, Image> cachedImages = {};
+  static final Map<String, Image> cachedImages = {};
 
   @override
   Widget build(BuildContext context) {
@@ -46,10 +45,7 @@ class _ObstacleCreatorState extends State<ObstacleCreator> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(obstacles[i].details),
-                if (obstacles[i] is ImageObstacle && (obstacles[i] as ImageObstacle).image != null) ...[
-                  const SizedBox(height: 10),
-                  imagePreview(obstacles[i] as ImageObstacle),
-                ],
+                ...imagePreview(obstacles[i]),
               ],
             ),
             trailing: Row(
@@ -205,37 +201,51 @@ class _ObstacleCreatorState extends State<ObstacleCreator> {
             });
             widget.onObstaclesChange(obstacles);
           },
-          cachedImage: cachedImages[ob],
+          cachedImage: cachedImages[ob.imagePath],
           onImageChanged: (image) {
             setState(() {
               if (image == null) {
-                cachedImages.remove(ob);
-                return;
+                cachedImages.remove(ob.imagePath);
+              } else if (ob.imagePath != null) {
+                cachedImages[ob.imagePath!] = image;
               }
-              cachedImages[ob] = image;
             });
           },
         );
     }
   }
 
-  Widget imagePreview(ImageObstacle ob) {
-    final cachedImage = cachedImages[ob];
+  List<Widget> imagePreview(Obstacle ob) {
+    if (ob is! ImageObstacle) return const [];
 
-    if (cachedImage != null) return cachedImage;
+    final imgPath = ob.imagePath;
 
-    return FutureBuilder(
-      future: ob.image!.toByteData(format: ImageByteFormat.png),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.done) {
-          cachedImages[ob] = Image.memory(
-            snapshot.data!.buffer.asUint8List(),
-            height: 200,
-          );
-          return cachedImages[ob]!;
-        }
-        return const CircularProgressIndicator();
-      },
-    );
+    if (imgPath == null) return const [];
+
+    final cachedImage = cachedImages[imgPath];
+
+    if (cachedImage != null) {
+      return [
+        const SizedBox(height: 10),
+        cachedImage,
+      ];
+    }
+
+    return [
+      FutureBuilder(
+        future: ob.image!.toByteData(format: ImageByteFormat.png),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.done) {
+            final img = Image.memory(
+              snapshot.data!.buffer.asUint8List(),
+              height: 200,
+            );
+            cachedImages[imgPath] = img;
+            return img;
+          }
+          return const CircularProgressIndicator();
+        },
+      ),
+    ];
   }
 }
