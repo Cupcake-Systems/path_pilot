@@ -135,6 +135,8 @@ class ImageObstacle extends Obstacle {
 
   ui.Image? get image => _image;
 
+  String? get imagePath => _imagePath;
+
   Future<bool> setImg(String newImgPath) async {
     try {
       final bytes = await File(newImgPath).readAsBytes();
@@ -151,7 +153,9 @@ class ImageObstacle extends Obstacle {
     required this.offset,
     required this.size,
     required ui.Image? img,
-  }) : _image = img;
+    required String? imgPath,
+  })  : _image = img,
+        _imagePath = imgPath;
 
   static Future<ImageObstacle?> create({
     required Paint paint,
@@ -165,7 +169,7 @@ class ImageObstacle extends Obstacle {
         final bytes = await File(imgPath).readAsBytes();
         img = await decodeImageFromList(bytes);
       }
-      return ImageObstacle(paint: paint, offset: offset, size: size, img: img);
+      return ImageObstacle(paint: paint, offset: offset, size: size, img: img, imgPath: imgPath);
     } catch (e) {
       // failed to load image
     }
