@@ -59,15 +59,18 @@ class _InteractableIrVisualizerState extends State<InteractableIrVisualizer> {
       pause();
     }
 
-    final updateDelay = frameTimeMultiplier / SettingsStorage.visualizerFps;
-    Future.delayed(Duration(milliseconds: (updateDelay * 1000).toInt()), () {
-      if (!updateRobi) return;
-      if (timeSnapshot + updateDelay > widget.totalTime) {
-        updateTime(widget.totalTime);
-        return;
-      }
-      updateTime(timeSnapshot + updateDelay);
-    });
+    if (SettingsStorage.limitFps) {
+      final updateDelay = frameTimeMultiplier / SettingsStorage.visualizerFps;
+      Future.delayed(Duration(milliseconds: (updateDelay * 1000).toInt()), () {
+        if (!updateRobi) return;
+        updateTime(timeSnapshot + updateDelay);
+      });
+    } else {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!updateRobi) return;
+        updateTime(timeSnapshot);
+      });
+    }
 
     final robiState = getStateAtTime(widget.irCalculatorResult, widget.irReadResult.resolution, timeSnapshot);
     if (lockToRobi) {
