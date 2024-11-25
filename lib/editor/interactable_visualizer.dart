@@ -9,6 +9,8 @@ import 'package:vector_math/vector_math.dart';
 import '../robi_api/robi_utils.dart';
 import 'obstacles/obstacle.dart';
 
+const double frameTimeMultiplier = 2 / 3; // tests showed that the visualizer is not producing the desired fps, so we need to adjust the time to get the desired fps
+
 class InteractableIrVisualizer extends StatefulWidget {
   final bool enableTimeInput;
   final RobiConfig robiConfig;
@@ -57,7 +59,7 @@ class _InteractableIrVisualizerState extends State<InteractableIrVisualizer> {
       pause();
     }
 
-    final updateDelay = 1 / SettingsStorage.visualizerFps;
+    final updateDelay = frameTimeMultiplier / SettingsStorage.visualizerFps;
     Future.delayed(Duration(milliseconds: (updateDelay * 1000).toInt()), () {
       if (!updateRobi) return;
       if (timeSnapshot + updateDelay > widget.totalTime) {
@@ -210,7 +212,7 @@ class _InteractableInstructionsVisualizerState extends State<InteractableInstruc
     }
 
     if (SettingsStorage.limitFps) {
-      final updateDelay = 1 / SettingsStorage.visualizerFps;
+      final updateDelay = frameTimeMultiplier / SettingsStorage.visualizerFps;
       Future.delayed(Duration(milliseconds: (updateDelay * 1000).toInt()), () {
         if (!updateRobi) return;
         updateTime(timeSnapshot + updateDelay);
@@ -276,7 +278,6 @@ class _InteractableInstructionsVisualizerState extends State<InteractableInstruc
   }
 
   void updateTime(double time) {
-
     if (time > widget.totalTime) {
       time = widget.totalTime;
     }
