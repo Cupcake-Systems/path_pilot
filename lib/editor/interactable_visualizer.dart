@@ -209,16 +209,18 @@ class _InteractableInstructionsVisualizerState extends State<InteractableInstruc
       pause();
     }
 
-    final updateDelay = 1 / SettingsStorage.visualizerFps;
-
-    Future.delayed(Duration(milliseconds: (updateDelay * 1000).toInt()), () {
-      if (!updateRobi) return;
-      if (timeSnapshot + updateDelay > widget.totalTime) {
-        updateTime(widget.totalTime);
-        return;
-      }
-      updateTime(timeSnapshot + updateDelay);
-    });
+    if (SettingsStorage.limitFps) {
+      final updateDelay = 1 / SettingsStorage.visualizerFps;
+      Future.delayed(Duration(milliseconds: (updateDelay * 1000).toInt()), () {
+        if (!updateRobi) return;
+        updateTime(timeSnapshot + updateDelay);
+      });
+    } else {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!updateRobi) return;
+        updateTime(timeSnapshot);
+      });
+    }
 
     final robiState = widget.simulationResult.getStateAtTime(timeSnapshot);
     if (lockToRobi) {
@@ -274,6 +276,11 @@ class _InteractableInstructionsVisualizerState extends State<InteractableInstruc
   }
 
   void updateTime(double time) {
+
+    if (time > widget.totalTime) {
+      time = widget.totalTime;
+    }
+
     widget.onTimeChanged?.call(time);
     setState(() {});
   }

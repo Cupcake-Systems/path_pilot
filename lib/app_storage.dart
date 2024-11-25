@@ -65,7 +65,9 @@ class SettingsStorage {
   static const String _showMillisecondsKey = "showMilliseconds";
   static const String _saveOnTriggerKey = "saveOnTrigger";
   static const String _autoSaveIntervalKey = "autoSaveInterval";
-  static const String _autoSave = "autoSave";
+  static const String _autoSaveKey = "autoSave";
+  static const String _limitFpsKey = "limitFps";
+
   static bool _autoSaveRunning = false;
 
   static void startAutoSaveTimer(void Function() saveTrigger) async {
@@ -117,7 +119,11 @@ class SettingsStorage {
 
   static set autoSaveInterval(int value) => AppData._prefs.setInt(_autoSaveIntervalKey, value);
 
-  static bool get autoSave => AppData._prefs.getBool(_autoSave) ?? true;
+  static bool get autoSave => AppData._prefs.getBool(_autoSaveKey) ?? true;
 
-  static set autoSave(bool value) => AppData._prefs.setBool(_autoSave, value);
+  static set autoSave(bool value) => AppData._prefs.setBool(_autoSaveKey, value);
+
+  static bool get limitFps => AppData._prefs.getBool(_limitFpsKey) ?? true;
+
+  static set limitFps(bool value) => AppData._prefs.setBool(_limitFpsKey, value);
 }

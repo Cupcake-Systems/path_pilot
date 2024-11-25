@@ -34,21 +34,35 @@ class _SettingsPageState extends State<SettingsPage> {
             padding: const EdgeInsets.all(16),
             child: Text("Visualizer", style: headerStyle),
           ),
-          ListTile(
-            title: const Text("Simulation Frame Rate", style: TextStyle(fontSize: 16)),
+          SwitchListTile(
+            title: Wrap(
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: [
+                const Text("Limit Simulation Frame Rate to ", style: TextStyle(fontSize: 16)),
+                DropdownButton<int>(
+                    value: SettingsStorage.visualizerFps,
+                    onChanged: SettingsStorage.limitFps
+                        ? (value) => setState(
+                              () => SettingsStorage.visualizerFps = value!,
+                            )
+                        : null,
+                    items: [
+                      if (!availableFrameRates.contains(SettingsStorage.visualizerFps))
+                        DropdownMenuItem(
+                          value: SettingsStorage.visualizerFps,
+                          child: Text("${SettingsStorage.visualizerFps} FPS"),
+                        ),
+                      for (final frameRate in availableFrameRates)
+                        DropdownMenuItem(
+                          value: frameRate,
+                          child: Text("$frameRate FPS"),
+                        ),
+                    ]),
+              ],
+            ),
             subtitle: const Text("Adjust the frame rate for smoother or more energy-efficient simulations."),
-            trailing: DropdownButton<int>(value: SettingsStorage.visualizerFps, onChanged: (value) => setState(() => SettingsStorage.visualizerFps = value!), items: [
-              if (!availableFrameRates.contains(SettingsStorage.visualizerFps))
-                DropdownMenuItem(
-                  value: SettingsStorage.visualizerFps,
-                  child: Text("${SettingsStorage.visualizerFps} FPS"),
-                ),
-              for (final frameRate in availableFrameRates)
-                DropdownMenuItem(
-                  value: frameRate,
-                  child: Text("$frameRate FPS"),
-                ),
-            ]),
+            value: SettingsStorage.limitFps,
+            onChanged: (value) => setState(() => SettingsStorage.limitFps = value),
           ),
           const Divider(height: 1),
           SwitchListTile(
@@ -64,12 +78,13 @@ class _SettingsPageState extends State<SettingsPage> {
           SwitchListTile(
             value: SettingsStorage.autoSave,
             onChanged: (value) => setState(() => SettingsStorage.autoSave = value),
-            title: Row(
+            title: Wrap(
+              crossAxisAlignment: WrapCrossAlignment.center,
               children: [
                 const Text("Auto-Save every "),
                 DropdownButton<int>(
                   value: SettingsStorage.autoSaveInterval,
-                  onChanged: (value) => setState(() => SettingsStorage.autoSaveInterval = value ?? 2),
+                  onChanged: SettingsStorage.autoSave ? (value) => setState(() => SettingsStorage.autoSaveInterval = value ?? 2) : null,
                   items: [
                     for (final interval in availableAutoSaveIntervals.toSet().toList(growable: false)..sort())
                       DropdownMenuItem(
