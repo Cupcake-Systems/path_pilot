@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:path_pilot/app_storage.dart';
 import 'package:path_pilot/editor/painters/ir_read_painter.dart';
 import 'package:path_pilot/editor/painters/obstacles_painter.dart';
 import 'package:path_pilot/editor/painters/robi_painter.dart';
@@ -31,6 +32,12 @@ class LinePainter extends CustomPainter {
   final RobiState robiState;
   final RobiStateType robiStateType;
   final List<Obstacle>? obstacles;
+
+  // Developer info
+  static int _drawCallsCount = 0;
+  static final _drawTimeSw = Stopwatch();
+  static final _last100FramesTimer = Stopwatch();
+  static Duration _last100FramesTime = Duration.zero;
 
   const LinePainter({
     super.repaint,
@@ -136,6 +143,29 @@ Dir.: $leftDir, $rightDir""";
     );
   }
 
+  void paintDeveloperInfo(Canvas canvas, Size size) {
+
+    final last100FpsText = _last100FramesTime.inMilliseconds == 0? "" : " (${(100 / (_last100FramesTime.inMilliseconds / 1000)).round()} FPS)";
+
+    final String text = """
+Developer Info
+Draw Calls: $_drawCallsCount
+Last Draw Time: ${_drawTimeSw.elapsedMilliseconds}ms
+Last 100 Frames Time: ${_last100FramesTime.inMilliseconds}ms$last100FpsText
+""";
+
+    paintText(
+      text,
+      const Offset(leftPadding, 90),
+      canvas,
+      size,
+      textStyle: const TextStyle(
+        fontFamily: "RobotoMono",
+        fontSize: 12,
+      ),
+    );
+  }
+
   void paintRobiState(Canvas canvas, Size size) {
     final rs = robiState.asInnerOuter();
     final String xPosText = (rs.position.x * 100).toStringAsFixed(0);
@@ -201,6 +231,34 @@ Acc.: I ${innerAccelText}cm/s²${accelSpace}O ${(rs.outerAcceleration * 100).toI
 
   @override
   void paint(Canvas canvas, Size size) {
+    if (SettingsStorage.developerMode) {
+      _devPaint(canvas, size);
+    } else {
+      _paint(canvas, size);
+    }
+  }
+
+  void _devPaint(Canvas canvas, Size size) {
+    if (_drawCallsCount % 100 == 0) {
+      _last100FramesTimer.stop();
+      _last100FramesTime = _last100FramesTimer.elapsed;
+      _last100FramesTimer.reset();
+      _last100FramesTimer.start();
+    }
+
+    _drawCallsCount++;
+    _drawTimeSw.start();
+
+    _paint(canvas, size);
+
+    _drawTimeSw.stop();
+
+    paintDeveloperInfo(canvas, size);
+
+    _drawTimeSw.reset();
+  }
+
+  void _paint(Canvas canvas, Size size) {
     canvas.save();
 
     canvas.clipRect(
