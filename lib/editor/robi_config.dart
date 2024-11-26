@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:path_pilot/app_storage.dart';
 import 'package:path_pilot/robi_api/robi_utils.dart';
 
 String? Function(String? value) notEmptyValidator = (value) {
@@ -39,7 +40,7 @@ class _RobiConfiguratorState extends State<RobiConfigurator> {
       wheelWidth = widget.initialConfig.wheelWidth,
       irDistance = widget.initialConfig.irDistance;
 
-  late String name = widget.initialConfig.name;
+  late String name = widget.initialConfig.name == "Default" ? "Config ${RobiConfigStorage.length + 1}" : widget.initialConfig.name;
 
   @override
   Widget build(BuildContext context) {
