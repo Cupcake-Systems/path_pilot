@@ -28,7 +28,6 @@ class _InstructionDetailsWidgetState extends State<InstructionDetailsWidget> {
 
   late XAxisType xAxisMode = widget.instructionResult is RapidTurnResult ? XAxisType.time : XAxisType.position;
   YAxisType yAxisMode = YAxisType.velocity;
-  late bool angular = widget.instructionResult is! DriveResult;
 
   @override
   Widget build(BuildContext context) {
@@ -43,25 +42,18 @@ class _InstructionDetailsWidgetState extends State<InstructionDetailsWidget> {
       ),
       growable: false,
     );
-    List<FlSpot> data1 = [];
-    List<FlSpot>? data2;
 
     late final String xAxisTitle;
     late final String yAxisTitle;
 
-    bool angularX = angular;
-    bool angularY = angular;
-
-    if (widget.instructionResult is RapidTurnResult) {
-      angularX = true;
-    }
+    final angular = widget.instructionResult is! DriveResult;
 
     switch (xAxisMode) {
       case XAxisType.time:
         xAxisTitle = "Time in s";
         break;
       case XAxisType.position:
-        if (angularX) {
+        if (angular) {
           xAxisTitle = "Rotation in °";
         } else {
           xAxisTitle = "Distance driven in cm";
@@ -71,65 +63,39 @@ class _InstructionDetailsWidgetState extends State<InstructionDetailsWidget> {
 
     switch (yAxisMode) {
       case YAxisType.position:
-        if (angularX) {
+        if (angular) {
           yAxisTitle = "Rotation in °";
         } else {
           yAxisTitle = "Distance driven in cm";
         }
         break;
       case YAxisType.velocity:
-        yAxisTitle = "Velocity in ${angularY ? "°/s" : "cm/s"}";
+        yAxisTitle = "Velocity in ${angular ? "°/s" : "cm/s"}";
         break;
       case YAxisType.acceleration:
-        yAxisTitle = "Acceleration in ${angularY ? "°/s²" : "cm/s²"}";
+        yAxisTitle = "Acceleration in ${angular ? "°/s²" : "cm/s²"}";
         break;
     }
 
-    if (angular) {
-      data1 = mergeData(
-        xValues(
-          widget.instructionResult,
-          chartStates,
-          xAxisMode,
-          angularX,
-        ),
-        yAngularValues(
-          widget.instructionResult,
-          chartStates,
-          yAxisMode,
-          angularY,
-        ),
-      );
-    } else {
-      data1 = mergeData(
-        xValues(
-          widget.instructionResult,
-          chartStates,
-          xAxisMode,
-          angularX,
-        ),
-        yInnerValues(
-          widget.instructionResult,
-          chartStates,
-          yAxisMode,
-        ),
-      );
-      if (widget.instructionResult is TurnResult) {
-        data2 = mergeData(
-          xValues(
-            widget.instructionResult,
-            chartStates,
-            xAxisMode,
-            angularX,
-          ),
-          yOuterValues(
+    final xSpots = xValues(
+      widget.instructionResult,
+      chartStates,
+      xAxisMode,
+    );
+
+    final ySpots = angular
+        ? yAngularValues(
             widget.instructionResult,
             chartStates,
             yAxisMode,
-          ),
-        );
-      }
-    }
+          )
+        : yDriveResValues(
+            widget.instructionResult as DriveResult,
+            chartStates,
+            yAxisMode,
+          );
+
+    final spots = mergeData(xSpots, ySpots);
 
     double minY = 0;
     double maxX = 0;
@@ -139,30 +105,24 @@ class _InstructionDetailsWidgetState extends State<InstructionDetailsWidget> {
         maxX = widget.instructionResult.totalTime;
         break;
       case XAxisType.position:
-        if (angularX) {
+        if (angular) {
           if (widget.instructionResult is RapidTurnResult) {
             maxX = (widget.instructionResult as RapidTurnResult).totalTurnDegree;
           } else {
             maxX = (widget.instructionResult as TurnResult).totalTurnDegree;
           }
         } else {
-          maxX = chartStates.last.position.distanceTo(widget.instructionResult.startPosition) * 100;
+          maxX = (widget.instructionResult as DriveResult).totalDistance * 100;
         }
         break;
     }
 
-    if (data1.isNotEmpty) {
-      minY = data1.map((spot) => spot.y).reduce(min);
-    }
-    if (data2 != null && data2.isNotEmpty) {
-      minY = min(minY, data2.map((spot) => spot.y).reduce(min));
+    if (spots.isNotEmpty) {
+      minY = spots.map((spot) => spot.y).reduce(min);
     }
     if (minY > 0) {
       minY = 0;
     }
-
-    final color1 = data2 == null ? Colors.grey : Colors.red;
-    final color2 = Colors.blue;
 
     return IntrinsicHeight(
       child: Flex(
@@ -175,8 +135,7 @@ class _InstructionDetailsWidgetState extends State<InstructionDetailsWidget> {
               child: ListenableBuilder(
                 builder: (context, child) {
                   double? progress = (widget.timeChangeNotifier.time - widget.instructionResult.timeStamp) / widget.instructionResult.totalTime;
-                  if (progress == 0 || progress >= 1) progress = null;
-
+                  if (progress > 1) progress = null;
                   return LineChart(
                     LineChartData(
                       borderData: FlBorderData(
@@ -219,42 +178,17 @@ class _InstructionDetailsWidgetState extends State<InstructionDetailsWidget> {
                       lineBarsData: [
                         LineChartBarData(
                           isStepLineChart: yAxisMode == YAxisType.acceleration,
-                          spots: data1,
-                          color: color1,
+                          spots: spots,
+                          color: Colors.grey,
                           dotData: const FlDotData(show: false),
-                          belowBarData: BarAreaData(
-                            show: true,
-                            gradient: LinearGradient(
-                              begin: Alignment.centerLeft,
-                              end: Alignment.centerRight,
-                              colors: [color1.withOpacity(0.3), color1.withOpacity(0.3), Colors.transparent, Colors.transparent],
-                              stops: [0, progress ?? 1, progress ?? 1, 1],
-                            ),
-                          ),
                         ),
-                        if (data2 != null)
-                          LineChartBarData(
-                            isStepLineChart: yAxisMode == YAxisType.acceleration,
-                            spots: data2,
-                            color: color2,
-                            dotData: const FlDotData(show: false),
-                            belowBarData: BarAreaData(
-                              show: true,
-                              gradient: LinearGradient(
-                                begin: Alignment.centerLeft,
-                                end: Alignment.centerRight,
-                                colors: [color2.withOpacity(0.3), color2.withOpacity(0.3), Colors.transparent, Colors.transparent],
-                                stops: [0, progress ?? 1, progress ?? 1, 1],
-                              ),
-                            ),
-                          ),
                       ],
                       extraLinesData: progress == null
                           ? null
                           : ExtraLinesData(
                               verticalLines: [
                                 VerticalLine(
-                                  x: progress * maxX,
+                                  x: getProgressIndicatorX(progress, maxX),
                                   color: Colors.grey,
                                   dashArray: [5, 5],
                                 ),
@@ -274,12 +208,6 @@ class _InstructionDetailsWidgetState extends State<InstructionDetailsWidget> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   if (!isScreenWide) const SizedBox(height: 20),
-                  if (widget.instructionResult is! DriveResult)
-                    CheckboxListTile(
-                      value: angular,
-                      onChanged: (value) => setState(() => angular = value!),
-                      title: const Text("Angular"),
-                    ),
                   DropdownMenu<XAxisType>(
                     width: 180,
                     initialSelection: xAxisMode,
@@ -326,23 +254,42 @@ class _InstructionDetailsWidgetState extends State<InstructionDetailsWidget> {
     );
   }
 
-  List<double> xValues(final InstructionResult res, final List<InnerOuterRobiState> states, final XAxisType xAxis, final bool angular) {
+  double getProgressIndicatorX(final double progress, final double maxX) {
+    switch (xAxisMode) {
+      case XAxisType.time:
+        return progress * maxX;
+      case XAxisType.position:
+        final rs = getRobiStateAtTimeInInstructionResult(widget.instructionResult, progress * widget.instructionResult.totalTime);
+        if (widget.instructionResult is! DriveResult) {
+          return rs.rotation - widget.instructionResult.startRotation;
+        }
+        return rs.position.distanceTo(widget.instructionResult.startPosition) * 100;
+    }
+  }
+
+  List<double> xValues(final InstructionResult res, final List<InnerOuterRobiState> states, final XAxisType xAxis) {
     return states.map((state) {
       if (xAxis == XAxisType.time) {
         return state.timeStamp - res.timeStamp;
+      } else if (res is! DriveResult) {
+        return (state.rotation - res.startRotation).abs();
       } else {
-        return angular ? (state.rotation - res.startRotation).abs() : res.startPosition.distanceTo(state.position) * 100;
+        return res.startPosition.distanceTo(state.position) * 100;
       }
     }).toList();
   }
 
-  List<double> yAngularValues(final InstructionResult res, final List<InnerOuterRobiState> states, final YAxisType yAxis, final bool angular) {
+  List<double> yAngularValues(final InstructionResult res, final List<InnerOuterRobiState> states, final YAxisType yAxis) {
+    if (res is DriveResult) {
+      throw Exception("Cannot use angular values for DriveResult");
+    }
+
     return states.map((state) {
       double y = 0;
 
       switch (yAxis) {
         case YAxisType.position:
-          y = state.rotation;
+          y = (state.rotation - res.startRotation).abs();
           break;
         case YAxisType.velocity:
           if (res is TurnResult) {
@@ -364,7 +311,7 @@ class _InstructionDetailsWidgetState extends State<InstructionDetailsWidget> {
     }).toList();
   }
 
-  List<double> yOuterValues(final InstructionResult res, final List<InnerOuterRobiState> states, final YAxisType yAxis) {
+  List<double> yDriveResValues(final DriveResult res, final List<InnerOuterRobiState> states, final YAxisType yAxis) {
     return states.map((state) {
       double y = 0;
 
@@ -377,26 +324,6 @@ class _InstructionDetailsWidgetState extends State<InstructionDetailsWidget> {
           break;
         case YAxisType.acceleration:
           y = state.outerAcceleration;
-          break;
-      }
-
-      return y * 100;
-    }).toList();
-  }
-
-  List<double> yInnerValues(final InstructionResult res, final List<InnerOuterRobiState> states, final YAxisType yAxis) {
-    return states.map((state) {
-      double y = 0;
-
-      switch (yAxis) {
-        case YAxisType.position:
-          y = state.position.distanceTo(res.startPosition);
-          break;
-        case YAxisType.velocity:
-          y = state.innerVelocity;
-          break;
-        case YAxisType.acceleration:
-          y = state.innerAcceleration;
           break;
       }
 

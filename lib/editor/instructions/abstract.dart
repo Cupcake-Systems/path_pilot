@@ -94,7 +94,10 @@ String vecToString(Vector2 vec, int decimalPlaces) => "(${vec.x.toStringAsFixed(
 class _RemovableWarningCardState extends State<RemovableWarningCard> {
   bool isExpanded = false;
 
-  double get progress => (widget.timeChangeNotifier.time - widget.instructionResult.timeStamp) / widget.instructionResult.totalTime;
+  double get progress {
+    if (widget.instructionResult.totalTime == 0) return 0;
+    return (widget.timeChangeNotifier.time - widget.instructionResult.timeStamp) / widget.instructionResult.totalTime;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -190,16 +193,18 @@ class _RemovableWarningCardState extends State<RemovableWarningCard> {
                           ],
                         ),
                       ),
-                      const Divider(height: 1),
-                      const SizedBox(height: 10),
-                      Padding(
-                        padding: Platform.isAndroid ? const EdgeInsets.all(16) : const EdgeInsets.only(left: 16, right: 30, top: 16, bottom: 16),
-                        child: InstructionDetailsWidget(
-                          instructionResult: widget.instructionResult,
-                          robiConfig: widget.robiConfig,
-                          timeChangeNotifier: widget.timeChangeNotifier,
+                      if (widget.instructionResult.totalTime > 0) ...[
+                        const Divider(height: 1),
+                        const SizedBox(height: 10),
+                        Padding(
+                          padding: Platform.isAndroid ? const EdgeInsets.all(16) : const EdgeInsets.only(left: 16, right: 30, top: 16, bottom: 16),
+                          child: InstructionDetailsWidget(
+                            instructionResult: widget.instructionResult,
+                            robiConfig: widget.robiConfig,
+                            timeChangeNotifier: widget.timeChangeNotifier,
+                          ),
                         ),
-                      ),
+                      ],
                     ]
                   : const [],
             ),

@@ -174,15 +174,20 @@ abstract class InstructionResult {
       timeStamp;
   final Vector2 startPosition, endPosition;
 
-  late final double accelerationTime = _calculateAccelerationTime(_innerAcceleration, _innerInitialVelocity, _innerAccelerationDistance);
-  late final double decelerationTime = _calculateDecelerationTime(_innerAcceleration, _innerInitialVelocity, _maxInnerVelocity, _innerDecelerationDistance);
-  late final double constantSpeedTime = _maxInnerVelocity > 0 ? _innerConstantSpeedDistance / _maxInnerVelocity : 0;
-  late final double totalTime = accelerationTime + decelerationTime + constantSpeedTime;
-  late final double innerTotalDistance = _innerAccelerationDistance + _innerDecelerationDistance + _innerConstantSpeedDistance;
+  late final double _outerAccelerationTime = _calculateAccelerationTime(_outerAcceleration, _outerInitialVelocity, _outerAccelerationDistance);
+  late final double _outerDecelerationTime = _calculateDecelerationTime(_outerAcceleration, _outerInitialVelocity, _maxOuterVelocity, _outerDecelerationDistance);
+  late final double _outerConstantSpeedTime = _maxOuterVelocity > 0 ? _outerConstantSpeedDistance / _maxOuterVelocity : 0;
+  late final double _outerTotalTime = _outerAccelerationTime + _outerDecelerationTime + _outerConstantSpeedTime;
   late final double outerTotalDistance = _outerAccelerationDistance + _outerDecelerationDistance + _outerConstantSpeedDistance;
-  late final double highestFinalVelocity = max(_finalInnerVelocity, _finalOuterVelocity);
-  late final double lowestFinalVelocity = min(_finalInnerVelocity, _finalOuterVelocity);
-  late final double highestMaxVelocity = max(_maxInnerVelocity, _maxOuterVelocity);
+
+  double get accelerationTime => _outerAccelerationTime;
+  double get constantSpeedTime => _outerConstantSpeedTime;
+  double get decelerationTime => _outerDecelerationTime;
+  double get totalTime => _outerTotalTime;
+
+  double get highestFinalVelocity => _finalOuterVelocity;
+  double get lowestFinalVelocity => _finalInnerVelocity;
+  double get highestMaxVelocity => _maxOuterVelocity;
 
   double _calculateAccelerationTime(double a, double vi, double accelerationDistance) {
     if (a == 0) return 0;
@@ -240,7 +245,7 @@ abstract class InstructionResult {
 class DriveResult extends InstructionResult {
   final double initialVelocity, maxVelocity, finalVelocity, acceleration, accelerationDistance, decelerationDistance, constantSpeedDistance;
 
-  late final double totalDistance = innerTotalDistance;
+  double get totalDistance => outerTotalDistance;
 
   DriveResult({
     required super.startPosition,
