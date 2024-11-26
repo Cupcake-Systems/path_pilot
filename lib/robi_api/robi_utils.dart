@@ -181,12 +181,17 @@ abstract class InstructionResult {
   late final double outerTotalDistance = _outerAccelerationDistance + _outerDecelerationDistance + _outerConstantSpeedDistance;
 
   double get accelerationTime => _outerAccelerationTime;
+
   double get constantSpeedTime => _outerConstantSpeedTime;
+
   double get decelerationTime => _outerDecelerationTime;
+
   double get totalTime => _outerTotalTime;
 
   double get highestFinalVelocity => _finalOuterVelocity;
+
   double get lowestFinalVelocity => _finalInnerVelocity;
+
   double get highestMaxVelocity => _maxOuterVelocity;
 
   double _calculateAccelerationTime(double a, double vi, double accelerationDistance) {
@@ -484,6 +489,7 @@ class RapidTurnResult extends InstructionResult {
 class SimulationResult {
   final List<InstructionResult> instructionResults;
   final double maxTargetedVelocity, maxReachedVelocity;
+  final Vector2 furthestPosition;
   final List<TurnResult> turnResults = [];
   final List<DriveResult> driveResults = [];
   final List<RapidTurnResult> rapidTurnResults = [];
@@ -496,6 +502,7 @@ class SimulationResult {
     this.instructionResults,
     this.maxTargetedVelocity,
     this.maxReachedVelocity,
+    this.furthestPosition,
   ) {
     for (final instruction in instructionResults) {
       if (instruction is TurnResult) {

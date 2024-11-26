@@ -1,13 +1,16 @@
 import 'dart:math';
+import 'dart:ui';
 
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:path_pilot/app_storage.dart';
 import 'package:path_pilot/editor/painters/ir_read_painter.dart';
 import 'package:path_pilot/editor/painters/ir_read_timeline_painter.dart';
 import 'package:path_pilot/editor/painters/line_painter.dart';
 import 'package:path_pilot/editor/painters/robi_painter.dart';
 import 'package:path_pilot/editor/painters/timeline_painter.dart';
+import 'package:path_pilot/helper/file_manager.dart';
 import 'package:path_pilot/robi_api/ir_read_api.dart';
 import 'package:path_pilot/robi_api/robi_utils.dart';
 import 'package:vector_math/vector_math.dart' show Vector2;
@@ -60,8 +63,7 @@ class IrVisualizer extends Visualizer {
     required super.obstacles,
     required super.measurementTimeDelta,
   }) : super(
-          irReadPainterSettings: irReadPainterSettings,
-          irCalculatorResult: irCalculatorResult,
+          irCalculatorResultAndSettings: (irCalculatorResult, irReadPainterSettings),
           robiStateType: RobiStateType.leftRight,
         );
 }
@@ -79,8 +81,7 @@ class Visualizer extends StatelessWidget {
   final InstructionResult? highlightedInstruction;
 
   // For IrVisualizer
-  final IrReadPainterSettings? irReadPainterSettings;
-  final IrCalculatorResult? irCalculatorResult;
+  final (IrCalculatorResult, IrReadPainterSettings)? irCalculatorResultAndSettings;
   final List<Vector2>? irPathApproximation;
   final Measurement? currentMeasurement;
   final double? measurementTimeDelta;
@@ -122,9 +123,8 @@ class Visualizer extends StatelessWidget {
     required this.obstacles,
     this.enableTimeInput = true,
     this.simulationResult,
-    this.irReadPainterSettings,
+    this.irCalculatorResultAndSettings,
     this.highlightedInstruction,
-    this.irCalculatorResult,
     this.irPathApproximation,
     this.currentMeasurement,
     this.measurementTimeDelta,
@@ -173,13 +173,13 @@ class Visualizer extends StatelessWidget {
                   scale: zoom,
                   robiConfig: robiConfig,
                   simulationResult: simulationResult,
-                  irReadPainterSettings: irReadPainterSettings,
                   highlightedInstruction: highlightedInstruction,
-                  irCalculatorResult: irCalculatorResult,
+                  irCalculatorResultAndSettings: irCalculatorResultAndSettings,
                   irPathApproximation: irPathApproximation,
                   offset: offset,
                   obstacles: obstacles,
                   currentMeasurement: currentMeasurement,
+                  showDeveloperInfo: SettingsStorage.developerMode,
                 ),
                 child: Container(),
               ),
@@ -256,6 +256,11 @@ class Visualizer extends StatelessWidget {
                             onPressed: () => onZoomChanged(zoom, Offset.zero, false),
                             icon: const Icon(Icons.center_focus_strong),
                           ),
+                          const SizedBox(width: 10),
+                          IconButton(
+                            onPressed: () => exportAsImageDialog(context),
+                            icon: const Icon(Icons.image),
+                          ),
                         ],
                       ),
                       Padding(
@@ -273,6 +278,270 @@ class Visualizer extends StatelessWidget {
     );
   }
 
+  void exportAsImageDialog(BuildContext context) {
+    bool showGrid = true,
+        showObstacles = true,
+        showRobi = true,
+        showIrMeasurementInfo = true,
+        showLengthScale = false,
+        showRobiInfo = false,
+        showVelocityScale = false,
+        showInstructions = true,
+        showIrReadings = true,
+        showIrPathApproximation = true;
+    final repaintKey = GlobalKey();
+    const int maxImageResolution = 20000;
+
+    int resolution = 500;
+
+    double startZoom = this.zoom;
+    Offset startOffset = this.offset;
+
+    Offset offset = startOffset;
+    double zoom = startZoom;
+
+    bool isConvertingToImage = false;
+    bool previewOpen = false;
+
+    Navigator.of(context).push(MaterialPageRoute(
+      builder: (context) {
+        return StatefulBuilder(builder: (context, setState) {
+          return Scaffold(
+            appBar: AppBar(title: const Text("Export as image")),
+            body: Stack(
+              fit: StackFit.expand,
+              children: [
+                ListView(
+                  padding: const EdgeInsets.all(8),
+                  children: [
+                    CheckboxListTile(
+                      title: const Text("Show grid"),
+                      value: showGrid,
+                      onChanged: (value) => setState(() => showGrid = value!),
+                    ),
+                    if (obstacles != null && obstacles!.isNotEmpty)
+                      CheckboxListTile(
+                        title: const Text("Show obstacles"),
+                        value: showObstacles,
+                        onChanged: (value) => setState(() => showObstacles = value!),
+                      ),
+                    CheckboxListTile(
+                      title: const Text("Show Robi"),
+                      value: showRobi,
+                      onChanged: (value) => setState(() => showRobi = value!),
+                    ),
+                    CheckboxListTile(
+                      title: const Text("Show Robi State Info"),
+                      value: showRobiInfo,
+                      onChanged: (value) => setState(() => showRobiInfo = value!),
+                    ),
+                    CheckboxListTile(
+                      title: const Text("Show Scale"),
+                      value: showLengthScale,
+                      onChanged: (value) => setState(() => showLengthScale = value!),
+                    ),
+                    CheckboxListTile(
+                      title: const Text("Show Velocity Scale"),
+                      value: showVelocityScale,
+                      onChanged: (value) => setState(() => showVelocityScale = value!),
+                    ),
+                    if (irCalculatorResultAndSettings != null)
+                      CheckboxListTile(
+                        title: const Text("Show IR Measurement Info"),
+                        value: showIrMeasurementInfo,
+                        onChanged: (value) => setState(() => showIrMeasurementInfo = value!),
+                      ),
+                    if (irCalculatorResultAndSettings != null)
+                      CheckboxListTile(
+                        title: const Text("Show IR Path Approximation"),
+                        value: showIrPathApproximation,
+                        onChanged: (value) => setState(() => showIrPathApproximation = value!),
+                      ),
+                    if (irCalculatorResultAndSettings != null)
+                      CheckboxListTile(
+                        title: const Text("Show IR Readings"),
+                        value: showIrReadings,
+                        onChanged: (value) => setState(() => showIrReadings = value!),
+                      ),
+                    if (simulationResult != null && simulationResult!.instructionResults.isNotEmpty)
+                      CheckboxListTile(
+                        title: const Text("Show Instructions"),
+                        value: showInstructions,
+                        onChanged: (value) => setState(() => showInstructions = value!),
+                      ),
+                    const Divider(),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        const Text("Resolution: ", style: TextStyle(fontSize: 16)),
+                        SizedBox(
+                          width: 80,
+                          child: TextFormField(
+                            initialValue: resolution.toString(),
+                            keyboardType: TextInputType.number,
+                            onChanged: (value) {
+                              final parsed = int.tryParse(value);
+                              if (parsed == null || parsed <= 0) return;
+                              setState(() => resolution = parsed.clamp(1, maxImageResolution));
+                            },
+                          ),
+                        ),
+                        Text(" x $resolution px", style: const TextStyle(fontSize: 16)),
+                      ],
+                    ),
+                    const SizedBox(height: 600),
+                  ],
+                ),
+                if (previewOpen)
+                  Align(
+                    alignment: Alignment.bottomCenter,
+                    child: Card(
+                      margin: const EdgeInsets.only(bottom: 16, left: 8, right: 8),
+                      child: Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: ConstrainedBox(
+                          constraints: const BoxConstraints(maxWidth: 500),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  const Text("Adjust zoom and position", textAlign: TextAlign.center),
+                                  IconButton(
+                                    onPressed: () => setState(() => previewOpen = false),
+                                    icon: const Icon(Icons.close),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 8),
+                              Listener(
+                                behavior: HitTestBehavior.translucent,
+                                onPointerSignal: (event) {
+                                  if (event is! PointerScrollEvent) return;
+                                  final oldScale = log(zoom + 1) / log2;
+                                  final newScale = (oldScale - event.scrollDelta.dy / 250);
+                                  setState(() {
+                                    zoom = (pow(2, newScale) - 1).toDouble();
+                                    final scaleDelta = log(zoom + 1) / log2 - oldScale;
+                                    offset = offset * pow(2, scaleDelta).toDouble();
+                                  });
+                                },
+                                child: GestureDetector(
+                                  behavior: HitTestBehavior.translucent,
+                                  onScaleStart: (details) {
+                                    startZoom = zoom;
+                                    startOffset = details.localFocalPoint - offset;
+                                  },
+                                  onScaleUpdate: (details) {
+                                    if (details.pointerCount > 1) {
+                                      setState(() {
+                                        final newZoom = (startZoom * details.scale);
+                                        final scaleDelta = (log(newZoom + 1) - log(zoom + 1)) / log2;
+                                        zoom = newZoom;
+                                        offset *= pow(2, scaleDelta).toDouble();
+                                      });
+                                    } else {
+                                      setState(() => offset = details.localFocalPoint - startOffset);
+                                    }
+                                  },
+                                  child: AspectRatio(
+                                    aspectRatio: 1,
+                                    child: Container(
+                                      decoration: BoxDecoration(border: Border.all(color: Colors.grey)),
+                                      child: RepaintBoundary(
+                                        key: repaintKey,
+                                        child: CustomPaint(
+                                          painter: LinePainter(
+                                            scale: zoom,
+                                            robiConfig: robiConfig,
+                                            simulationResult: showInstructions ? simulationResult : null,
+                                            highlightedInstruction: null,
+                                            irCalculatorResultAndSettings: showIrReadings ? irCalculatorResultAndSettings : null,
+                                            irPathApproximation: showIrPathApproximation ? irPathApproximation : null,
+                                            offset: offset,
+                                            robiState: robiState,
+                                            robiStateType: robiStateType,
+                                            obstacles: showObstacles ? obstacles : null,
+                                            currentMeasurement: currentMeasurement,
+                                            showGrid: showGrid,
+                                            showIrMeasurementInfo: showIrMeasurementInfo,
+                                            showLengthScale: showLengthScale,
+                                            showRobiStateInfo: showRobiInfo,
+                                            showVelocityScale: showVelocityScale,
+                                            showRobi: showRobi,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  IconButton(
+                                    onPressed: () => setState(() {
+                                      zoom = (maxZoom + minZoom) / 2;
+                                      offset = Offset.zero;
+                                    }),
+                                    icon: const Icon(Icons.center_focus_strong),
+                                  ),
+                                  IconButton(
+                                    icon: const Icon(Icons.file_upload_outlined),
+                                    onPressed: isConvertingToImage
+                                        ? null
+                                        : () async {
+                                            if (isConvertingToImage) return;
+                                            setState(() => isConvertingToImage = true);
+
+                                            try {
+                                              final size = repaintKey.currentContext!.size!.width;
+                                              final boundary = repaintKey.currentContext!.findRenderObject() as RenderRepaintBoundary;
+                                              final img = await boundary.toImage(pixelRatio: resolution.clamp(1, maxImageResolution) / size);
+                                              final byteData = await img.toByteData(format: ImageByteFormat.png);
+                                              setState(() => isConvertingToImage = false);
+
+                                              if (byteData == null || !context.mounted) return;
+
+                                              await pickFileAndWriteWithStatusMessage(
+                                                bytes: byteData.buffer.asUint8List(),
+                                                context: context,
+                                                extension: ".png",
+                                              );
+                                            } catch (e) {
+                                              setState(() => isConvertingToImage = false);
+                                              if (context.mounted) {
+                                                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Failed to convert image: $e")));
+                                              }
+                                              return;
+                                            }
+                                          },
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+            floatingActionButton: previewOpen
+                ? null
+                : FloatingActionButton(
+                    onPressed: () => setState(() => previewOpen = true),
+                    child: const Icon(Icons.image),
+                  ),
+          );
+        });
+      },
+    ));
+  }
+
   Widget timeLinePainter() {
     const maxInstructions = 10000;
     const timelineSize = Size.fromHeight(15);
@@ -288,9 +557,9 @@ class Visualizer extends StatelessWidget {
           ),
         ),
       );
-    } else if (irCalculatorResult != null && measurementTimeDelta != null && irCalculatorResult!.length <= maxInstructions) {
+    } else if (irCalculatorResultAndSettings != null && measurementTimeDelta != null && irCalculatorResultAndSettings!.$1.length <= maxInstructions) {
       return RepaintBoundary(
-        key: ValueKey(irCalculatorResult.hashCode),
+        key: ValueKey(irCalculatorResultAndSettings!.$1.hashCode),
         child: CustomPaint(
           size: timelineSize,
           painter: IrReadTimelinePainter(

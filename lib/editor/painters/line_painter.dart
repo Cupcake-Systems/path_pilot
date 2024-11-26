@@ -1,7 +1,6 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
-import 'package:path_pilot/app_storage.dart';
 import 'package:path_pilot/editor/painters/ir_read_painter.dart';
 import 'package:path_pilot/editor/painters/obstacles_painter.dart';
 import 'package:path_pilot/editor/painters/robi_painter.dart';
@@ -24,14 +23,14 @@ class LinePainter extends CustomPainter {
   final Offset offset;
   final RobiConfig robiConfig;
   final SimulationResult? simulationResult;
-  final IrReadPainterSettings? irReadPainterSettings;
   final InstructionResult? highlightedInstruction;
-  final IrCalculatorResult? irCalculatorResult;
+  final (IrCalculatorResult, IrReadPainterSettings)? irCalculatorResultAndSettings;
   final List<Vector2>? irPathApproximation;
   final Measurement? currentMeasurement;
-  final RobiState robiState;
+  final RobiState? robiState;
   final RobiStateType robiStateType;
   final List<Obstacle>? obstacles;
+  final bool showLengthScale, showVelocityScale, showRobiStateInfo, showIrMeasurementInfo, showGrid, showDeveloperInfo, showRobi;
 
   // Developer info
   static int _drawCallsCount = 0;
@@ -43,16 +42,22 @@ class LinePainter extends CustomPainter {
     super.repaint,
     required this.scale,
     required this.robiConfig,
-    required this.irReadPainterSettings,
     required this.simulationResult,
     required this.highlightedInstruction,
-    required this.irCalculatorResult,
+    required this.irCalculatorResultAndSettings,
     required this.irPathApproximation,
     required this.offset,
     required this.robiState,
     required this.robiStateType,
     required this.obstacles,
     required this.currentMeasurement,
+    this.showLengthScale = true,
+    this.showVelocityScale = true,
+    this.showRobiStateInfo = true,
+    this.showIrMeasurementInfo = true,
+    this.showGrid = true,
+    this.showDeveloperInfo = false,
+    this.showRobi = true,
   });
 
   static void paintText(String text, Offset offset, Canvas canvas, Size size, {TextStyle? textStyle, TextAlign textAlign = TextAlign.start}) {
@@ -144,8 +149,7 @@ Dir.: $leftDir, $rightDir""";
   }
 
   void paintDeveloperInfo(Canvas canvas, Size size) {
-
-    final last100FpsText = _last100FramesTime.inMilliseconds == 0? "" : " (${(100 / (_last100FramesTime.inMilliseconds / 1000)).round()} FPS)";
+    final last100FpsText = _last100FramesTime.inMilliseconds == 0 ? "" : " (${(100 / (_last100FramesTime.inMilliseconds / 1000)).round()} FPS)";
 
     final String text = """
 Developer Info
@@ -167,7 +171,9 @@ Last 100 Frames Time: ${_last100FramesTime.inMilliseconds}ms$last100FpsText
   }
 
   void paintRobiState(Canvas canvas, Size size) {
-    final rs = robiState.asInnerOuter();
+    if (robiState == null) return;
+
+    final rs = robiState!.asInnerOuter();
     final String xPosText = (rs.position.x * 100).toStringAsFixed(0);
     final String innerVelText = (rs.innerVelocity * 100).toStringAsFixed(0);
     final String innerAccelText = (rs.innerAcceleration * 100).toStringAsFixed(0);
@@ -231,7 +237,7 @@ Acc.: I ${innerAccelText}cm/s²${accelSpace}O ${(rs.outerAcceleration * 100).toI
 
   @override
   void paint(Canvas canvas, Size size) {
-    if (SettingsStorage.developerMode) {
+    if (showDeveloperInfo) {
       _devPaint(canvas, size);
     } else {
       _paint(canvas, size);
@@ -265,7 +271,8 @@ Acc.: I ${innerAccelText}cm/s²${accelSpace}O ${(rs.outerAcceleration * 100).toI
       Rect.fromLTWH(0, 0, size.width, size.height),
       doAntiAlias: false,
     );
-    paintGrid(canvas, size);
+
+    if (showGrid) paintGrid(canvas, size);
 
     final Offset center = Offset(size.width / 2, size.height / 2);
     canvas.translate(center.dx + offset.dx, center.dy + offset.dy);
@@ -277,7 +284,6 @@ Acc.: I ${innerAccelText}cm/s²${accelSpace}O ${(rs.outerAcceleration * 100).toI
       Vector2(-offset.dx + center.dx, offset.dy + center.dy) / scale,
     );
 
-    if (irCalculatorResult != null) assert(irReadPainterSettings != null);
     final List<MyPainter> painters = [
       if (obstacles != null)
         ObstaclesPainter(
@@ -292,20 +298,21 @@ Acc.: I ${innerAccelText}cm/s²${accelSpace}O ${(rs.outerAcceleration * 100).toI
           visibleArea: visibleArea,
           highlightedInstruction: highlightedInstruction,
         ),
-      if (irCalculatorResult != null)
+      if (irCalculatorResultAndSettings != null)
         IrReadPainter(
           visibleArea: visibleArea,
           robiConfig: robiConfig,
-          settings: irReadPainterSettings!,
+          settings: irCalculatorResultAndSettings!.$2,
           canvas: canvas,
           size: size,
-          irCalculatorResult: irCalculatorResult!,
+          irCalculatorResult: irCalculatorResultAndSettings!.$1,
           pathApproximation: irPathApproximation,
         ),
-      RobiPainter(
-        robiState: robiState,
-        canvas: canvas,
-      ),
+      if (robiState != null && showRobi)
+        RobiPainter(
+          robiState: robiState!,
+          canvas: canvas,
+        ),
     ];
 
     canvas.restore();
@@ -318,14 +325,16 @@ Acc.: I ${innerAccelText}cm/s²${accelSpace}O ${(rs.outerAcceleration * 100).toI
 
     canvas.restore();
 
-    paintRobiState(canvas, size);
-    paintIrMeasurement(canvas, size);
-    paintScale(canvas, size);
+    if (showRobiStateInfo) paintRobiState(canvas, size);
+    if (showIrMeasurementInfo) paintIrMeasurement(canvas, size);
+    if (showLengthScale) paintScale(canvas, size);
 
-    if (simulationResult != null) {
-      paintVelocityScale(canvas, size, simulationResult!.maxTargetedVelocity);
-    } else if (irCalculatorResult != null) {
-      paintVelocityScale(canvas, size, irCalculatorResult!.maxVelocity);
+    if (showVelocityScale) {
+      if (simulationResult != null) {
+        paintVelocityScale(canvas, size, simulationResult!.maxTargetedVelocity);
+      } else if (irCalculatorResultAndSettings != null) {
+        paintVelocityScale(canvas, size, irCalculatorResultAndSettings!.$1.maxVelocity);
+      }
     }
   }
 }

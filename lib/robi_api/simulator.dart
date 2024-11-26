@@ -15,6 +15,7 @@ class Simulator {
 
     double maxManagedVel = 0;
     double maxTargetVel = 0;
+    Vector2 furthestPosition = Vector2.zero();
 
     for (int i = 0; i < instructions.length; i++) {
       final instruction = instructions[i];
@@ -29,10 +30,14 @@ class Simulator {
         maxManagedVel = result.highestMaxVelocity;
       }
 
+      if (result.endPosition.length2 > furthestPosition.length2) {
+        furthestPosition = result.endPosition;
+      }
+
       results.add(result);
     }
 
-    return SimulationResult(results, maxTargetVel, maxManagedVel);
+    return SimulationResult(results, maxTargetVel, maxManagedVel, furthestPosition);
   }
 
   InstructionResult simulateInstruction(InstructionResult? prevResult, MissionInstruction instruction) {
