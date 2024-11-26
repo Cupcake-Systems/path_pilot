@@ -10,7 +10,7 @@ import '../interactable_visualizer.dart';
 import 'approximation_settings_widget.dart';
 import 'ir_reading_info.dart';
 
-class IrVisualizerWidget extends StatelessWidget {
+class IrVisualizerWidget extends StatefulWidget {
   final IrReadResult irReadResult;
   final RobiConfig robiConfig;
   final double time;
@@ -29,19 +29,25 @@ class IrVisualizerWidget extends StatelessWidget {
   });
 
   @override
+  State<IrVisualizerWidget> createState() => _IrVisualizerWidgetState();
+}
+
+class _IrVisualizerWidgetState extends State<IrVisualizerWidget> {
+  IrReadPainterSettings irReadPainterSettings = defaultIrReadPainterSettings;
+
+  @override
   Widget build(BuildContext context) {
-    final IrCalculatorResult irCalculatorResult = IrCalculator.calculate(irReadResult, robiConfig);
-    IrReadPainterSettings irReadPainterSettings = defaultIrReadPainterSettings;
+    final IrCalculatorResult irCalculatorResult = IrCalculator.calculate(widget.irReadResult, widget.robiConfig);
 
     return StatefulBuilder(builder: (context, setState) {
       InteractableIrVisualizer? visualizer;
       Widget? editor;
 
-      if (subViewMode == SubViewMode.split || subViewMode == SubViewMode.visualizer) {
+      if (widget.subViewMode == SubViewMode.split || widget.subViewMode == SubViewMode.visualizer) {
         visualizer = InteractableIrVisualizer(
-          enableTimeInput: enableTimeInput,
-          robiConfig: robiConfig,
-          totalTime: irReadResult.totalTime,
+          enableTimeInput: widget.enableTimeInput,
+          robiConfig: widget.robiConfig,
+          totalTime: widget.irReadResult.totalTime,
           irCalculatorResult: irCalculatorResult,
           irPathApproximation: IrCalculator.pathApproximation(
             irCalculatorResult,
@@ -49,11 +55,11 @@ class IrVisualizerWidget extends StatelessWidget {
             irReadPainterSettings.ramerDouglasPeuckerTolerance,
           ),
           irReadPainterSettings: irReadPainterSettings,
-          irReadResult: irReadResult,
-          obstacles: obstacles,
+          irReadResult: widget.irReadResult,
+          obstacles: widget.obstacles,
         );
       }
-      if (subViewMode == SubViewMode.split || subViewMode == SubViewMode.editor) {
+      if (widget.subViewMode == SubViewMode.split || widget.subViewMode == SubViewMode.editor) {
         editor = ListView(
           padding: const EdgeInsets.all(16),
           children: [
@@ -63,15 +69,15 @@ class IrVisualizerWidget extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             IrReadingInfoWidget(
-              selectedRobiConfig: robiConfig,
-              irReadResult: irReadResult,
+              selectedRobiConfig: widget.robiConfig,
+              irReadResult: widget.irReadResult,
               irCalculatorResult: irCalculatorResult,
             ),
           ],
         );
       }
 
-      switch (subViewMode) {
+      switch (widget.subViewMode) {
         case SubViewMode.editor:
           return editor!;
         case SubViewMode.visualizer:
