@@ -332,7 +332,7 @@ Acc.: I ${innerAccelText}cm/s²${accelSpace}O ${(rs.outerAcceleration * 100).toI
     if (showVelocityScale) {
       if (simulationResult != null) {
         paintVelocityScale(canvas, size, simulationResult!.maxTargetedVelocity);
-      } else if (irCalculatorResultAndSettings != null) {
+      } else if (irCalculatorResultAndSettings != null && irCalculatorResultAndSettings!.$2.showVelocityPath) {
         paintVelocityScale(canvas, size, irCalculatorResultAndSettings!.$1.maxVelocity);
       }
     }

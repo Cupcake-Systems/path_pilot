@@ -282,17 +282,21 @@ class Visualizer extends StatelessWidget {
     bool showGrid = true,
         showObstacles = true,
         showRobi = true,
-        showIrMeasurementInfo = true,
+        showIrMeasurementInfo = false,
         showLengthScale = false,
         showRobiInfo = false,
         showVelocityScale = false,
         showInstructions = true,
-        showIrReadings = true,
-        showIrPathApproximation = true;
+        showIrReadings = true;
+    IrReadPainterSettings? irReadPainterSettings;
+    if (irCalculatorResultAndSettings != null) {
+      irReadPainterSettings = irCalculatorResultAndSettings!.$2;
+    }
+
     final repaintKey = GlobalKey();
     const int maxImageResolution = 20000;
 
-    int resolution = 500;
+    int resolution = 2048;
 
     double startZoom = this.zoom;
     Offset startOffset = this.offset;
@@ -303,6 +307,8 @@ class Visualizer extends StatelessWidget {
     bool isConvertingToImage = false;
     bool previewOpen = false;
 
+    final headerStyle = Theme.of(context).textTheme.titleSmall!.copyWith(color: Theme.of(context).colorScheme.onPrimaryContainer);
+
     Navigator.of(context).push(MaterialPageRoute(
       builder: (context) {
         return StatefulBuilder(builder: (context, setState) {
@@ -312,84 +318,111 @@ class Visualizer extends StatelessWidget {
               fit: StackFit.expand,
               children: [
                 ListView(
-                  padding: const EdgeInsets.all(8),
                   children: [
+                    Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Text("Visualizer", style: headerStyle),
+                    ),
                     CheckboxListTile(
                       title: const Text("Show grid"),
                       value: showGrid,
                       onChanged: (value) => setState(() => showGrid = value!),
                     ),
-                    if (obstacles != null && obstacles!.isNotEmpty)
-                      CheckboxListTile(
-                        title: const Text("Show obstacles"),
-                        value: showObstacles,
-                        onChanged: (value) => setState(() => showObstacles = value!),
-                      ),
+                    const Divider(height: 1),
                     CheckboxListTile(
                       title: const Text("Show Robi"),
                       value: showRobi,
                       onChanged: (value) => setState(() => showRobi = value!),
                     ),
+                    const Divider(height: 1),
                     CheckboxListTile(
                       title: const Text("Show Robi State Info"),
                       value: showRobiInfo,
                       onChanged: (value) => setState(() => showRobiInfo = value!),
                     ),
+                    const Divider(height: 1),
                     CheckboxListTile(
                       title: const Text("Show Scale"),
                       value: showLengthScale,
                       onChanged: (value) => setState(() => showLengthScale = value!),
                     ),
+                    const Divider(height: 1),
                     CheckboxListTile(
                       title: const Text("Show Velocity Scale"),
                       value: showVelocityScale,
                       onChanged: (value) => setState(() => showVelocityScale = value!),
+                      enabled: irReadPainterSettings == null || irReadPainterSettings!.showVelocityPath,
                     ),
-                    if (irCalculatorResultAndSettings != null)
+                    if (obstacles != null && obstacles!.isNotEmpty) ...[
+                      const Divider(height: 1),
+                      CheckboxListTile(
+                        title: const Text("Show obstacles"),
+                        value: showObstacles,
+                        onChanged: (value) => setState(() => showObstacles = value!),
+                      ),
+                    ],
+                    if (irReadPainterSettings != null) ...[
+                      const Divider(height: 1),
+                      CheckboxListTile(
+                        title: const Text("Show Velocity Path"),
+                        value: irReadPainterSettings!.showVelocityPath,
+                        onChanged: (value) => setState(
+                          () => irReadPainterSettings = irReadPainterSettings!.copyWith(showVelocityPath: value),
+                        ),
+                      ),
+                      const Divider(height: 1),
                       CheckboxListTile(
                         title: const Text("Show IR Measurement Info"),
                         value: showIrMeasurementInfo,
                         onChanged: (value) => setState(() => showIrMeasurementInfo = value!),
                       ),
-                    if (irCalculatorResultAndSettings != null)
+                      const Divider(height: 1),
                       CheckboxListTile(
                         title: const Text("Show IR Path Approximation"),
-                        value: showIrPathApproximation,
-                        onChanged: (value) => setState(() => showIrPathApproximation = value!),
+                        value: irReadPainterSettings!.showCalculatedPath,
+                        onChanged: (value) => setState(
+                          () => irReadPainterSettings = irReadPainterSettings!.copyWith(showCalculatedPath: value),
+                        ),
                       ),
-                    if (irCalculatorResultAndSettings != null)
+                      const Divider(height: 1),
                       CheckboxListTile(
                         title: const Text("Show IR Readings"),
                         value: showIrReadings,
                         onChanged: (value) => setState(() => showIrReadings = value!),
                       ),
-                    if (simulationResult != null && simulationResult!.instructionResults.isNotEmpty)
+                    ],
+                    if (simulationResult != null && simulationResult!.instructionResults.isNotEmpty) ...[
+                      const Divider(height: 1),
                       CheckboxListTile(
                         title: const Text("Show Instructions"),
                         value: showInstructions,
                         onChanged: (value) => setState(() => showInstructions = value!),
                       ),
-                    const Divider(),
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        const Text("Resolution: ", style: TextStyle(fontSize: 16)),
-                        SizedBox(
-                          width: 80,
-                          child: TextFormField(
-                            initialValue: resolution.toString(),
-                            keyboardType: TextInputType.number,
-                            onChanged: (value) {
-                              final parsed = int.tryParse(value);
-                              if (parsed == null || parsed <= 0) return;
-                              setState(() => resolution = parsed.clamp(1, maxImageResolution));
-                            },
+                    ],
+                    Padding(padding: const EdgeInsets.all(16), child: Text("Image", style: headerStyle)),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          const Text("Resolution: ", style: TextStyle(fontSize: 16)),
+                          SizedBox(
+                            width: 80,
+                            child: TextFormField(
+                              initialValue: resolution.toString(),
+                              keyboardType: TextInputType.number,
+                              onChanged: (value) {
+                                final parsed = int.tryParse(value);
+                                if (parsed == null || parsed <= 0) return;
+                                setState(() => resolution = parsed.clamp(1, maxImageResolution));
+                              },
+                            ),
                           ),
-                        ),
-                        Text(" x $resolution px", style: const TextStyle(fontSize: 16)),
-                      ],
+                          Text(" x $resolution px", style: const TextStyle(fontSize: 16)),
+                        ],
+                      ),
                     ),
-                    const SizedBox(height: 600),
+                    if (previewOpen) const SizedBox(height: 600),
                   ],
                 ),
                 if (previewOpen)
@@ -405,13 +438,27 @@ class Visualizer extends StatelessWidget {
                             crossAxisAlignment: CrossAxisAlignment.stretch,
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              Stack(
                                 children: [
-                                  const Text("Adjust zoom and position", textAlign: TextAlign.center),
-                                  IconButton(
-                                    onPressed: () => setState(() => previewOpen = false),
-                                    icon: const Icon(Icons.close),
+                                  Align(
+                                    alignment: Alignment.center,
+                                    child: Column(
+                                      children: [
+                                        const Text("Preview", textAlign: TextAlign.center),
+                                        Text(
+                                          "Resolution: $resolution x $resolution px\nPan and zoom to adjust",
+                                          style: const TextStyle(color: Colors.grey, fontSize: 12),
+                                          textAlign: TextAlign.center,
+                                        )
+                                      ],
+                                    ),
+                                  ),
+                                  Align(
+                                    alignment: Alignment.topRight,
+                                    child: IconButton(
+                                      onPressed: () => setState(() => previewOpen = false),
+                                      icon: const Icon(Icons.close),
+                                    ),
                                   ),
                                 ],
                               ),
@@ -459,7 +506,7 @@ class Visualizer extends StatelessWidget {
                                             simulationResult: showInstructions ? simulationResult : null,
                                             highlightedInstruction: null,
                                             irCalculatorResultAndSettings: showIrReadings ? irCalculatorResultAndSettings : null,
-                                            irPathApproximation: showIrPathApproximation ? irPathApproximation : null,
+                                            irPathApproximation: irPathApproximation,
                                             offset: offset,
                                             robiState: robiState,
                                             robiStateType: robiStateType,
