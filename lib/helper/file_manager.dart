@@ -127,6 +127,7 @@ Future<File?> pickFileAndWriteWithStatusMessage({
   required String extension,
   bool showFilePathInMessage = false,
   String? successMessage,
+  bool overwriteWarning = true
 }) async {
   final hasPermission = await getExternalStoragePermission();
 
@@ -192,6 +193,33 @@ Future<File?> pickFileAndWriteWithStatusMessage({
   if (directoryPath == null) return null;
 
   final filePath = "$directoryPath/$fileName$extension";
+
+  final file = File(filePath);
+
+  if (overwriteWarning && await file.exists()) {
+    if (!context.mounted) return null;
+    final overwrite = await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text("File already exists"),
+          content: const Text("Do you want to overwrite it?"),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: const Text("Cancel"),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: const Text("Overwrite"),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (overwrite == null || !overwrite) return null;
+  }
 
   return writeBytesToFileWithStatusMessage(
     filePath,
