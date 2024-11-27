@@ -33,7 +33,7 @@ class IrVisualizerWidget extends StatefulWidget {
 }
 
 class _IrVisualizerWidgetState extends State<IrVisualizerWidget> {
-  IrReadPainterSettings irReadPainterSettings = defaultIrReadPainterSettings;
+  IrReadPainterSettings irReadPainterSettings = IrReadPainterSettings.defaultSettings;
 
   @override
   Widget build(BuildContext context) {

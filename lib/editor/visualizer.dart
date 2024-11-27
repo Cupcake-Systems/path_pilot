@@ -8,6 +8,7 @@ import 'package:path_pilot/app_storage.dart';
 import 'package:path_pilot/editor/painters/ir_read_painter.dart';
 import 'package:path_pilot/editor/painters/ir_read_timeline_painter.dart';
 import 'package:path_pilot/editor/painters/line_painter.dart';
+import 'package:path_pilot/editor/painters/line_painter_settings/line_painter_visibility_settings.dart';
 import 'package:path_pilot/editor/painters/robi_painter.dart';
 import 'package:path_pilot/editor/painters/timeline_painter.dart';
 import 'package:path_pilot/helper/file_manager.dart';
@@ -34,6 +35,8 @@ class InstructionsVisualizer extends Visualizer {
     required super.play,
     required super.onTogglePlay,
     required super.obstacles,
+    required super.visibilitySettings,
+    required super.onVisibilitySettingsChange,
     super.enableTimeInput,
   }) : super(
           simulationResult: simulationResult,
@@ -58,10 +61,12 @@ class IrVisualizer extends Visualizer {
     super.enableTimeInput = true,
     required super.onZoomChanged,
     required super.onTimeChanged,
+    required super.visibilitySettings,
     required super.play,
     required super.onTogglePlay,
     required super.obstacles,
     required super.measurementTimeDelta,
+    required super.onVisibilitySettingsChange,
   }) : super(
           irCalculatorResultAndSettings: (irCalculatorResult, irReadPainterSettings),
           robiStateType: RobiStateType.leftRight,
@@ -75,6 +80,8 @@ class Visualizer extends StatelessWidget {
   final RobiStateType robiStateType;
   final RobiState robiState;
   final List<Obstacle>? obstacles;
+  final LinePainterVisibilitySettings visibilitySettings;
+  final void Function() onVisibilitySettingsChange;
 
   // For InstructionsVisualizer
   final SimulationResult? simulationResult;
@@ -121,6 +128,8 @@ class Visualizer extends StatelessWidget {
     required this.play,
     required this.onTogglePlay,
     required this.obstacles,
+    required this.visibilitySettings,
+    required this.onVisibilitySettingsChange,
     this.enableTimeInput = true,
     this.simulationResult,
     this.irCalculatorResultAndSettings,
@@ -180,6 +189,7 @@ class Visualizer extends StatelessWidget {
                   obstacles: obstacles,
                   currentMeasurement: currentMeasurement,
                   showDeveloperInfo: SettingsStorage.developerMode,
+                  visibilitySettings: visibilitySettings,
                 ),
                 child: Container(),
               ),
@@ -257,6 +267,41 @@ class Visualizer extends StatelessWidget {
                             icon: const Icon(Icons.center_focus_strong),
                           ),
                           const SizedBox(width: 10),
+                          PopupMenuButton(
+                            tooltip: "",
+                            icon: Icon(
+                              Icons.visibility,
+                              color: Colors.grey[400],
+                            ),
+                            itemBuilder: (context) {
+                              Widget createEntry(LinePainterVisibility v) => StatefulBuilder(
+                                    builder: (context, setState) => CheckedPopupMenuItem(
+                                      value: visibilitySettings.isVisible(v),
+                                      checked: visibilitySettings.isVisible(v),
+                                      child: Text(LinePainterVisibilitySettings.nameOf(v)),
+                                      onTap: () {
+                                        setState(() => visibilitySettings.set(v, !visibilitySettings.isVisible(v)));
+                                        onVisibilitySettingsChange();
+                                      },
+                                    ),
+                                  );
+
+                              final widgets = <PopupMenuEntry>[];
+                              for (final v in visibilitySettings.availableUniversalSettings) {
+                                widgets.add(PopupMenuItem(child: createEntry(v)));
+                              }
+
+                              widgets.add(const PopupMenuDivider());
+                              for (final v in visibilitySettings.availableNonUniversalSettings) {
+                                widgets.add(PopupMenuItem(
+                                  child: createEntry(v),
+                                ));
+                              }
+
+                              return widgets;
+                            },
+                          ),
+                          const SizedBox(width: 10),
                           IconButton(
                             onPressed: () => exportAsImageDialog(context),
                             icon: const Icon(Icons.image),
@@ -279,19 +324,7 @@ class Visualizer extends StatelessWidget {
   }
 
   void exportAsImageDialog(BuildContext context) {
-    bool showGrid = true,
-        showObstacles = true,
-        showRobi = true,
-        showIrMeasurementInfo = false,
-        showLengthScale = false,
-        showRobiInfo = false,
-        showVelocityScale = false,
-        showInstructions = true,
-        showIrReadings = true;
-    IrReadPainterSettings? irReadPainterSettings;
-    if (irCalculatorResultAndSettings != null) {
-      irReadPainterSettings = irCalculatorResultAndSettings!.$2;
-    }
+    var visibilitySettings = this.visibilitySettings.copy();
 
     final repaintKey = GlobalKey();
     const int maxImageResolution = 20000;
@@ -323,80 +356,23 @@ class Visualizer extends StatelessWidget {
                       padding: const EdgeInsets.all(16),
                       child: Text("Visualizer", style: headerStyle),
                     ),
-                    CheckboxListTile(
-                      title: const Text("Show grid"),
-                      value: showGrid,
-                      onChanged: (value) => setState(() => showGrid = value!),
-                    ),
-                    const Divider(height: 1),
-                    CheckboxListTile(
-                      title: const Text("Show Robi"),
-                      value: showRobi,
-                      onChanged: (value) => setState(() => showRobi = value!),
-                    ),
-                    const Divider(height: 1),
-                    CheckboxListTile(
-                      title: const Text("Show Robi State Info"),
-                      value: showRobiInfo,
-                      onChanged: (value) => setState(() => showRobiInfo = value!),
-                    ),
-                    const Divider(height: 1),
-                    CheckboxListTile(
-                      title: const Text("Show Scale"),
-                      value: showLengthScale,
-                      onChanged: (value) => setState(() => showLengthScale = value!),
-                    ),
-                    const Divider(height: 1),
-                    CheckboxListTile(
-                      title: const Text("Show Velocity Scale"),
-                      value: showVelocityScale,
-                      onChanged: (value) => setState(() => showVelocityScale = value!),
-                      enabled: irReadPainterSettings == null || irReadPainterSettings!.showVelocityPath,
-                    ),
-                    if (obstacles != null && obstacles!.isNotEmpty) ...[
-                      const Divider(height: 1),
+                    for (final v in visibilitySettings.availableUniversalSettings) ...[
                       CheckboxListTile(
-                        title: const Text("Show obstacles"),
-                        value: showObstacles,
-                        onChanged: (value) => setState(() => showObstacles = value!),
+                        value: visibilitySettings.isVisible(v),
+                        title: Text(LinePainterVisibilitySettings.nameOf(v)),
+                        onChanged: (value) {
+                          setState(() => visibilitySettings.set(v, value == true));
+                        },
                       ),
                     ],
-                    if (irReadPainterSettings != null) ...[
-                      const Divider(height: 1),
+                    if (visibilitySettings.availableNonUniversalSettings.isNotEmpty) const Divider(height: 1),
+                    for (final v in visibilitySettings.availableNonUniversalSettings) ...[
                       CheckboxListTile(
-                        title: const Text("Show Velocity Path"),
-                        value: irReadPainterSettings!.showVelocityPath,
-                        onChanged: (value) => setState(
-                          () => irReadPainterSettings = irReadPainterSettings!.copyWith(showVelocityPath: value),
-                        ),
-                      ),
-                      const Divider(height: 1),
-                      CheckboxListTile(
-                        title: const Text("Show IR Measurement Info"),
-                        value: showIrMeasurementInfo,
-                        onChanged: (value) => setState(() => showIrMeasurementInfo = value!),
-                      ),
-                      const Divider(height: 1),
-                      CheckboxListTile(
-                        title: const Text("Show IR Path Approximation"),
-                        value: irReadPainterSettings!.showCalculatedPath,
-                        onChanged: (value) => setState(
-                          () => irReadPainterSettings = irReadPainterSettings!.copyWith(showCalculatedPath: value),
-                        ),
-                      ),
-                      const Divider(height: 1),
-                      CheckboxListTile(
-                        title: const Text("Show IR Readings"),
-                        value: showIrReadings,
-                        onChanged: (value) => setState(() => showIrReadings = value!),
-                      ),
-                    ],
-                    if (simulationResult != null && simulationResult!.instructionResults.isNotEmpty) ...[
-                      const Divider(height: 1),
-                      CheckboxListTile(
-                        title: const Text("Show Instructions"),
-                        value: showInstructions,
-                        onChanged: (value) => setState(() => showInstructions = value!),
+                        value: visibilitySettings.isVisible(v),
+                        title: Text(LinePainterVisibilitySettings.nameOf(v)),
+                        onChanged: (value) {
+                          setState(() => visibilitySettings.set(v, value == true));
+                        },
                       ),
                     ],
                     Padding(padding: const EdgeInsets.all(16), child: Text("Image", style: headerStyle)),
@@ -503,21 +479,17 @@ class Visualizer extends StatelessWidget {
                                           painter: LinePainter(
                                             scale: zoom,
                                             robiConfig: robiConfig,
-                                            simulationResult: showInstructions ? simulationResult : null,
+                                            simulationResult: simulationResult,
                                             highlightedInstruction: null,
-                                            irCalculatorResultAndSettings: showIrReadings ? irCalculatorResultAndSettings : null,
+                                            irCalculatorResultAndSettings: irCalculatorResultAndSettings,
                                             irPathApproximation: irPathApproximation,
                                             offset: offset,
                                             robiState: robiState,
                                             robiStateType: robiStateType,
-                                            obstacles: showObstacles ? obstacles : null,
+                                            obstacles: obstacles,
                                             currentMeasurement: currentMeasurement,
-                                            showGrid: showGrid,
-                                            showIrMeasurementInfo: showIrMeasurementInfo,
-                                            showLengthScale: showLengthScale,
-                                            showRobiStateInfo: showRobiInfo,
-                                            showVelocityScale: showVelocityScale,
-                                            showRobi: showRobi,
+                                            showDeveloperInfo: false,
+                                            visibilitySettings: visibilitySettings,
                                           ),
                                         ),
                                       ),
@@ -577,7 +549,7 @@ class Visualizer extends StatelessWidget {
                   ),
               ],
             ),
-            floatingActionButton: previewOpen
+            floatingActionButton: previewOpen || !visibilitySettings.anyVisible()
                 ? null
                 : FloatingActionButton(
                     onPressed: () => setState(() => previewOpen = true),

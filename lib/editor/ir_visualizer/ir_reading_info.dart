@@ -52,7 +52,7 @@ class IrReadingInfoWidget extends StatelessWidget {
                 ));
               },
               label: const Text("View readings"),
-              icon: const Icon(Icons.remove_red_eye),
+              icon: const Icon(Icons.visibility),
             ),
           ],
         ),

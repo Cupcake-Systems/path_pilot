@@ -11,6 +11,7 @@ import 'package:vector_math/vector_math.dart' show Aabb2, Vector2;
 
 import '../obstacles/obstacle.dart';
 import 'abstract_painter.dart';
+import 'line_painter_settings/line_painter_visibility_settings.dart';
 
 const Color white = Color(0xFFFFFFFF);
 const double bottomPadding = 100;
@@ -30,7 +31,8 @@ class LinePainter extends CustomPainter {
   final RobiState? robiState;
   final RobiStateType robiStateType;
   final List<Obstacle>? obstacles;
-  final bool showLengthScale, showVelocityScale, showRobiStateInfo, showIrMeasurementInfo, showGrid, showDeveloperInfo, showRobi;
+  final LinePainterVisibilitySettings visibilitySettings;
+  final bool showDeveloperInfo;
 
   // Developer info
   static int _drawCallsCount = 0;
@@ -51,13 +53,8 @@ class LinePainter extends CustomPainter {
     required this.robiStateType,
     required this.obstacles,
     required this.currentMeasurement,
-    this.showLengthScale = true,
-    this.showVelocityScale = true,
-    this.showRobiStateInfo = true,
-    this.showIrMeasurementInfo = true,
-    this.showGrid = true,
-    this.showDeveloperInfo = false,
-    this.showRobi = true,
+    required this.visibilitySettings,
+    required this.showDeveloperInfo,
   });
 
   static void paintText(String text, Offset offset, Canvas canvas, Size size, {TextStyle? textStyle, TextAlign textAlign = TextAlign.start}) {
@@ -272,26 +269,26 @@ Acc.: I ${innerAccelText}cm/s²${accelSpace}O ${(rs.outerAcceleration * 100).toI
       doAntiAlias: false,
     );
 
-    if (showGrid) paintGrid(canvas, size);
+    if (visibilitySettings.showGrid) paintGrid(canvas, size);
 
-    final Offset center = Offset(size.width / 2, size.height / 2);
+    final center = Offset(size.width / 2, size.height / 2);
     canvas.translate(center.dx + offset.dx, center.dy + offset.dy);
     canvas.scale(scale);
     canvas.save();
 
-    final Aabb2 visibleArea = Aabb2.minMax(
+    final visibleArea = Aabb2.minMax(
       Vector2(-offset.dx - center.dx, offset.dy - center.dy) / scale,
       Vector2(-offset.dx + center.dx, offset.dy + center.dy) / scale,
     );
 
-    final List<MyPainter> painters = [
-      if (obstacles != null)
+    final painters = <MyPainter>[
+      if (obstacles != null && visibilitySettings.showObstacles)
         ObstaclesPainter(
           canvas: canvas,
           obstacles: obstacles!,
           visibleArea: visibleArea,
         ),
-      if (simulationResult != null)
+      if (simulationResult != null && visibilitySettings.showSimulation)
         SimulationPainter(
           simulationResult: simulationResult!,
           canvas: canvas,
@@ -307,8 +304,11 @@ Acc.: I ${innerAccelText}cm/s²${accelSpace}O ${(rs.outerAcceleration * 100).toI
           size: size,
           irCalculatorResult: irCalculatorResultAndSettings!.$1,
           pathApproximation: irPathApproximation,
+          showIrTrackPath: visibilitySettings.showIrTrackPath,
+          showCalculatedPath: visibilitySettings.showIrPathApproximation,
+          showIrReadings: visibilitySettings.showIrRead,
         ),
-      if (robiState != null && showRobi)
+      if (robiState != null && visibilitySettings.showRobi)
         RobiPainter(
           robiState: robiState!,
           canvas: canvas,
@@ -325,14 +325,14 @@ Acc.: I ${innerAccelText}cm/s²${accelSpace}O ${(rs.outerAcceleration * 100).toI
 
     canvas.restore();
 
-    if (showRobiStateInfo) paintRobiState(canvas, size);
-    if (showIrMeasurementInfo) paintIrMeasurement(canvas, size);
-    if (showLengthScale) paintScale(canvas, size);
+    if (visibilitySettings.showRobiStateInfo) paintRobiState(canvas, size);
+    if (visibilitySettings.showIrMeasurementInfo) paintIrMeasurement(canvas, size);
+    if (visibilitySettings.showLengthScale) paintScale(canvas, size);
 
-    if (showVelocityScale) {
-      if (simulationResult != null) {
+    if (visibilitySettings.showVelocityScale) {
+      if (simulationResult != null && visibilitySettings.showSimulation && simulationResult!.instructionResults.isNotEmpty) {
         paintVelocityScale(canvas, size, simulationResult!.maxTargetedVelocity);
-      } else if (irCalculatorResultAndSettings != null && irCalculatorResultAndSettings!.$2.showVelocityPath) {
+      } else if (irCalculatorResultAndSettings != null && visibilitySettings.showIrTrackPath && irCalculatorResultAndSettings!.$1.length > 0) {
         paintVelocityScale(canvas, size, irCalculatorResultAndSettings!.$1.maxVelocity);
       }
     }

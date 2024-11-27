@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:path_pilot/app_storage.dart';
 import 'package:path_pilot/editor/painters/ir_read_painter.dart';
+import 'package:path_pilot/editor/painters/line_painter_settings/line_painter_visibility_settings.dart';
 import 'package:path_pilot/editor/painters/robi_painter.dart';
 import 'package:path_pilot/editor/visualizer.dart';
 import 'package:path_pilot/robi_api/ir_read_api.dart';
@@ -48,6 +49,11 @@ class _InteractableIrVisualizerState extends State<InteractableIrVisualizer> {
   bool updateRobi = false;
   double timeOffset = 0;
 
+  final LinePainterVisibilitySettings visibilitySettings = LinePainterVisibilitySettings.of([
+    ...LinePainterVisibilitySettings.universalSettings,
+    ...LinePainterVisibilitySettings.onlyIrSettings,
+  ]);
+
   final deltaCounter = Stopwatch();
 
   @override
@@ -80,6 +86,7 @@ class _InteractableIrVisualizerState extends State<InteractableIrVisualizer> {
     final currentMeasurement = getMeasurementAtTime(widget.irReadResult, timeSnapshot);
 
     return IrVisualizer(
+      visibilitySettings: visibilitySettings,
       zoom: zoom,
       offset: offset,
       robiConfig: widget.robiConfig,
@@ -94,6 +101,7 @@ class _InteractableIrVisualizerState extends State<InteractableIrVisualizer> {
         zoom = newZoom;
         lockToRobi = newLockToRobi;
       }),
+      onVisibilitySettingsChange: () => setState(() {}),
       measurementTimeDelta: widget.irReadResult.resolution,
       onTimeChanged: (newTime, newOffset) => setState(() {
         timeOffset = newTime;
@@ -204,6 +212,10 @@ class _InteractableInstructionsVisualizerState extends State<InteractableInstruc
   double timeOffset = 0;
 
   final deltaCounter = Stopwatch();
+  final LinePainterVisibilitySettings visibilitySettings = LinePainterVisibilitySettings.of([
+    ...LinePainterVisibilitySettings.universalSettings,
+    ...LinePainterVisibilitySettings.onlySimulationSettings,
+  ]);
 
   @override
   Widget build(BuildContext context) {
@@ -233,6 +245,7 @@ class _InteractableInstructionsVisualizerState extends State<InteractableInstruc
     }
 
     return InstructionsVisualizer(
+      visibilitySettings: visibilitySettings,
       obstacles: widget.obstacles,
       zoom: zoom,
       offset: offset,
@@ -242,6 +255,7 @@ class _InteractableInstructionsVisualizerState extends State<InteractableInstruc
       totalTime: widget.totalTime,
       highlightedInstruction: widget.highlightedInstruction,
       simulationResult: widget.simulationResult,
+      onVisibilitySettingsChange: () => setState(() {}),
       time: timeSnapshot,
       onZoomChanged: (newZoom, newOffset, newLockToRobi) => setState(() {
         offset = newOffset;

@@ -2,13 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../painters/ir_read_painter.dart';
 
-const defaultIrReadPainterSettings = IrReadPainterSettings(
-  irReadingsThreshold: 1024,
-  showCalculatedPath: true,
-  ramerDouglasPeuckerTolerance: 0.5,
-  irInclusionThreshold: 100,
-  showVelocityPath: false,
-);
+
 
 class IrPathApproximationSettingsWidget extends StatelessWidget {
   final void Function(IrReadPainterSettings newSettings) onSettingsChange;
@@ -42,21 +36,6 @@ class IrPathApproximationSettingsWidget extends StatelessWidget {
                 const Text(
                   "Customize what elements to display on the visualization.",
                   style: TextStyle(color: Colors.grey, fontSize: 14),
-                ),
-                const SizedBox(height: 16),
-                CheckboxListTile(
-                  title: const Text("Show calculated path", style: TextStyle(fontSize: 16)),
-                  value: settings.showCalculatedPath,
-                  onChanged: (value) => onSettingsChange(
-                    settings.copyWith(showCalculatedPath: value),
-                  ),
-                ),
-                CheckboxListTile(
-                  title: const Text("Show velocity path", style: TextStyle(fontSize: 16)),
-                  value: settings.showVelocityPath,
-                  onChanged: (value) => onSettingsChange(
-                    settings.copyWith(showVelocityPath: value),
-                  ),
                 ),
                 const SizedBox(height: 16),
                 ListTile(

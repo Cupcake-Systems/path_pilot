@@ -11,34 +11,33 @@ import '../../robi_api/robi_utils.dart';
 import 'line_painter.dart';
 
 class IrReadPainterSettings {
-  final bool showCalculatedPath, showVelocityPath;
   final int irReadingsThreshold, irInclusionThreshold;
   final double ramerDouglasPeuckerTolerance;
 
   const IrReadPainterSettings({
     required this.irReadingsThreshold,
-    required this.showCalculatedPath,
     required this.ramerDouglasPeuckerTolerance,
     required this.irInclusionThreshold,
-    required this.showVelocityPath,
   });
 
   IrReadPainterSettings copyWith({
     int? irReadingsThreshold,
-    bool? showCalculatedPath,
-    bool? showTracks,
     double? ramerDouglasPeuckerTolerance,
     int? irInclusionThreshold,
     bool? showVelocityPath,
   }) {
     return IrReadPainterSettings(
       irReadingsThreshold: irReadingsThreshold ?? this.irReadingsThreshold,
-      showCalculatedPath: showCalculatedPath ?? this.showCalculatedPath,
       ramerDouglasPeuckerTolerance: ramerDouglasPeuckerTolerance ?? this.ramerDouglasPeuckerTolerance,
       irInclusionThreshold: irInclusionThreshold ?? this.irInclusionThreshold,
-      showVelocityPath: showVelocityPath ?? this.showVelocityPath,
     );
   }
+
+  static const defaultSettings = IrReadPainterSettings(
+    irReadingsThreshold: 1024,
+    ramerDouglasPeuckerTolerance: 0.5,
+    irInclusionThreshold: 100,
+  );
 }
 
 class IrReadPainter extends MyPainter {
@@ -48,6 +47,7 @@ class IrReadPainter extends MyPainter {
   final Size size;
   final IrCalculatorResult irCalculatorResult;
   final List<Vector2>? pathApproximation;
+  final bool showIrTrackPath, showCalculatedPath, showIrReadings;
 
   late final Paint leftTrackPaint = Paint()
     ..strokeWidth = robiConfig.wheelWidth
@@ -82,6 +82,9 @@ class IrReadPainter extends MyPainter {
     required this.irCalculatorResult,
     required this.visibleArea,
     this.pathApproximation,
+    required this.showIrTrackPath,
+    required this.showCalculatedPath,
+    required this.showIrReadings,
   });
 
   static void addLine(Vector2 a, Path path) => path.lineTo(a.x, -a.y);
@@ -99,7 +102,7 @@ class IrReadPainter extends MyPainter {
       final irPositions = irCalculatorResult.irData[i];
       final robiState = irCalculatorResult.robiStates[i];
 
-      if (settings.showVelocityPath && i < irCalculatorResult.length - 1) {
+      if (showIrTrackPath && i < irCalculatorResult.length - 1) {
         final leftVel = robiState.leftVelocity;
         final rightVel = robiState.rightVelocity;
 
@@ -120,6 +123,7 @@ class IrReadPainter extends MyPainter {
         }
       }
 
+      if (!showIrReadings) continue;
       final mp = irPositions.$2.position;
       if (visionCenter.distanceToSquared(mp) > a) continue; // rough pre filter
 
@@ -131,7 +135,7 @@ class IrReadPainter extends MyPainter {
       }
     }
 
-    if (settings.showCalculatedPath) paintReducedLineEstimate();
+    if (showCalculatedPath) paintReducedLineEstimate();
   }
 
   Color irToColor(final int rawIr) {
