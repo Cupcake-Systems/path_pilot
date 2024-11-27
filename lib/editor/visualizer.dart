@@ -509,7 +509,13 @@ class Visualizer extends StatelessWidget {
                                     icon: const Icon(Icons.center_focus_strong),
                                   ),
                                   IconButton(
-                                    icon: const Icon(Icons.file_upload_outlined),
+                                    icon: isConvertingToImage
+                                        ? const SizedBox(
+                                            width: 20,
+                                            height: 20,
+                                            child: CircularProgressIndicator(strokeWidth: 3),
+                                          )
+                                        : const Icon(Icons.file_upload_outlined),
                                     onPressed: isConvertingToImage
                                         ? null
                                         : () async {
