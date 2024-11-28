@@ -79,196 +79,220 @@ class _FileBrowserState extends State<FileBrowser> with WidgetsBindingObserver {
         title: Text(viewMode == ViewMode.instructions ? "Instructions" : "IR Readings"),
         bottom: const PreferredSize(preferredSize: Size.fromHeight(1), child: Divider(height: 1)),
         actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 4),
-            child: DropdownButton<SubViewMode>(
-              value: subViewMode,
-              padding: const EdgeInsets.symmetric(horizontal: 8),
-              borderRadius: BorderRadius.circular(8),
-              items: [
-                const DropdownMenuItem(
-                  value: SubViewMode.visualizer,
-                  child: Text("Visualizer"),
-                ),
-                const DropdownMenuItem(
-                  value: SubViewMode.editor,
-                  child: Text("Editor"),
-                ),
-                const DropdownMenuItem(
-                  value: SubViewMode.split,
-                  child: Text("Split"),
-                ),
-              ],
-              onChanged: (value) => setState(() => subViewMode = value ?? subViewMode),
-            ),
+          DropdownButton<SubViewMode>(
+            value: subViewMode,
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            borderRadius: BorderRadius.circular(8),
+            items: [
+              const DropdownMenuItem(
+                value: SubViewMode.visualizer,
+                child: Text("Visualizer"),
+              ),
+              const DropdownMenuItem(
+                value: SubViewMode.editor,
+                child: Text("Editor"),
+              ),
+              const DropdownMenuItem(
+                value: SubViewMode.split,
+                child: Text("Split"),
+              ),
+            ],
+            onChanged: (value) => setState(() => subViewMode = value ?? subViewMode),
           ),
+          const SizedBox(width: 10),
+          ListenableBuilder(
+              listenable: isSavedNotifier,
+              builder: (context, child) {
+                String saveText = "";
+
+                if (isSavedNotifier.lastSave != null) {
+                  saveText = "Last saved: ${DateFormat('kk:mm').format(isSavedNotifier.lastSave!)}\n";
+                }
+                final isSaving = isSavedNotifier.isSaving;
+                return PopupMenuButton(
+                  itemBuilder: (context) => <PopupMenuEntry>[
+                    if (viewMode == ViewMode.instructions) ...[
+                      PopupMenuItem(
+                        child: ListTile(
+                          title: const Text("New"),
+                          onTap: newFile,
+                          leading: const Icon(Icons.add),
+                        ),
+                      ),
+                      PopupMenuItem(
+                        child: ListTile(
+                          title: const Text("Open"),
+                          onTap: openFile,
+                          leading: const Icon(Icons.folder_open),
+                        ),
+                      ),
+                      if (openedFile != null) ...[
+                        const PopupMenuDivider(height: 1),
+                        PopupMenuItem(
+                          enabled: !isSaving,
+                          onTap: saveFile,
+                          child: ListTile(
+                            title: const Text("Save"),
+                            subtitle: Text("$saveText$openedFile"),
+                            leading: isSaving
+                                ? const SizedBox(
+                                    width: 20,
+                                    height: 20,
+                                    child: CircularProgressIndicator(),
+                                  )
+                                : const Icon(Icons.save),
+                          ),
+                        ),
+                        PopupMenuItem(
+                          child: ListTile(
+                            title: const Text("Save As"),
+                            onTap: saveAsFile,
+                            leading: const Icon(Icons.save_as),
+                          ),
+                        ),
+                        const PopupMenuDivider(height: 1),
+                        PopupMenuItem(
+                          child: ListTile(
+                            title: const Text("Export"),
+                            onTap: () {
+                              if (simulationResult == null || simulationResult!.instructionResults.isEmpty) {
+                                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                                  content: Text("Nothing to export"),
+                                  duration: Duration(seconds: 2),
+                                ));
+                                return;
+                              }
+                              Exporter.exportToFile(
+                                selectedRobiConfig,
+                                simulationResult!.instructionResults,
+                                context,
+                              );
+                            },
+                            leading: const Icon(Icons.file_upload_outlined),
+                          ),
+                        ),
+                      ],
+                    ] else if (viewMode == ViewMode.irReadings) ...[
+                      PopupMenuItem(
+                        child: ListTile(
+                          title: const Text("Import IR Reading"),
+                          onTap: importIrReading,
+                          leading: const Icon(Icons.file_download_outlined),
+                        ),
+                      ),
+                    ],
+                  ],
+                  onSelected: (value) {
+                    setState(() {});
+                  },
+                );
+              })
         ],
       ),
       drawer: Drawer(
-        child: ListView(
+        child: Column(
           children: [
-            DrawerHeader(
-              padding: EdgeInsets.zero,
-              decoration: const BoxDecoration(
-                border: Border(bottom: BorderSide(width: 1, color: Colors.grey)),
-              ),
-              child: ShaderMask(
-                shaderCallback: (bounds) {
-                  return const LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [
-                      Colors.white, // Fully visible
-                      Colors.white, // Keep visible for a longer area
-                      Colors.transparent, // Fades out
-                    ],
-                    stops: [0.0, 0.7, 1.0], // Control the fade areas
-                  ).createShader(Rect.fromLTWH(0, 0, bounds.width, bounds.height));
-                },
-                blendMode: BlendMode.dstIn,
-                child: Image.asset(
-                  "assets/repo_banner.webp",
-                  fit: BoxFit.cover,
-                ),
-              ),
-            ),
-            const Padding(
-              padding: EdgeInsets.all(8.0),
-              child: Text(
-                "View Mode",
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-              ),
-            ),
-            RadioListTile(
-              value: ViewMode.instructions,
-              groupValue: viewMode,
-              onChanged: (value) => setState(() => viewMode = ViewMode.instructions),
-              title: const Text("Instructions"),
-            ),
-            RadioListTile(
-              value: ViewMode.irReadings,
-              groupValue: viewMode,
-              onChanged: (value) => setState(() => viewMode = ViewMode.irReadings),
-              title: const Text("IR Readings"),
-            ),
-            const Divider(height: 1),
-            const Padding(
-              padding: EdgeInsets.all(8.0),
-              child: Text("File", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-            ),
-            if (viewMode == ViewMode.instructions) ...[
-              ListTile(
-                leading: const Icon(Icons.add),
-                title: const Text("New"),
-                onTap: newFile,
-              ),
-              ListTile(
-                leading: const Icon(Icons.folder_open),
-                title: const Text("Open"),
-                onTap: openFile,
-              ),
-              if (openedFile != null) ...[
-                ListenableBuilder(
-                  builder: (context, child) {
-                    String saveText = "";
-
-                    if (isSavedNotifier.lastSave != null) {
-                      saveText = "Last saved: ${DateFormat('kk:mm:ss - dd.MM.yy').format(isSavedNotifier.lastSave!)}\n";
-                    }
-
-                    return ListTile(
-                      leading: const Icon(Icons.save),
-                      onTap: saveFile,
-                      title: const Text('Save'),
-                      subtitle: Text("$saveText$openedFile"),
-                      enabled: !isSavedNotifier.isSaved,
-                    );
-                  },
-                  listenable: isSavedNotifier,
-                ),
-                ListTile(
-                  leading: const Icon(Icons.save_as),
-                  onTap: saveAsFile,
-                  title: const Text('Save As'),
-                ),
-                ListTile(
-                  onTap: () {
-                    if (simulationResult == null || simulationResult!.instructionResults.isEmpty) {
-                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                        content: Text("Nothing to export"),
-                        duration: Duration(seconds: 2),
-                      ));
-                      return;
-                    }
-                    Exporter.exportToFile(
-                      selectedRobiConfig,
-                      simulationResult!.instructionResults,
-                      context,
-                    );
-                  },
-                  leading: const Icon(Icons.file_upload_outlined),
-                  title: const Text("Export"),
-                ),
-              ],
-            ] else if (viewMode == ViewMode.irReadings) ...[
-              ListTile(
-                leading: const Icon(Icons.file_download_outlined),
-                title: const Text("Import IR Reading"),
-                onTap: importIrReading,
-              ),
-            ],
-            const Divider(height: 1),
-            ListTile(
-              leading: const Icon(Icons.square_rounded),
-              title: const Text("Obstacles"),
-              onTap: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (context) => ObstacleCreator(
-                      obstacles: loadedData.obstacles,
-                      onObstaclesChange: (obstacles) {
-                        setState(() {
-                          loadedData = loadedData.copyWith(obstacles: obstacles);
-                        });
-                        isSavedNotifier.setSaved(false);
+            Expanded(
+              child: ListView(
+                children: [
+                  DrawerHeader(
+                    padding: EdgeInsets.zero,
+                    decoration: const BoxDecoration(
+                      border: Border(bottom: BorderSide(width: 1, color: Colors.grey)),
+                    ),
+                    child: ShaderMask(
+                      shaderCallback: (bounds) {
+                        return const LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [
+                            Colors.white, // Fully visible
+                            Colors.white, // Keep visible for a longer area
+                            Colors.transparent, // Fades out
+                          ],
+                          stops: [0.0, 0.7, 1.0], // Control the fade areas
+                        ).createShader(Rect.fromLTWH(0, 0, bounds.width, bounds.height));
                       },
+                      blendMode: BlendMode.dstIn,
+                      child: Image.asset(
+                        "assets/repo_banner.webp",
+                        fit: BoxFit.cover,
+                      ),
                     ),
                   ),
-                );
-              },
-              trailing: Checkbox(
-                value: showObstacles,
-                onChanged: (value) => setState(() => showObstacles = value == true),
+                  const Padding(
+                    padding: EdgeInsets.all(8.0),
+                    child: Text(
+                      "Mode",
+                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                    ),
+                  ),
+                  RadioListTile(
+                    value: ViewMode.instructions,
+                    groupValue: viewMode,
+                    onChanged: (value) => setState(() => viewMode = ViewMode.instructions),
+                    title: const Text("Instructions"),
+                  ),
+                  RadioListTile(
+                    value: ViewMode.irReadings,
+                    groupValue: viewMode,
+                    onChanged: (value) => setState(() => viewMode = ViewMode.irReadings),
+                    title: const Text("IR Readings"),
+                  ),
+                  const Divider(height: 1),
+                  ListTile(
+                    leading: const Icon(Icons.square_rounded),
+                    title: const Text("Obstacles"),
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) => ObstacleCreator(
+                            obstacles: loadedData.obstacles,
+                            onObstaclesChange: (obstacles) {
+                              setState(() {
+                                loadedData = loadedData.copyWith(obstacles: obstacles);
+                              });
+                              isSavedNotifier.isSaved = false;
+                            },
+                          ),
+                        ),
+                      );
+                    },
+                    trailing: Checkbox(
+                      value: showObstacles,
+                      onChanged: (value) => setState(() => showObstacles = value == true),
+                    ),
+                  ),
+                  const Divider(height: 1),
+                  ListTile(
+                    leading: const Icon(Icons.build_circle),
+                    title: const Text("Robi Configs"),
+                    onTap: () async {
+                      await Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) => RobiConfigSettingsPage(
+                            onConfigSelected: (selectedConfig) => setState(() => selectedRobiConfig = selectedConfig),
+                            selectedConfig: selectedRobiConfig,
+                          ),
+                        ),
+                      );
+                      setState(() {});
+                    },
+                  ),
+                  const Divider(height: 1),
+                  ListTile(
+                    leading: const Icon(Icons.bug_report),
+                    onTap: () => launchUrlString("$repoUrl/issues/new"),
+                    title: const Text('Report A Bug'),
+                  ),
+                  ListTile(
+                    leading: const Icon(Icons.menu_book),
+                    onTap: () => launchUrlString("$repoUrl/wiki"),
+                    title: const Text('Wiki'),
+                  ),
+                ],
               ),
             ),
-            const Divider(height: 1),
-            ListTile(
-              leading: const Icon(Icons.build_circle),
-              title: const Text("Robi Configs"),
-              onTap: () async {
-                await Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (context) => RobiConfigSettingsPage(
-                      onConfigSelected: (selectedConfig) => setState(() => selectedRobiConfig = selectedConfig),
-                      selectedConfig: selectedRobiConfig,
-                    ),
-                  ),
-                );
-                setState(() {});
-              },
-            ),
-            const Divider(height: 1),
-            ListTile(
-              leading: const Icon(Icons.bug_report),
-              onTap: () => launchUrlString("$repoUrl/issues/new"),
-              title: const Text('Report A Bug'),
-            ),
-            ListTile(
-              leading: const Icon(Icons.menu_book),
-              onTap: () => launchUrlString("$repoUrl/wiki"),
-              title: const Text('Wiki'),
-            ),
-            const Divider(height: 1),
             ListTile(
               leading: const Icon(Icons.info),
               onTap: () {
@@ -326,7 +350,7 @@ class _FileBrowserState extends State<FileBrowser> with WidgetsBindingObserver {
           onInstructionsChanged: (newInstructions, newSimulationResult) {
             loadedData = loadedData.copyWith(instructions: newInstructions);
             simulationResult = newSimulationResult;
-            isSavedNotifier.setSaved(false);
+            isSavedNotifier.isSaved = false;
           },
           firstSimulationResult: (result) {
             simulationResult = result;
@@ -373,9 +397,11 @@ class _FileBrowserState extends State<FileBrowser> with WidgetsBindingObserver {
 
   Future<File?> saveFile([bool showStatusMessage = true]) async {
     if (openedFile == null) return null;
+
+    isSavedNotifier.isSaving = true;
     final res = await loadedData.saveToFileWithStatusMessage(openedFile!, showStatusMessage ? context : null);
     if (res != null) {
-      isSavedNotifier.setSaved(true);
+      isSavedNotifier.isSaved = true;
     }
     return res;
   }
@@ -389,7 +415,7 @@ class _FileBrowserState extends State<FileBrowser> with WidgetsBindingObserver {
 
     if (result == null) return;
 
-    isSavedNotifier.setSaved(true);
+    isSavedNotifier.isSaved = true;
 
     setState(() {
       openedFile = result.absolute.path;
@@ -406,7 +432,7 @@ class _FileBrowserState extends State<FileBrowser> with WidgetsBindingObserver {
 
     if (result == null) return;
 
-    isSavedNotifier.setSaved(true);
+    isSavedNotifier.isSaved = true;
 
     setState(() {
       openedFile = result.absolute.path;
@@ -424,7 +450,7 @@ class _FileBrowserState extends State<FileBrowser> with WidgetsBindingObserver {
     if (result == null) return;
 
     if (await tryLoadingSaveData(result)) {
-      isSavedNotifier.setSaved(true);
+      isSavedNotifier.isSaved = true;
     }
   }
 
@@ -483,16 +509,26 @@ enum SubViewMode {
 }
 
 class IsSavedNotifier extends ChangeNotifier {
-  bool _isSaved = false;
+  bool _isSaved = false, _isSaving = false;
   DateTime? _lastSave;
 
   DateTime? get lastSave => _lastSave;
 
   bool get isSaved => _isSaved;
 
-  void setSaved(bool saved) {
+  bool get isSaving => _isSaving;
+
+  set isSaving(bool saving) {
+    _isSaving = saving;
+    notifyListeners();
+  }
+
+  set isSaved(bool saved) {
     _isSaved = saved;
-    if (saved) _lastSave = DateTime.now();
+    if (saved) {
+      _lastSave = DateTime.now();
+      _isSaving = false;
+    }
     notifyListeners();
   }
 }
