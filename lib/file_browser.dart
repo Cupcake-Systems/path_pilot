@@ -78,6 +78,31 @@ class _FileBrowserState extends State<FileBrowser> with WidgetsBindingObserver {
       appBar: AppBar(
         title: Text(viewMode == ViewMode.instructions ? "Instructions" : "IR Readings"),
         bottom: const PreferredSize(preferredSize: Size.fromHeight(1), child: Divider(height: 1)),
+        actions: [
+          Padding(
+            padding: const EdgeInsets.only(right: 4),
+            child: DropdownButton<SubViewMode>(
+              value: subViewMode,
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              borderRadius: BorderRadius.circular(8),
+              items: [
+                const DropdownMenuItem(
+                  value: SubViewMode.visualizer,
+                  child: Text("Visualizer"),
+                ),
+                const DropdownMenuItem(
+                  value: SubViewMode.editor,
+                  child: Text("Editor"),
+                ),
+                const DropdownMenuItem(
+                  value: SubViewMode.split,
+                  child: Text("Split"),
+                ),
+              ],
+              onChanged: (value) => setState(() => subViewMode = value ?? subViewMode),
+            ),
+          ),
+        ],
       ),
       drawer: Drawer(
         child: ListView(
@@ -125,28 +150,6 @@ class _FileBrowserState extends State<FileBrowser> with WidgetsBindingObserver {
               groupValue: viewMode,
               onChanged: (value) => setState(() => viewMode = ViewMode.irReadings),
               title: const Text("IR Readings"),
-            ),
-            const Padding(
-              padding: EdgeInsets.all(8.0),
-              child: Text("Sub View Mode", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-            ),
-            RadioListTile(
-              value: SubViewMode.editor,
-              groupValue: subViewMode,
-              onChanged: (value) => setState(() => subViewMode = SubViewMode.editor),
-              title: const Text("Editor"),
-            ),
-            RadioListTile(
-              value: SubViewMode.visualizer,
-              groupValue: subViewMode,
-              onChanged: (value) => setState(() => subViewMode = SubViewMode.visualizer),
-              title: const Text("Visualizer"),
-            ),
-            RadioListTile(
-              value: SubViewMode.split,
-              groupValue: subViewMode,
-              onChanged: (value) => setState(() => subViewMode = SubViewMode.split),
-              title: const Text("Split"),
             ),
             const Divider(height: 1),
             const Padding(
@@ -370,7 +373,7 @@ class _FileBrowserState extends State<FileBrowser> with WidgetsBindingObserver {
 
   Future<File?> saveFile([bool showStatusMessage = true]) async {
     if (openedFile == null) return null;
-    final res = await loadedData.saveToFileWithStatusMessage(openedFile!, showStatusMessage? context : null);
+    final res = await loadedData.saveToFileWithStatusMessage(openedFile!, showStatusMessage ? context : null);
     if (res != null) {
       isSavedNotifier.setSaved(true);
     }
