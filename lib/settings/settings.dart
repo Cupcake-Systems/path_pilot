@@ -43,7 +43,7 @@ class _SettingsPageState extends State<SettingsPage> {
                     value: SettingsStorage.visualizerFps,
                     onChanged: SettingsStorage.limitFps
                         ? (value) => setState(
-                              () => SettingsStorage.visualizerFps = value!,
+                              () => SettingsStorage.visualizerFps = value ?? SettingsStorage.visualizerFps,
                             )
                         : null,
                     items: [

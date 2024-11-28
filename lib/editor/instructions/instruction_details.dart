@@ -212,7 +212,7 @@ class _InstructionDetailsWidgetState extends State<InstructionDetailsWidget> {
                     width: 180,
                     initialSelection: xAxisMode,
                     label: const Text("X-Axis"),
-                    onSelected: (value) => setState(() => xAxisMode = value!),
+                    onSelected: (value) => setState(() => xAxisMode = value ?? XAxisType.position),
                     dropdownMenuEntries: [
                       const DropdownMenuEntry<XAxisType>(
                         value: XAxisType.time,
@@ -228,7 +228,7 @@ class _InstructionDetailsWidgetState extends State<InstructionDetailsWidget> {
                   DropdownMenu<YAxisType>(
                     initialSelection: yAxisMode,
                     width: 180,
-                    onSelected: (value) => setState(() => yAxisMode = value!),
+                    onSelected: (value) => setState(() => yAxisMode = value ?? YAxisType.velocity),
                     label: const Text("Y-Axis"),
                     dropdownMenuEntries: [
                       const DropdownMenuEntry<YAxisType>(

@@ -81,9 +81,12 @@ class _ObstacleCreatorState extends State<ObstacleCreator> {
                                               )
                                               .toList(),
                                           onSelected: (value) async {
+
+                                            if (value == null) return;
+
                                             Obstacle newObstacle;
 
-                                            switch (value!) {
+                                            switch (value) {
                                               case ObstacleType.rectangle:
                                                 newObstacle = RectangleObstacle.base();
                                                 break;

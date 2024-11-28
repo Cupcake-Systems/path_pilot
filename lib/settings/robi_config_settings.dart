@@ -38,14 +38,14 @@ class _RobiConfigSettingsPageState extends State<RobiConfigSettingsPage> {
                 onPressed: () => viewRobiConfigDialog(defaultRobiConfig),
               ),
             ),
-            onChanged: (value) => selectConfig(value!),
+            onChanged: (value) => selectConfig(value ?? defaultRobiConfig),
           ),
           const Divider(height: 1),
           for (final config in RobiConfigStorage.configs) ...[
             RadioListTile<RobiConfig>(
               groupValue: selectedConfig,
               value: config,
-              onChanged: (value) => selectConfig(value!),
+              onChanged: (value) => selectConfig(value ?? defaultRobiConfig),
               title: Text(config.name, style: const TextStyle(fontWeight: FontWeight.bold)),
               subtitle: Row(
                 mainAxisSize: MainAxisSize.min,
