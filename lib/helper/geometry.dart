@@ -3,6 +3,8 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:vector_math/vector_math.dart';
 
+final double log2 = log(2);
+
 Alignment polarToAlignment(final double deg) => Alignment(cosD(deg), -sinD(deg));
 
 Vector2 polarToCartesian(double deg, double radius) => Vector2(cosD(deg) * radius, sinD(deg) * radius);
