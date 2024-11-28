@@ -152,6 +152,7 @@ Future<File?> pickFileAndWriteWithStatusMessage({
           key: _formKey,
           child: TextFormField(
             controller: controller,
+            autofocus: true,
             decoration: InputDecoration(hintText: "File name", suffix: Text(extension)),
             inputFormatters: [
               FilteringTextInputFormatter.allow(RegExp(r"[a-zA-Z0-9\.\-_]")),
