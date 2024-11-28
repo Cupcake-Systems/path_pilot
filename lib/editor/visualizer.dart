@@ -14,7 +14,7 @@ import 'package:path_pilot/robi_api/robi_utils.dart';
 import 'package:vector_math/vector_math.dart' show Vector2;
 
 import '../helper/geometry.dart';
-import 'export_as_image.dart';
+import 'visualizer_image_exporter.dart';
 import 'obstacles/obstacle.dart';
 
 class InstructionsVisualizer extends Visualizer {
@@ -304,7 +304,9 @@ class Visualizer extends StatelessWidget {
                                 },
                               ),
                               IconButton(
-                                onPressed: () => exportVisualizerAsImageDialog(this, context),
+                                onPressed: () => Navigator.of(context).push(MaterialPageRoute(
+                                  builder: (context) => VisualizerImageExporter(viz: this),
+                                )),
                                 icon: const Icon(Icons.image),
                               ),
                             ],
