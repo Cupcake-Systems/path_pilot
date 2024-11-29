@@ -48,6 +48,7 @@ class _InteractableIrVisualizerState extends State<InteractableIrVisualizer> {
   bool lockToRobi = false;
   bool updateRobi = false;
   double timeOffset = 0;
+  double speedMultiplier = 1;
 
   final LinePainterVisibilitySettings visibilitySettings = LinePainterVisibilitySettings.of([
     ...LinePainterVisibilitySettings.universalSettings,
@@ -64,7 +65,7 @@ class _InteractableIrVisualizerState extends State<InteractableIrVisualizer> {
 
   @override
   Widget build(BuildContext context) {
-    double timeSnapshot = timeOffset + deltaCounter.elapsedMilliseconds / 1000;
+    double timeSnapshot = timeOffset + deltaCounter.elapsedMilliseconds / 1000 * speedMultiplier;
 
     if (timeSnapshot >= widget.totalTime) {
       timeSnapshot = widget.totalTime;
@@ -130,6 +131,12 @@ class _InteractableIrVisualizerState extends State<InteractableIrVisualizer> {
         } else {
           setState(() => pause());
         }
+      },
+      speedMultiplier: speedMultiplier,
+      onSpeedMultiplierChanged: (newSpeed) {
+        timeOffset = timeSnapshot;
+        deltaCounter.reset();
+        setState(() => speedMultiplier = newSpeed);
       },
     );
   }
@@ -216,6 +223,7 @@ class _InteractableInstructionsVisualizerState extends State<InteractableInstruc
   bool lockToRobi = false;
   bool updateRobi = false;
   double timeOffset = 0;
+  double speedMultiplier = 1;
 
   final deltaCounter = Stopwatch();
   final LinePainterVisibilitySettings visibilitySettings = LinePainterVisibilitySettings.of([
@@ -225,7 +233,7 @@ class _InteractableInstructionsVisualizerState extends State<InteractableInstruc
 
   @override
   Widget build(BuildContext context) {
-    double timeSnapshot = timeOffset + deltaCounter.elapsedMilliseconds / 1000;
+    double timeSnapshot = timeOffset + deltaCounter.elapsedMilliseconds / 1000 * speedMultiplier;
 
     if (timeSnapshot >= widget.totalTime) {
       timeSnapshot = widget.totalTime;
@@ -287,6 +295,8 @@ class _InteractableInstructionsVisualizerState extends State<InteractableInstruc
           setState(() => pause());
         }
       },
+      speedMultiplier: speedMultiplier,
+      onSpeedMultiplierChanged: (newSpeed) => setState(() => speedMultiplier = newSpeed),
     );
   }
 

@@ -36,6 +36,8 @@ class InstructionsVisualizer extends Visualizer {
     required super.obstacles,
     required super.visibilitySettings,
     required super.onVisibilitySettingsChange,
+    required super.onSpeedMultiplierChanged,
+    required super.speedMultiplier,
     super.enableTimeInput,
   }) : super(
           simulationResult: simulationResult,
@@ -66,6 +68,8 @@ class IrVisualizer extends Visualizer {
     required super.obstacles,
     required super.measurementTimeDelta,
     required super.onVisibilitySettingsChange,
+    required super.onSpeedMultiplierChanged,
+    required super.speedMultiplier,
   }) : super(
           irCalculatorResultAndSettings: (irCalculatorResult, irReadPainterSettings),
           robiStateType: RobiStateType.leftRight,
@@ -105,6 +109,9 @@ class Visualizer extends StatelessWidget {
   final bool play;
   final void Function(bool play) onTogglePlay;
 
+  final double speedMultiplier;
+  final void Function(double newSpeedMultiplier) onSpeedMultiplierChanged;
+
   static const double minZoom = 100;
   static const double maxZoom = 1000;
 
@@ -128,6 +135,8 @@ class Visualizer extends StatelessWidget {
     required this.obstacles,
     required this.visibilitySettings,
     required this.onVisibilitySettingsChange,
+    required this.onSpeedMultiplierChanged,
+    required this.speedMultiplier,
     this.enableTimeInput = true,
     this.simulationResult,
     this.irCalculatorResultAndSettings,
@@ -212,6 +221,7 @@ class Visualizer extends StatelessWidget {
               padding: const EdgeInsets.all(8.0),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   Stack(
                     alignment: Alignment.center,
@@ -244,84 +254,88 @@ class Visualizer extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(height: 4),
-                  Stack(
-                    alignment: Alignment.center,
+                  Wrap(
+                    alignment: WrapAlignment.spaceBetween,
                     children: [
-                      Align(
-                        alignment: Alignment.centerLeft,
-                        child: Padding(
-                          padding: const EdgeInsets.only(right: 78),
-                          child: Wrap(
-                            alignment: WrapAlignment.center,
-                            crossAxisAlignment: WrapCrossAlignment.center,
-                            spacing: 8,
-                            children: [
-                              IconButton(
-                                onPressed: () => onTogglePlay(!play),
-                                icon: Icon(play ? Icons.pause : Icons.play_arrow),
-                                iconSize: 32,
-                              ),
-                              IconButton(
-                                onPressed: () => onZoomChanged(zoom, offset, !lockToRobi),
-                                icon: Icon(lockToRobi ? Icons.lock : Icons.lock_open),
-                              ),
-                              IconButton(
-                                onPressed: () => onZoomChanged(zoom, Offset.zero, false),
-                                icon: const Icon(Icons.center_focus_strong),
-                              ),
-                              PopupMenuButton(
-                                tooltip: "",
-                                icon: Icon(
-                                  Icons.visibility,
-                                  color: Colors.grey[400],
-                                ),
-                                itemBuilder: (context) {
-                                  Widget createEntry(LinePainterVisibility v) => StatefulBuilder(
-                                        builder: (context, setState) => CheckedPopupMenuItem(
-                                          value: visibilitySettings.isVisible(v),
-                                          checked: visibilitySettings.isVisible(v),
-                                          child: Text(LinePainterVisibilitySettings.nameOf(v)),
-                                          onTap: () {
-                                            setState(() => visibilitySettings.set(v, !visibilitySettings.isVisible(v)));
-                                            onVisibilitySettingsChange();
-                                          },
-                                        ),
-                                      );
-
-                                  final widgets = <PopupMenuEntry>[];
-                                  for (final v in visibilitySettings.availableUniversalSettings) {
-                                    widgets.add(PopupMenuItem(child: createEntry(v)));
-                                  }
-
-                                  widgets.add(const PopupMenuDivider());
-                                  for (final v in visibilitySettings.availableNonUniversalSettings) {
-                                    widgets.add(PopupMenuItem(
-                                      child: createEntry(v),
-                                    ));
-                                  }
-
-                                  return widgets;
-                                },
-                              ),
-                              IconButton(
-                                onPressed: () => Navigator.of(context).push(MaterialPageRoute(
-                                  builder: (context) => VisualizerImageExporter(viz: this),
-                                )),
-                                icon: const Icon(Icons.image),
-                              ),
-                            ],
+                      Wrap(
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        alignment: WrapAlignment.start,
+                        spacing: 8,
+                        children: [
+                          IconButton(
+                            onPressed: () => onTogglePlay(!play),
+                            icon: Icon(play ? Icons.pause : Icons.play_arrow),
+                            iconSize: 32,
                           ),
-                        ),
+                          IconButton(
+                            onPressed: () => onZoomChanged(zoom, offset, !lockToRobi),
+                            icon: Icon(lockToRobi ? Icons.lock : Icons.lock_open),
+                          ),
+                          IconButton(
+                            onPressed: () => onZoomChanged(zoom, Offset.zero, false),
+                            icon: const Icon(Icons.center_focus_strong),
+                          ),
+                          PopupMenuButton(
+                            tooltip: "",
+                            icon: Icon(
+                              Icons.visibility,
+                              color: Colors.grey[400],
+                            ),
+                            itemBuilder: (context) {
+                              Widget createEntry(LinePainterVisibility v) => StatefulBuilder(
+                                    builder: (context, setState) => CheckedPopupMenuItem(
+                                      value: visibilitySettings.isVisible(v),
+                                      checked: visibilitySettings.isVisible(v),
+                                      child: Text(LinePainterVisibilitySettings.nameOf(v)),
+                                      onTap: () {
+                                        setState(() => visibilitySettings.set(v, !visibilitySettings.isVisible(v)));
+                                        onVisibilitySettingsChange();
+                                      },
+                                    ),
+                                  );
+
+                              final widgets = <PopupMenuEntry>[];
+                              for (final v in visibilitySettings.availableUniversalSettings) {
+                                widgets.add(PopupMenuItem(child: createEntry(v)));
+                              }
+
+                              widgets.add(const PopupMenuDivider());
+                              for (final v in visibilitySettings.availableNonUniversalSettings) {
+                                widgets.add(PopupMenuItem(
+                                  child: createEntry(v),
+                                ));
+                              }
+
+                              return widgets;
+                            },
+                          ),
+                          IconButton(
+                            onPressed: () => Navigator.of(context).push(MaterialPageRoute(
+                              builder: (context) => VisualizerImageExporter(viz: this),
+                            )),
+                            icon: const Icon(Icons.image),
+                          ),
+                        ],
                       ),
-                      Align(
-                        alignment: Alignment.centerRight,
-                        child: Padding(
-                          padding: const EdgeInsets.only(right: 8.0),
-                          child: Text(
-                            "$timeString / $totalTimeString",
-                            textAlign: TextAlign.center,
+                      Wrap(
+                        alignment: WrapAlignment.end,
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        spacing: 8,
+                        children: [
+                          DropdownButton<double>(
+                            value: speedMultiplier,
+                            items: const [0.25, 0.5, 1.0, 2.0, 5.0, 10.0].map((e) => DropdownMenuItem(value: e, child: Text("$e x"))).toList(growable: false),
+                            onChanged: (value) => onSpeedMultiplierChanged(value ?? 1),
+                            borderRadius: BorderRadius.circular(8),
                           ),
-                        ),
+                          Padding(
+                            padding: const EdgeInsets.only(right: 8.0),
+                            child: Text(
+                              "$timeString / $totalTimeString",
+                              textAlign: TextAlign.center,
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),
@@ -367,9 +381,21 @@ class Visualizer extends StatelessWidget {
 
 String printDuration(Duration duration, bool showMilliseconds) {
   String twoDigits(int n) => n.toString().padLeft(2, "0").substring(0, 2);
-  String twoDigitMinutes = duration.inMinutes.remainder(60).abs().toString();
+  String hours = duration.inHours.remainder(24).abs().toString();
+  String minutes = duration.inMinutes.remainder(60).abs().toString();
   String twoDigitSeconds = twoDigits(duration.inSeconds.remainder(60).abs());
-  if (!showMilliseconds) return "$twoDigitMinutes:$twoDigitSeconds";
+
+  String res = "$minutes:$twoDigitSeconds";
+
+  if (duration.inHours > 0) {
+    minutes = twoDigits(duration.inMinutes.remainder(60).abs());
+    res = "$hours:$minutes:$twoDigitSeconds";
+  }
+
+  if (!showMilliseconds) return res;
+
   String twoDigitMilliseconds = twoDigits(duration.inMilliseconds.remainder(1000).abs());
-  return "$twoDigitMinutes:$twoDigitSeconds:$twoDigitMilliseconds";
+
+  res = "$res.$twoDigitMilliseconds";
+  return res;
 }
