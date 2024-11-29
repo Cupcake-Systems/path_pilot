@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 
-import 'package:flutter/widgets.dart';
+import 'package:flutter/material.dart';
 import 'package:path_pilot/editor/obstacles/obstacle.dart';
 import 'package:path_pilot/helper/file_manager.dart';
 import 'package:path_pilot/robi_api/robi_path_serializer.dart';
@@ -48,7 +48,14 @@ final class SaveData {
 
   static Future<SaveData?> fromFileWithStatusMessage(String path, BuildContext context) async {
     final json = await readStringFromFileWithStatusMessage(path, context);
-    if (json == null) return null;
+    if (json == null) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Failed to decode data from $path")),
+        );
+      }
+      return null;
+    }
     if (json.isEmpty) return SaveData.empty;
     return fromJson(json);
   }

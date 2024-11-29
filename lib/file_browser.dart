@@ -15,7 +15,6 @@ import 'package:path_pilot/robi_api/ir_read_api.dart';
 import 'package:path_pilot/robi_api/robi_utils.dart';
 import 'package:path_pilot/settings/robi_config_settings.dart';
 import 'package:path_pilot/settings/settings.dart';
-import 'package:path_pilot/welcome_screen.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 
@@ -37,7 +36,6 @@ class _FileBrowserState extends State<FileBrowser> with WidgetsBindingObserver {
 
   // Instructions Editor
   String? openedFile;
-  String? errorMessage;
   SaveData loadedData = SaveData.empty;
   SimulationResult? simulationResult;
 
@@ -74,6 +72,27 @@ class _FileBrowserState extends State<FileBrowser> with WidgetsBindingObserver {
 
   @override
   Widget build(BuildContext context) {
+    List<Widget> availableNewFileActions = [
+      if (viewMode == ViewMode.instructions) ...[
+        ListTile(
+          title: const Text("New"),
+          onTap: newFile,
+          leading: const Icon(Icons.add),
+        ),
+        ListTile(
+          title: const Text("Open"),
+          onTap: openFile,
+          leading: const Icon(Icons.folder_open),
+        ),
+      ] else if (viewMode == ViewMode.irReadings) ...[
+        ListTile(
+          title: const Text("Import IR Reading"),
+          onTap: importIrReading,
+          leading: const Icon(Icons.file_download_outlined),
+        ),
+      ],
+    ];
+
     return Scaffold(
       appBar: AppBar(
         title: Text(viewMode == ViewMode.instructions ? "Instructions" : "IR Readings"),
@@ -108,30 +127,19 @@ class _FileBrowserState extends State<FileBrowser> with WidgetsBindingObserver {
                 if (isSavedNotifier.lastSave != null) {
                   saveText = "Last saved: ${DateFormat('kk:mm').format(isSavedNotifier.lastSave!)}\n";
                 }
+
                 final isSaving = isSavedNotifier.isSaving;
                 return PopupMenuButton(
                   itemBuilder: (context) => <PopupMenuEntry>[
+                    for (final action in availableNewFileActions) PopupMenuItem(child: action),
                     if (viewMode == ViewMode.instructions) ...[
-                      PopupMenuItem(
-                        child: ListTile(
-                          title: const Text("New"),
-                          onTap: newFile,
-                          leading: const Icon(Icons.add),
-                        ),
-                      ),
-                      PopupMenuItem(
-                        child: ListTile(
-                          title: const Text("Open"),
-                          onTap: openFile,
-                          leading: const Icon(Icons.folder_open),
-                        ),
-                      ),
                       if (openedFile != null) ...[
                         const PopupMenuDivider(height: 1),
                         PopupMenuItem(
-                          enabled: !isSaving,
+                          enabled: !isSaving && !isSavedNotifier.isSaved,
                           onTap: saveFile,
                           child: ListTile(
+                            enabled: !isSaving && !isSavedNotifier.isSaved,
                             title: const Text("Save"),
                             subtitle: Text("$saveText$openedFile"),
                             leading: isSaving
@@ -144,41 +152,54 @@ class _FileBrowserState extends State<FileBrowser> with WidgetsBindingObserver {
                           ),
                         ),
                         PopupMenuItem(
-                          child: ListTile(
-                            title: const Text("Save As"),
-                            onTap: saveAsFile,
-                            leading: const Icon(Icons.save_as),
+                          onTap: saveAsFile,
+                          child: const ListTile(
+                            title: Text("Save As"),
+                            leading: Icon(Icons.save_as),
                           ),
                         ),
                         const PopupMenuDivider(height: 1),
                         PopupMenuItem(
-                          child: ListTile(
-                            title: const Text("Export"),
-                            onTap: () {
-                              if (simulationResult == null || simulationResult!.instructionResults.isEmpty) {
-                                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                                  content: Text("Nothing to export"),
-                                  duration: Duration(seconds: 2),
-                                ));
-                                return;
-                              }
-                              Exporter.exportToFile(
-                                selectedRobiConfig,
-                                simulationResult!.instructionResults,
-                                context,
-                              );
-                            },
-                            leading: const Icon(Icons.file_upload_outlined),
+                          onTap: () {
+                            if (simulationResult == null || simulationResult!.instructionResults.isEmpty) {
+                              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                                content: Text("Nothing to export"),
+                                duration: Duration(seconds: 2),
+                              ));
+                              return;
+                            }
+                            Exporter.exportToFile(
+                              selectedRobiConfig,
+                              simulationResult!.instructionResults,
+                              context,
+                            );
+                          },
+                          child: const ListTile(
+                            title: Text("Export"),
+                            leading: Icon(Icons.file_upload_outlined),
+                          ),
+                        ),
+                        const PopupMenuDivider(height: 1),
+                        PopupMenuItem(
+                          enabled: !isSaving,
+                          onTap: () async {
+                            if (!isSavedNotifier.isSaved) await saveFile();
+                            setState(() {
+                              openedFile = null;
+                              loadedData = SaveData.empty;
+                              simulationResult = null;
+                            });
+                          },
+                          child: const ListTile(
+                            title: Text("Save & Close"),
+                            leading: Icon(Icons.close),
                           ),
                         ),
                       ],
                     ] else if (viewMode == ViewMode.irReadings) ...[
                       PopupMenuItem(
-                        child: ListTile(
-                          title: const Text("Import IR Reading"),
-                          onTap: importIrReading,
-                          leading: const Icon(Icons.file_download_outlined),
-                        ),
+                        onTap: () => setState(() => irReadResult = null),
+                        child: const ListTile(title: Text("Close"), leading: Icon(Icons.close)),
                       ),
                     ],
                   ],
@@ -328,20 +349,33 @@ class _FileBrowserState extends State<FileBrowser> with WidgetsBindingObserver {
           ],
         ),
       ),
-      body: getView(),
+      body: getView(availableNewFileActions),
     );
   }
 
-  Widget getView() {
+  Widget getView(List<Widget> availableNewFileActions) {
+    if ((openedFile == null && viewMode == ViewMode.instructions) || (irReadResult == null && viewMode == ViewMode.irReadings)) {
+      return Center(
+        child: IntrinsicWidth(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              for (final action in availableNewFileActions) ...[
+                Card(
+                  clipBehavior: Clip.antiAlias,
+                  child: action,
+                ),
+              ]
+            ],
+          ),
+        ),
+      );
+    }
+
     switch (viewMode) {
       case ViewMode.instructions:
-        if (openedFile == null) {
-          return WelcomeScreen(
-            newFilePressed: newFile,
-            openFilePressed: openFile,
-            errorMessage: errorMessage,
-          );
-        }
         return Editor(
           key: ObjectKey(openedFile),
           subViewMode: subViewMode,
@@ -419,7 +453,6 @@ class _FileBrowserState extends State<FileBrowser> with WidgetsBindingObserver {
 
     setState(() {
       openedFile = result.absolute.path;
-      errorMessage = null;
     });
   }
 
@@ -435,9 +468,9 @@ class _FileBrowserState extends State<FileBrowser> with WidgetsBindingObserver {
     isSavedNotifier.isSaved = true;
 
     setState(() {
-      openedFile = result.absolute.path;
       loadedData = SaveData.empty;
-      errorMessage = null;
+      openedFile = null;
+      simulationResult = null;
     });
   }
 
@@ -447,28 +480,19 @@ class _FileBrowserState extends State<FileBrowser> with WidgetsBindingObserver {
       dialogTitle: "Select Robi Script File",
       allowedExtensions: ["json", "robi_script.json"],
     );
-    if (result == null) return;
+    if (result == null || !mounted) return;
 
-    if (await tryLoadingSaveData(result)) {
-      isSavedNotifier.isSaved = true;
-    }
-  }
+    final loadedData = await SaveData.fromFileWithStatusMessage(result, context);
 
-  Future<bool> tryLoadingSaveData(String file) async {
-    final instructions = await SaveData.fromFileWithStatusMessage(file, context);
+    if (loadedData == null) return;
+
+    isSavedNotifier.isSaved = true;
 
     setState(() {
-      if (instructions == null) {
-        errorMessage = "Failed to decode content!";
-        openedFile = null;
-      } else {
-        errorMessage = null;
-        openedFile = file;
-        loadedData = instructions;
-      }
+      openedFile = result;
+      this.loadedData = loadedData;
+      simulationResult = null;
     });
-
-    return instructions != null;
   }
 }
 
