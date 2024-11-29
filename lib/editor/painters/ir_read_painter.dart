@@ -152,10 +152,11 @@ class IrReadPainter extends MyPainter {
     if (pathApproximation == null) return;
 
     final path = Path();
+    final paint = Paint()..color = Colors.white;
 
     for (final point in pathApproximation!) {
       if (expandedAreaForIrReadings.intersectsWithVector2(point)) {
-        drawCircle(point, Paint()..color = Colors.white);
+        drawCircle(point, paint);
       }
       addLine(point, path);
     }
