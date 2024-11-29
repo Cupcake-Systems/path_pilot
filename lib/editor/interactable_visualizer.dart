@@ -57,6 +57,12 @@ class _InteractableIrVisualizerState extends State<InteractableIrVisualizer> {
   final deltaCounter = Stopwatch();
 
   @override
+  void dispose() {
+    deltaCounter.stop();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     double timeSnapshot = timeOffset + deltaCounter.elapsedMilliseconds / 1000;
 
