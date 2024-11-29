@@ -1,10 +1,11 @@
 import 'dart:async';
-import 'dart:convert';
 import 'dart:ui';
 
 import 'package:path_pilot/robi_api/robi_utils.dart';
 import 'package:path_pilot/settings/settings.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+import 'helper/json_parser.dart';
 
 class AppData {
   static late final SharedPreferences _prefs;
@@ -32,7 +33,7 @@ class RobiConfigStorage {
     try {
       final storedString = AppData._prefs.getString(_storageKey);
       if (storedString == null) return [];
-      final List jsonList = jsonDecode(storedString) as List;
+      final List jsonList = JsonParser.parseIsolated(storedString) as List;
       return jsonList.map((e) => RobiConfig.fromJson(e)).toList();
     } catch (e) {
       return [];
@@ -40,7 +41,7 @@ class RobiConfigStorage {
   }
 
   static void _saveConfigs() {
-    final jsonString = jsonEncode(_storedConfigs.map((e) => e.toJson()).toList());
+    final jsonString = JsonParser.stringify(_storedConfigs.map((e) => e.toJson()).toList());
     AppData._prefs.setString(_storageKey, jsonString);
   }
 

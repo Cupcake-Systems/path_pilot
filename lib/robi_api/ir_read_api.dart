@@ -1,8 +1,8 @@
 import 'dart:math';
 import 'dart:typed_data';
 
-import 'package:flutter/material.dart';
 import 'package:path_pilot/editor/painters/robi_painter.dart';
+import 'package:path_pilot/helper/dialogs.dart';
 import 'package:path_pilot/helper/file_manager.dart';
 import 'package:path_pilot/robi_api/robi_utils.dart';
 import 'package:vector_math/vector_math.dart';
@@ -71,15 +71,13 @@ class IrReadResult {
     );
   }
 
-  static Future<IrReadResult?> fromFile(String path, BuildContext context) async {
-    final bytes = await readBytesFromFileWithWithStatusMessage(path, context);
+  static Future<IrReadResult?> fromFile(String path) async {
+    final bytes = await readBytesFromFileWithWithStatusMessage(path);
     if (bytes == null) return null;
     try {
       return IrReadResult.fromData(bytes.buffer);
     } on Exception {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Failed to decode data!")));
-      }
+      showSnackBar("Failed to decode data!");
       return null;
     }
   }

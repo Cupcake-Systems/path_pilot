@@ -7,6 +7,7 @@ import 'package:flutter/rendering.dart';
 import 'package:path_pilot/editor/painters/line_painter.dart';
 import 'package:path_pilot/editor/painters/line_painter_settings/line_painter_visibility_settings.dart';
 import 'package:path_pilot/editor/visualizer.dart';
+import 'package:path_pilot/helper/dialogs.dart';
 
 import '../helper/file_manager.dart';
 import '../helper/geometry.dart';
@@ -233,9 +234,7 @@ class _VisualizerImageExporterState extends State<VisualizerImageExporter> {
                                         );
                                       } catch (e) {
                                         setState(() => isConvertingToImage = false);
-                                        if (context.mounted) {
-                                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Failed to convert image: $e")));
-                                        }
+                                        showSnackBar("Failed to convert image: $e");
                                         return;
                                       }
                                     },

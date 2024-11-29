@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:path_pilot/main.dart';
 
 Future<bool> confirmDialog(BuildContext context, String title, String content) async {
   final answer = await showDialog<bool>(
@@ -21,4 +22,13 @@ Future<bool> confirmDialog(BuildContext context, String title, String content) a
     },
   );
   return answer == true;
+}
+
+void showSnackBar(String message, {Duration duration = const Duration(seconds: 3)}) {
+  snackBarKey.currentState?.showSnackBar(
+    SnackBar(
+      content: Text(message),
+      duration: duration,
+    ),
+  );
 }

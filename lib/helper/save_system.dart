@@ -2,9 +2,10 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 
-import 'package:flutter/material.dart';
 import 'package:path_pilot/editor/obstacles/obstacle.dart';
+import 'package:path_pilot/helper/dialogs.dart';
 import 'package:path_pilot/helper/file_manager.dart';
+import 'package:path_pilot/helper/json_parser.dart';
 import 'package:path_pilot/robi_api/robi_path_serializer.dart';
 
 import '../editor/obstacles/obstacles_serializer.dart';
@@ -23,7 +24,7 @@ final class SaveData {
 
   static Future<SaveData?> fromJson(String json) async {
     try {
-      final data = jsonDecode(json);
+      final data = await JsonParser.parseIsolated(json);
       final instructions = data["instructions"];
       final obstacles = data["obstacles"];
 
@@ -46,34 +47,31 @@ final class SaveData {
     }
   }
 
-  static Future<SaveData?> fromFileWithStatusMessage(String path, BuildContext context) async {
-    final json = await readStringFromFileWithStatusMessage(path, context);
+  static Future<SaveData?> fromFileWithStatusMessage(String path) async {
+    final json = await readStringFromFileWithStatusMessage(path);
     if (json == null) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Failed to decode data from $path")),
-        );
-      }
+      showSnackBar("Failed to decode data from $path");
       return null;
     }
     if (json.isEmpty) return SaveData.empty;
     return fromJson(json);
   }
 
-  String toJson() {
+  Future<String> toJson() {
     final saveData = {
       "instructions": RobiPathSerializer.encode(instructions),
       "obstacles": ObstaclesSerializer.encode(obstacles),
     };
-    return jsonEncode(saveData);
+    return JsonParser.stringifyIsolated(saveData);
   }
 
-  Uint8List toBytes() {
-    return utf8.encode(toJson());
+  Future<Uint8List> toBytes() async {
+    return utf8.encode(await toJson());
   }
 
-  Future<File?> saveToFileWithStatusMessage(String path, BuildContext? context) {
-    return writeStringToFileWithStatusMessage(path, toJson(), context);
+  Future<File?> saveToFileWithStatusMessage(String path) async {
+    final json = await toJson();
+    return writeStringToFileWithStatusMessage(path, json);
   }
 
   SaveData copyWith({List<MissionInstruction>? instructions, List<Obstacle>? obstacles}) {

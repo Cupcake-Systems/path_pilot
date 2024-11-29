@@ -3,6 +3,7 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:path_pilot/editor/obstacles/obstacle.dart';
+import 'package:path_pilot/helper/dialogs.dart';
 import 'package:path_pilot/helper/file_manager.dart';
 
 class ImageObstacleSettings extends StatefulWidget {
@@ -147,9 +148,7 @@ class _ImageObstacleSettingsState extends State<ImageObstacleSettings> {
 
             setState(() {
               if (!imageSuccessfullySet) {
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Failed to load image")));
-                }
+                showSnackBar("Failed to load image");
                 return;
               }
               cachedImage = null;

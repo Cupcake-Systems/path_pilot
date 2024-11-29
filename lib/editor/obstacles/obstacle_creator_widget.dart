@@ -6,6 +6,7 @@ import 'package:flutter_expandable_fab/flutter_expandable_fab.dart';
 import 'package:path_pilot/editor/obstacles/obstacle_settings/circle_obstacle_settings.dart';
 import 'package:path_pilot/helper/file_manager.dart';
 
+import '../../helper/dialogs.dart';
 import '../../helper/save_system.dart';
 import 'obstacle.dart';
 import 'obstacle_settings/image_obstacle_settings.dart';
@@ -154,8 +155,10 @@ class _ObstacleCreatorState extends State<ObstacleCreator> {
                 heroTag: 'saveObstacles',
                 onPressed: () async {
                   final saveData = SaveData(obstacles: obstacles, instructions: []);
+                  final bytes = await saveData.toBytes();
+                  if (!context.mounted) return;
                   final res = await pickFileAndWriteWithStatusMessage(
-                    bytes: saveData.toBytes(),
+                    bytes: bytes,
                     context: context,
                     extension: ".robi_script.json",
                     showFilePathInMessage: true,
@@ -174,13 +177,12 @@ class _ObstacleCreatorState extends State<ObstacleCreator> {
               if (lastFilePath != null) ...[
                 FloatingActionButton.small(
                   heroTag: 'saveObstacles',
-                  onPressed: () {
+                  onPressed: () async {
                     if (lastFilePath == null) return;
                     final saveData = SaveData(obstacles: obstacles, instructions: []);
-                    writeStringToFileWithStatusMessage(
+                    await writeStringToFileWithStatusMessage(
                       lastFilePath!,
-                      saveData.toJson(),
-                      context,
+                      await saveData.toJson(),
                       showFilePathInMessage: true,
                       successMessage: "${saveData.obstacles.length} Obstacles saved",
                     );
@@ -195,15 +197,14 @@ class _ObstacleCreatorState extends State<ObstacleCreator> {
             heroTag: 'loadObstacles',
             onPressed: () async {
               final file = await pickSingleFile(context: context, allowedExtensions: ['json', 'robi_script.json']);
-              if (file == null || !context.mounted) return;
-              final saveData = await SaveData.fromFileWithStatusMessage(file, context);
+              if (file == null) return;
+              final saveData = await SaveData.fromFileWithStatusMessage(file);
               if (saveData == null) return;
               setState(() {
                 obstacles.addAll(saveData.obstacles);
               });
               widget.onObstaclesChange(obstacles);
-              if (!context.mounted) return;
-              ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('${saveData.obstacles.length} Obstacles loaded')));
+              showSnackBar('${saveData.obstacles.length} Obstacles loaded');
             },
             child: const Icon(Icons.file_download_outlined),
           ),

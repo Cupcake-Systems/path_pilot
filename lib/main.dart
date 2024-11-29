@@ -14,7 +14,7 @@ late final PackageInfo packageInfo;
 final deviceInfo = DeviceInfoPlugin();
 
 final rand = Random();
-bool isPortrait = true;
+final snackBarKey = GlobalKey<ScaffoldMessengerState>();
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -32,9 +32,9 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    isPortrait = MediaQuery.of(context).orientation == Orientation.portrait;
     return MaterialApp(
       title: 'Path Pilot',
+      scaffoldMessengerKey: snackBarKey,
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.cyan, brightness: Brightness.dark),
         useMaterial3: true,

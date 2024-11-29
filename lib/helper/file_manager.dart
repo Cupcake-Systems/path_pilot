@@ -3,9 +3,11 @@ import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:filesystem_picker/filesystem_picker.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:path_pilot/file_browser.dart';
+import 'package:path_pilot/helper/dialogs.dart';
 
 get fileSystemShortcuts => getShortcuts();
 
@@ -81,66 +83,50 @@ List<FilesystemPickerShortcut> getShortcuts() {
 
 Future<File?> writeBytesToFileWithStatusMessage(
   String path,
-  List<int> content,
-  BuildContext? context, {
+  List<int> content, {
   bool showFilePathInMessage = false,
   String? successMessage,
 }) async {
   try {
-    final f = await File(path).writeAsBytes(content);
-    if (context != null && context.mounted) {
-      String msg = successMessage ?? "File written successfully";
-      if (showFilePathInMessage) {
-        msg = "$msg to \"$path\"";
-      }
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(msg),
-          duration: const Duration(seconds: 2),
-        ),
-      );
+    final file = File(path);
+    final f = await compute(file.writeAsBytes, content);
+    String msg = successMessage ?? "File written successfully";
+    if (showFilePathInMessage) {
+      msg = "$msg to \"$path\"";
     }
+    showSnackBar(msg, duration: const Duration(seconds: 2));
     return f;
   } catch (e) {
-    if (context != null && context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Failed to write to $path: $e")));
-    }
+    showSnackBar("Failed to write to $path: $e");
     return null;
   }
 }
 
 Future<File?> writeStringToFileWithStatusMessage(
   String path,
-  String content,
-  BuildContext? context, {
+  String content, {
   bool showFilePathInMessage = false,
   String? successMessage,
 }) {
-  return writeBytesToFileWithStatusMessage(path, utf8.encode(content), context, showFilePathInMessage: showFilePathInMessage, successMessage: successMessage);
+  return writeBytesToFileWithStatusMessage(path, utf8.encode(content), showFilePathInMessage: showFilePathInMessage, successMessage: successMessage);
 }
 
 final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
 
-Future<File?> pickFileAndWriteWithStatusMessage({
-  required Uint8List bytes,
-  required BuildContext context,
-  required String extension,
-  bool showFilePathInMessage = false,
-  String? successMessage,
-  bool overwriteWarning = true
-}) async {
+Future<File?> pickFileAndWriteWithStatusMessage(
+    {required Uint8List bytes, required BuildContext context, required String extension, bool showFilePathInMessage = false, String? successMessage, bool overwriteWarning = true}) async {
   final hasPermission = await getExternalStoragePermission();
 
-  if (!context.mounted) return null;
-
   if (!hasPermission) {
-    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Please grant storage permission")));
+    showSnackBar("Please grant storage permission");
     return null;
   }
 
   if (!extension.startsWith(".")) {
     extension = ".$extension";
   }
+
+  if (!context.mounted) return null;
 
   String? fileName = await showDialog<String?>(
     context: context,
@@ -225,7 +211,6 @@ Future<File?> pickFileAndWriteWithStatusMessage({
   return writeBytesToFileWithStatusMessage(
     filePath,
     bytes,
-    context.mounted ? context : null,
     showFilePathInMessage: showFilePathInMessage,
     successMessage: successMessage,
   );
@@ -263,20 +248,18 @@ Future<String?> pickSingleFile({
   return filePath;
 }
 
-Future<Uint8List?> readBytesFromFileWithWithStatusMessage(String path, BuildContext context) async {
+Future<Uint8List?> readBytesFromFileWithWithStatusMessage(String path) async {
   try {
     final f = File(path);
     return await f.readAsBytes();
   } catch (e) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text("Failed to read from $path: $e")),
-    );
+    showSnackBar("Failed to read from $path: $e");
     return null;
   }
 }
 
-Future<String?> readStringFromFileWithStatusMessage(String path, BuildContext context) async {
-  final bytes = await readBytesFromFileWithWithStatusMessage(path, context);
+Future<String?> readStringFromFileWithStatusMessage(String path) async {
+  final bytes = await readBytesFromFileWithWithStatusMessage(path);
   if (bytes == null) return null;
   return utf8.decode(bytes);
 }

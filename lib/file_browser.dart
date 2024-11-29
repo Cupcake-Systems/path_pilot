@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
@@ -7,6 +8,7 @@ import 'package:path_pilot/app_storage.dart';
 import 'package:path_pilot/constants.dart';
 import 'package:path_pilot/editor/editor.dart';
 import 'package:path_pilot/editor/obstacles/obstacle_creator_widget.dart';
+import 'package:path_pilot/helper/dialogs.dart';
 import 'package:path_pilot/helper/file_manager.dart';
 import 'package:path_pilot/helper/save_system.dart';
 import 'package:path_pilot/main.dart';
@@ -38,6 +40,7 @@ class _FileBrowserState extends State<FileBrowser> with WidgetsBindingObserver {
   String? openedFile;
   SaveData loadedData = SaveData.empty;
   SimulationResult? simulationResult;
+  bool isOpening = false;
 
   // IR Readings analysis
   IrReadResult? irReadResult;
@@ -82,13 +85,25 @@ class _FileBrowserState extends State<FileBrowser> with WidgetsBindingObserver {
         ListTile(
           title: const Text("Open"),
           onTap: openFile,
-          leading: const Icon(Icons.folder_open),
+          leading: isOpening
+              ? const SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(),
+                )
+              : const Icon(Icons.folder_open),
         ),
       ] else if (viewMode == ViewMode.irReadings) ...[
         ListTile(
           title: const Text("Import IR Reading"),
           onTap: importIrReading,
-          leading: const Icon(Icons.file_download_outlined),
+          leading: isOpening
+              ? const SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(),
+                )
+              : const Icon(Icons.file_download_outlined),
         ),
       ],
     ];
@@ -162,10 +177,7 @@ class _FileBrowserState extends State<FileBrowser> with WidgetsBindingObserver {
                         PopupMenuItem(
                           onTap: () {
                             if (simulationResult == null || simulationResult!.instructionResults.isEmpty) {
-                              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                                content: Text("Nothing to export"),
-                                duration: Duration(seconds: 2),
-                              ));
+                              showSnackBar("Nothing to export");
                               return;
                             }
                             Exporter.exportToFile(
@@ -418,9 +430,11 @@ class _FileBrowserState extends State<FileBrowser> with WidgetsBindingObserver {
       allowedExtensions: ["bin"],
     );
 
-    if (result == null || !mounted) return;
+    if (result == null) return;
 
-    final loaded = await IrReadResult.fromFile(result, context);
+    setState(() => isOpening = true);
+    final loaded = await IrReadResult.fromFile(result);
+    setState(() => isOpening = false);
 
     if (loaded == null) return;
 
@@ -433,7 +447,7 @@ class _FileBrowserState extends State<FileBrowser> with WidgetsBindingObserver {
     if (openedFile == null) return null;
 
     isSavedNotifier.isSaving = true;
-    final res = await loadedData.saveToFileWithStatusMessage(openedFile!, showStatusMessage ? context : null);
+    final res = await loadedData.saveToFileWithStatusMessage(openedFile!);
     if (res != null) {
       isSavedNotifier.isSaved = true;
     }
@@ -441,9 +455,13 @@ class _FileBrowserState extends State<FileBrowser> with WidgetsBindingObserver {
   }
 
   Future<void> saveAsFile() async {
+    final bytes = await loadedData.toBytes();
+
+    if (!mounted) return;
+
     final result = await pickFileAndWriteWithStatusMessage(
       context: context,
-      bytes: loadedData.toBytes(),
+      bytes: bytes,
       extension: ".robi_script.json",
     );
 
@@ -451,9 +469,7 @@ class _FileBrowserState extends State<FileBrowser> with WidgetsBindingObserver {
 
     isSavedNotifier.isSaved = true;
 
-    setState(() {
-      openedFile = result.absolute.path;
-    });
+    setState(() => openedFile = result.absolute.path);
   }
 
   Future<void> newFile() async {
@@ -480,9 +496,12 @@ class _FileBrowserState extends State<FileBrowser> with WidgetsBindingObserver {
       dialogTitle: "Select Robi Script File",
       allowedExtensions: ["json", "robi_script.json"],
     );
-    if (result == null || !mounted) return;
 
-    final loadedData = await SaveData.fromFileWithStatusMessage(result, context);
+    if (result == null) return;
+
+    setState(() => isOpening = true);
+    final loadedData = await SaveData.fromFileWithStatusMessage(result);
+    setState(() => isOpening = false);
 
     if (loadedData == null) return;
 
