@@ -273,8 +273,9 @@ class IrCalculator {
     List<Vector2> blackPoints = [Vector2(0, 0)];
 
     for (final measurement in irCalculatorResult.irData) {
-      if (measurement.$2.value < minBlackLevel) {
-        blackPoints.add(measurement.$2.position);
+      final darkestMeasurement = [measurement.$1, measurement.$2, measurement.$3].reduce((a, b) => a.value < b.value ? a : b);
+      if (darkestMeasurement.value < minBlackLevel) {
+        blackPoints.add(darkestMeasurement.position);
       }
     }
 
