@@ -85,7 +85,7 @@ class _InteractableIrVisualizerState extends State<InteractableIrVisualizer> {
       });
     }
 
-    final robiState = getStateAtTime(widget.irCalculatorResult, widget.irReadResult.resolution, timeSnapshot);
+    final robiState = getStateAtTime(widget.irCalculatorResult, widget.irReadResult, timeSnapshot);
     if (lockToRobi) {
       offset = Offset(-robiState.position.x, robiState.position.y) * zoom;
     }
@@ -141,9 +141,10 @@ class _InteractableIrVisualizerState extends State<InteractableIrVisualizer> {
     );
   }
 
-  static RobiState getStateAtTime(final IrCalculatorResult irCalcResult, final double measurementTimeDelta, final double t) {
-    final res = measurementTimeDelta;
+  static RobiState getStateAtTime(final IrCalculatorResult irCalcResult, final IrReadResult irReadResult, final double t) {
     final states = irCalcResult.robiStates;
+    final totalTime = irReadResult.totalTime;
+    final measurementTimeDelta = irReadResult.resolution;
 
     if (states.isEmpty) {
       return RobiState.zero;
@@ -151,13 +152,13 @@ class _InteractableIrVisualizerState extends State<InteractableIrVisualizer> {
       return states.first;
     }
 
-    for (int i = 0; i < states.length - 1; ++i) {
-      if (t <= res * (i + 1)) {
-        return states[i].interpolate(states[i + 1], (t - (res * i)) / res);
-      }
-    }
+    if (t >= totalTime) return states.last;
 
-    return states.last;
+    final stateIndex = (t / totalTime * (states.length - 1)).toInt();
+    final state = states[stateIndex];
+    final timeInState = t - state.timeStamp;
+
+    return state.interpolate(states[stateIndex + 1], timeInState / measurementTimeDelta);
   }
 
   static Measurement? getMeasurementAtTime(final IrReadResult irReadResult, final double t) {
@@ -170,8 +171,9 @@ class _InteractableIrVisualizerState extends State<InteractableIrVisualizer> {
     }
 
     if (t <= irReadResult.resolution) return measurements.first;
+    if (t >= irReadResult.totalTime) return measurements.last;
 
-    return measurements[(t / irReadResult.totalTime * measurements.length - 1).floor()];
+    return measurements[(t / irReadResult.totalTime * (measurements.length - 1)).toInt()];
   }
 
   void play() {

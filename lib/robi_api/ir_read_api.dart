@@ -56,7 +56,7 @@ final class Measurement {
 class IrReadResult {
   final double resolution;
   final List<Measurement> measurements;
-  late final double totalTime = resolution * measurements.length;
+  late final double totalTime = resolution * (measurements.length - 1);
 
   IrReadResult({required this.resolution, required this.measurements});
 
@@ -118,10 +118,6 @@ class IrCalculator {
     final halfTrackWidth = robiConfig.trackWidth / 2;
     final piOver2 = pi / 2;
 
-    final mc = sqrt(pow(robiConfig.distanceWheelIr, 2) + pow(halfTrackWidth, 2));
-    final rc = sqrt(pow(robiConfig.distanceWheelIr, 2) + pow(halfTrackWidth - robiConfig.irDistance, 2));
-    final lc = sqrt(pow(robiConfig.distanceWheelIr, 2) + pow(halfTrackWidth + robiConfig.irDistance, 2));
-
     Vector2 lastRightOffset = Vector2(0, -halfTrackWidth);
     Vector2 lastLeftOffset = Vector2(0, halfTrackWidth);
 
@@ -158,9 +154,11 @@ class IrCalculator {
 
       wheelPositions[i] = (lastLeftOffset, lastRightOffset);
 
+      final robiPosition = (lastLeftOffset + lastRightOffset) / 2;
+
       robiStates[i] = LeftRightRobiState(
         timeStamp: i * irReadResult.resolution,
-        position: (lastLeftOffset + lastRightOffset) / 2,
+        position: robiPosition,
         rotation: rotationRad * radians2Degrees,
         leftVelocity: leftVel,
         rightVelocity: rightVel,
@@ -182,14 +180,14 @@ class IrCalculator {
       }
 
       // IR Calculations
-      final double mAlpha = rotationRad + piOver2 - atan(robiConfig.distanceWheelIr / halfTrackWidth);
-      final double rAlpha = rotationRad + piOver2 - atan(robiConfig.distanceWheelIr / (halfTrackWidth - robiConfig.irDistance));
-      final double lAlpha = rotationRad + piOver2 - atan(robiConfig.distanceWheelIr / (halfTrackWidth + robiConfig.irDistance));
+
+      final middleIrPos = robiPosition + polarToCartesianRad(rotationRad, robiConfig.distanceWheelIr);
+      final lrDelta = polarToCartesianRad(rotationRad + piOver2, robiConfig.irDistance);
 
       irData[i] = (
-        IrReading(measurement.leftIr, lastRightOffset + Vector2(cos(lAlpha) * lc, sin(lAlpha) * lc)),
-        IrReading(measurement.middleIr, lastRightOffset + Vector2(cos(mAlpha) * mc, sin(mAlpha) * mc)),
-        IrReading(measurement.rightIr, lastRightOffset + Vector2(cos(rAlpha) * rc, sin(rAlpha) * rc))
+        IrReading(measurement.leftIr, middleIrPos + lrDelta),
+        IrReading(measurement.middleIr, middleIrPos),
+        IrReading(measurement.rightIr, middleIrPos - lrDelta),
       );
 
       lastRightOffset = newRightOffset;
