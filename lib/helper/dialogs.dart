@@ -29,6 +29,7 @@ void showSnackBar(String message, {Duration duration = const Duration(seconds: 3
     SnackBar(
       content: Text(message),
       duration: duration,
+      behavior: SnackBarBehavior.floating,
     ),
   );
 }
