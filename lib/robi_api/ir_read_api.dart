@@ -76,6 +76,11 @@ class IrReadResult {
 
         final dataLineCount = data.asByteData(dataLineOffset).lengthInBytes ~/ dataLineBytes;
 
+        if (dataLineCount == 0) {
+          showSnackBar("No data found!");
+          return null;
+        }
+
         return IrReadResult(
           versionNumber: data.asByteData(0, versionNumberBytes).getUint16(0),
           resolution: data.asByteData(versionNumberBytes, resolutionBytes).getUint16(0) / 1000,
