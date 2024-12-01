@@ -69,20 +69,7 @@ class SettingsStorage {
   static const String _autoSaveKey = "autoSave";
   static const String _limitFpsKey = "limitFps";
 
-  static bool _autoSaveRunning = false;
 
-  static void startAutoSaveTimer(void Function() saveTrigger) async {
-    if (_autoSaveRunning) return;
-    _autoSaveRunning = true;
-    while (_autoSaveRunning) {
-      await Future.delayed(Duration(minutes: autoSaveInterval));
-      if (autoSave) {
-        saveTrigger();
-      }
-    }
-  }
-
-  static void stopAutoSaveTimer() => _autoSaveRunning = false;
 
   static final Set<AppLifecycleState> _autoSaveTriggers =
       AppData._prefs.getStringList(_saveOnTriggerKey)?.map((e) => AppLifecycleState.values.firstWhere((element) => element.name == e)).toSet() ?? availableSaveTriggers;

@@ -45,24 +45,33 @@ class _FileBrowserState extends State<FileBrowser> with WidgetsBindingObserver {
   // IR Readings analysis
   IrReadResult? irReadResult;
 
+  static bool _autoSaveRunning = false;
+
+  void startAutoSaveTimer() async {
+    if (_autoSaveRunning) return;
+    _autoSaveRunning = true;
+    while (_autoSaveRunning) {
+      await Future.delayed(Duration(minutes: SettingsStorage.autoSaveInterval));
+      if (SettingsStorage.autoSave && !isSavedNotifier.isSaved) {
+        saveFile(false);
+      }
+    }
+  }
+
+  static void stopAutoSaveTimer() => _autoSaveRunning = false;
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    SettingsStorage.startAutoSaveTimer(
-      () {
-        if (!isSavedNotifier.isSaved) {
-          saveFile(false);
-        }
-      },
-    );
+    startAutoSaveTimer();
   }
 
   @override
   void dispose() {
     isSavedNotifier.dispose();
     WidgetsBinding.instance.removeObserver(this);
-    SettingsStorage.stopAutoSaveTimer();
+    stopAutoSaveTimer();
     super.dispose();
   }
 
@@ -447,7 +456,7 @@ class _FileBrowserState extends State<FileBrowser> with WidgetsBindingObserver {
     if (openedFile == null) return null;
 
     isSavedNotifier.isSaving = true;
-    final res = await loadedData.saveToFileWithStatusMessage(openedFile!);
+    final res = await loadedData.saveToFileWithStatusMessage(openedFile!, showSuccessMessage: showStatusMessage);
     if (res != null) {
       isSavedNotifier.isSaved = true;
     }

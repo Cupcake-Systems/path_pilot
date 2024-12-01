@@ -69,9 +69,14 @@ final class SaveData {
     return utf8.encode(await toJson());
   }
 
-  Future<File?> saveToFileWithStatusMessage(String path) async {
+  Future<File?> saveToFileWithStatusMessage(String path, {bool showSuccessMessage = true}) async {
     final json = await toJson();
-    return writeStringToFileWithStatusMessage(path, json);
+    return writeStringToFileWithStatusMessage(
+      path,
+      json,
+      showSuccessMessage: showSuccessMessage,
+      successMessage: "Data saved successfully",
+    );
   }
 
   SaveData copyWith({List<MissionInstruction>? instructions, List<Obstacle>? obstacles}) {

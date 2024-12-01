@@ -84,17 +84,20 @@ List<FilesystemPickerShortcut> getShortcuts() {
 Future<File?> writeBytesToFileWithStatusMessage(
   String path,
   List<int> content, {
+  bool showSuccessMessage = true,
   bool showFilePathInMessage = false,
   String? successMessage,
 }) async {
   try {
     final file = File(path);
     final f = await compute(file.writeAsBytes, content);
-    String msg = successMessage ?? "File written successfully";
-    if (showFilePathInMessage) {
-      msg = "$msg to \"$path\"";
+    if (showSuccessMessage) {
+      String msg = successMessage ?? "File written successfully";
+      if (showFilePathInMessage) {
+        msg = "$msg to \"$path\"";
+      }
+      showSnackBar(msg, duration: const Duration(seconds: 2));
     }
-    showSnackBar(msg, duration: const Duration(seconds: 2));
     return f;
   } catch (e) {
     showSnackBar("Failed to write to $path: $e");
@@ -107,14 +110,28 @@ Future<File?> writeStringToFileWithStatusMessage(
   String content, {
   bool showFilePathInMessage = false,
   String? successMessage,
+  bool showSuccessMessage = true,
 }) {
-  return writeBytesToFileWithStatusMessage(path, utf8.encode(content), showFilePathInMessage: showFilePathInMessage, successMessage: successMessage);
+  return writeBytesToFileWithStatusMessage(
+    path,
+    utf8.encode(content),
+    showFilePathInMessage: showFilePathInMessage,
+    successMessage: successMessage,
+    showSuccessMessage: showSuccessMessage,
+  );
 }
 
 final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
 
-Future<File?> pickFileAndWriteWithStatusMessage(
-    {required Uint8List bytes, required BuildContext context, required String extension, bool showFilePathInMessage = false, String? successMessage, bool overwriteWarning = true}) async {
+Future<File?> pickFileAndWriteWithStatusMessage({
+  required Uint8List bytes,
+  required BuildContext context,
+  required String extension,
+  bool showFilePathInMessage = false,
+  String? successMessage,
+  bool overwriteWarning = true,
+  bool showSuccessMessage = true,
+}) async {
   final hasPermission = await getExternalStoragePermission();
 
   if (!hasPermission) {
@@ -213,6 +230,7 @@ Future<File?> pickFileAndWriteWithStatusMessage(
     bytes,
     showFilePathInMessage: showFilePathInMessage,
     successMessage: successMessage,
+    showSuccessMessage: showSuccessMessage,
   );
 }
 
