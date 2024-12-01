@@ -433,7 +433,7 @@ class _FileBrowserState extends State<FileBrowser> with WidgetsBindingObserver {
     if (result == null) return;
 
     setState(() => isOpening = true);
-    final loaded = await IrReadResult.fromFile(result);
+    final loaded = await IrReadResult.fromFileWithStatusMessage(result);
     setState(() => isOpening = false);
 
     if (loaded == null) return;

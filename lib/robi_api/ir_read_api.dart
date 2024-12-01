@@ -54,28 +54,53 @@ final class Measurement {
 }
 
 class IrReadResult {
+  final int versionNumber;
   final double resolution;
   final List<Measurement> measurements;
-  late final double totalTime = resolution * (measurements.length - 1);
 
-  IrReadResult({required this.resolution, required this.measurements});
+  double get totalTime => resolution * (measurements.length - 1);
+
+  const IrReadResult({required this.versionNumber, required this.resolution, required this.measurements});
 
   /// Binary file structure documentation:
   /// https://github.com/Cupcake-Systems/path_pilot/wiki/IR-Read-Result-Binary-File-Definition
-  factory IrReadResult.fromData(ByteBuffer data) {
-    final dataLineCount = data.asByteData(2).lengthInBytes ~/ 8;
+  static IrReadResult? fromDataWithStatusMessage(ByteBuffer data) {
+    const versionNumberBytes = 2;
+    final versionNumber = data.asByteData(0, versionNumberBytes).getUint16(0);
 
-    return IrReadResult(
-      resolution: data.asByteData(0, 2).getUint16(0) / 1000,
-      measurements: [for (int i = 0; i < dataLineCount; ++i) Measurement.fromLine(data.asByteData(2 + i * 8, 8), i)],
-    );
+    switch (versionNumber) {
+      case 1:
+        const resolutionBytes = 2;
+        const dataLineBytes = 8;
+        const dataLineOffset = versionNumberBytes + resolutionBytes;
+
+        final dataLineCount = data.asByteData(dataLineOffset).lengthInBytes ~/ dataLineBytes;
+
+        return IrReadResult(
+          versionNumber: data.asByteData(0, versionNumberBytes).getUint16(0),
+          resolution: data.asByteData(versionNumberBytes, resolutionBytes).getUint16(0) / 1000,
+          measurements: [
+            for (int i = 0; i < dataLineCount; ++i)
+              Measurement.fromLine(
+                data.asByteData(
+                  dataLineOffset + i * dataLineBytes,
+                  dataLineBytes,
+                ),
+                i,
+              ),
+          ],
+        );
+      default:
+        showSnackBar("Unsupported file version: $versionNumber");
+        return null;
+    }
   }
 
-  static Future<IrReadResult?> fromFile(String path) async {
+  static Future<IrReadResult?> fromFileWithStatusMessage(String path) async {
     final bytes = await readBytesFromFileWithWithStatusMessage(path);
     if (bytes == null) return null;
     try {
-      return IrReadResult.fromData(bytes.buffer);
+      return IrReadResult.fromDataWithStatusMessage(bytes.buffer);
     } on Exception {
       showSnackBar("Failed to decode data!");
       return null;
