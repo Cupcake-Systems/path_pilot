@@ -81,6 +81,19 @@ class IrReadResult {
       return null;
     }
   }
+
+  Measurement? getMeasurementAtTime(final double t) {
+    if (measurements.isEmpty) {
+      return null;
+    } else if (measurements.length == 1) {
+      return measurements.first;
+    }
+
+    if (t <= resolution) return measurements.first;
+    if (t >= totalTime) return measurements.last;
+
+    return measurements[(t / totalTime * (measurements.length - 1)).toInt()];
+  }
 }
 
 class IrReading {
@@ -110,6 +123,25 @@ class IrCalculatorResult {
     required this.maxRightVelocity,
   }) : length = irData.length {
     assert(length == wheelPositions.length && length == wheelPositions.length);
+  }
+
+  RobiState getStateAtTime(final IrReadResult irReadResult, final double t) {
+    final totalTime = irReadResult.totalTime;
+    final measurementTimeDelta = irReadResult.resolution;
+
+    if (robiStates.isEmpty) {
+      return RobiState.zero;
+    } else if (robiStates.length == 1) {
+      return robiStates.first;
+    }
+
+    if (t >= totalTime) return robiStates.last;
+
+    final stateIndex = (t / totalTime * (robiStates.length - 1)).toInt();
+    final state = robiStates[stateIndex];
+    final timeInState = t - state.timeStamp;
+
+    return state.interpolate(robiStates[stateIndex + 1], timeInState / measurementTimeDelta);
   }
 }
 

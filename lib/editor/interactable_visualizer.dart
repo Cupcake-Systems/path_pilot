@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:path_pilot/app_storage.dart';
 import 'package:path_pilot/editor/painters/ir_read_painter.dart';
 import 'package:path_pilot/editor/painters/line_painter_settings/line_painter_visibility_settings.dart';
-import 'package:path_pilot/editor/painters/robi_painter.dart';
 import 'package:path_pilot/editor/visualizer.dart';
 import 'package:path_pilot/robi_api/ir_read_api.dart';
 import 'package:vector_math/vector_math.dart';
@@ -85,12 +84,12 @@ class _InteractableIrVisualizerState extends State<InteractableIrVisualizer> {
       });
     }
 
-    final robiState = getStateAtTime(widget.irCalculatorResult, widget.irReadResult, timeSnapshot);
+    final robiState = widget.irCalculatorResult.getStateAtTime(widget.irReadResult, timeSnapshot);
     if (lockToRobi) {
       offset = Offset(-robiState.position.x, robiState.position.y) * zoom;
     }
 
-    final currentMeasurement = getMeasurementAtTime(widget.irReadResult, timeSnapshot);
+    final currentMeasurement = widget.irReadResult.getMeasurementAtTime(timeSnapshot);
 
     return IrVisualizer(
       visibilitySettings: visibilitySettings,
@@ -139,41 +138,6 @@ class _InteractableIrVisualizerState extends State<InteractableIrVisualizer> {
         setState(() => speedMultiplier = newSpeed);
       },
     );
-  }
-
-  static RobiState getStateAtTime(final IrCalculatorResult irCalcResult, final IrReadResult irReadResult, final double t) {
-    final states = irCalcResult.robiStates;
-    final totalTime = irReadResult.totalTime;
-    final measurementTimeDelta = irReadResult.resolution;
-
-    if (states.isEmpty) {
-      return RobiState.zero;
-    } else if (states.length == 1) {
-      return states.first;
-    }
-
-    if (t >= totalTime) return states.last;
-
-    final stateIndex = (t / totalTime * (states.length - 1)).toInt();
-    final state = states[stateIndex];
-    final timeInState = t - state.timeStamp;
-
-    return state.interpolate(states[stateIndex + 1], timeInState / measurementTimeDelta);
-  }
-
-  static Measurement? getMeasurementAtTime(final IrReadResult irReadResult, final double t) {
-    final measurements = irReadResult.measurements;
-
-    if (measurements.isEmpty) {
-      return null;
-    } else if (measurements.length == 1) {
-      return measurements.first;
-    }
-
-    if (t <= irReadResult.resolution) return measurements.first;
-    if (t >= irReadResult.totalTime) return measurements.last;
-
-    return measurements[(t / irReadResult.totalTime * (measurements.length - 1)).toInt()];
   }
 
   void play() {
