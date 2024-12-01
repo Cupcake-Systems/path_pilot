@@ -84,7 +84,7 @@ class Visualizer extends StatelessWidget {
   final RobiState robiState;
   final List<Obstacle>? obstacles;
   final LinePainterVisibilitySettings visibilitySettings;
-  final void Function() onVisibilitySettingsChange;
+  final void Function(LinePainterVisibilitySettings newSettings) onVisibilitySettingsChange;
 
   // For InstructionsVisualizer
   final SimulationResult? simulationResult;
@@ -282,17 +282,15 @@ class Visualizer extends StatelessWidget {
                               color: Colors.grey[400],
                             ),
                             itemBuilder: (context) {
-                              Widget createEntry(LinePainterVisibility v) => StatefulBuilder(
-                                    builder: (context, setState) => CheckedPopupMenuItem(
-                                      value: visibilitySettings.isVisible(v),
-                                      checked: visibilitySettings.isVisible(v),
-                                      child: Text(LinePainterVisibilitySettings.nameOf(v)),
-                                      onTap: () {
-                                        setState(() => visibilitySettings.set(v, !visibilitySettings.isVisible(v)));
-                                        onVisibilitySettingsChange();
-                                      },
-                                    ),
-                                  );
+                              Widget createEntry(LinePainterVisibility v) => CheckedPopupMenuItem(
+                                value: visibilitySettings.isVisible(v),
+                                checked: visibilitySettings.isVisible(v),
+                                child: Text(LinePainterVisibilitySettings.nameOf(v)),
+                                onTap: () {
+                                  visibilitySettings.set(v, !visibilitySettings.isVisible(v));
+                                  onVisibilitySettingsChange(visibilitySettings);
+                                },
+                              );
 
                               final widgets = <PopupMenuEntry>[];
                               for (final v in visibilitySettings.availableUniversalSettings) {

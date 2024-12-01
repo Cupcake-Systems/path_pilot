@@ -20,6 +20,7 @@ class InteractableIrVisualizer extends StatefulWidget {
   final IrReadResult irReadResult;
   final double totalTime;
   final List<Obstacle>? obstacles;
+  final void Function(LinePainterVisibilitySettings newSettings) onVisibilitySettingsChange;
 
   final void Function(double newTime)? onTimeChanged;
 
@@ -33,6 +34,7 @@ class InteractableIrVisualizer extends StatefulWidget {
     required this.totalTime,
     required this.irReadResult,
     required this.obstacles,
+    required this.onVisibilitySettingsChange,
     this.onTimeChanged,
   });
 
@@ -49,10 +51,11 @@ class _InteractableIrVisualizerState extends State<InteractableIrVisualizer> {
   double timeOffset = 0;
   double speedMultiplier = 1;
 
-  final LinePainterVisibilitySettings visibilitySettings = LinePainterVisibilitySettings.of([
+  LinePainterVisibilitySettings visibilitySettings = LinePainterVisibilitySettings.of([
     ...LinePainterVisibilitySettings.universalSettings,
     ...LinePainterVisibilitySettings.onlyIrSettings,
-  ]);
+  ])
+    ..set(LinePainterVisibility.irPathApproximation, false);
 
   final deltaCounter = Stopwatch();
 
@@ -107,7 +110,10 @@ class _InteractableIrVisualizerState extends State<InteractableIrVisualizer> {
         zoom = newZoom;
         lockToRobi = newLockToRobi;
       }),
-      onVisibilitySettingsChange: () => setState(() {}),
+      onVisibilitySettingsChange: (settings) {
+        setState(() => visibilitySettings = settings);
+        widget.onVisibilitySettingsChange(settings);
+      },
       measurementTimeDelta: widget.irReadResult.resolution,
       onTimeChanged: (newTime, newOffset) => setState(() {
         timeOffset = newTime;
@@ -192,7 +198,7 @@ class _InteractableInstructionsVisualizerState extends State<InteractableInstruc
   double speedMultiplier = 1;
 
   final deltaCounter = Stopwatch();
-  final LinePainterVisibilitySettings visibilitySettings = LinePainterVisibilitySettings.of([
+  LinePainterVisibilitySettings visibilitySettings = LinePainterVisibilitySettings.of([
     ...LinePainterVisibilitySettings.universalSettings,
     ...LinePainterVisibilitySettings.onlySimulationSettings,
   ]);
@@ -235,7 +241,9 @@ class _InteractableInstructionsVisualizerState extends State<InteractableInstruc
       totalTime: widget.totalTime,
       highlightedInstruction: widget.highlightedInstruction,
       simulationResult: widget.simulationResult,
-      onVisibilitySettingsChange: () => setState(() {}),
+      onVisibilitySettingsChange: (settings) => setState(() {
+        visibilitySettings = settings;
+      }),
       time: timeSnapshot,
       onZoomChanged: (newZoom, newOffset, newLockToRobi) => setState(() {
         offset = newOffset;

@@ -34,10 +34,11 @@ class IrVisualizerWidget extends StatefulWidget {
 
 class _IrVisualizerWidgetState extends State<IrVisualizerWidget> {
   IrReadPainterSettings irReadPainterSettings = IrReadPainterSettings.defaultSettings;
+  bool approximatePath = false;
 
   @override
   Widget build(BuildContext context) {
-    final IrCalculatorResult irCalculatorResult = IrCalculator.calculate(widget.irReadResult, widget.robiConfig);
+    final irCalculatorResult = IrCalculator.calculate(widget.irReadResult, widget.robiConfig);
 
     return StatefulBuilder(builder: (context, setState) {
       InteractableIrVisualizer? visualizer;
@@ -49,14 +50,21 @@ class _IrVisualizerWidgetState extends State<IrVisualizerWidget> {
           robiConfig: widget.robiConfig,
           totalTime: widget.irReadResult.totalTime,
           irCalculatorResult: irCalculatorResult,
-          irPathApproximation: IrCalculator.pathApproximation(
-            irCalculatorResult,
-            irReadPainterSettings.irInclusionThreshold,
-            irReadPainterSettings.ramerDouglasPeuckerTolerance,
-          ),
+          irPathApproximation: approximatePath
+              ? IrCalculator.pathApproximation(
+                  irCalculatorResult,
+                  irReadPainterSettings.irInclusionThreshold,
+                  irReadPainterSettings.ramerDouglasPeuckerTolerance,
+                )
+              : null,
           irReadPainterSettings: irReadPainterSettings,
           irReadResult: widget.irReadResult,
           obstacles: widget.obstacles,
+          onVisibilitySettingsChange: (newSettings) {
+            setState(() {
+              approximatePath = newSettings.showIrPathApproximation;
+            });
+          },
         );
       }
       if (widget.subViewMode == SubViewMode.split || widget.subViewMode == SubViewMode.editor) {
