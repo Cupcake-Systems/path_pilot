@@ -181,12 +181,12 @@ class IrCalculator {
       final leftAccel = (leftVel - lastLeftVel) / irReadResult.resolution;
       final rightAccel = (rightVel - lastRightVel) / irReadResult.resolution;
 
-      final newRightOffset = lastRightOffset + polarToCartesianRad(rotationRad, rightDistance);
-      final newLeftOffset = lastLeftOffset + polarToCartesianRad(rotationRad, leftDistance);
-
       wheelPositions[i] = (lastLeftOffset, lastRightOffset);
 
       final robiPosition = (lastLeftOffset + lastRightOffset) / 2;
+
+      final newRightOffset = robiPosition + polarToCartesianRad(rotationRad - piOver2, halfTrackWidth) + polarToCartesianRad(rotationRad, rightDistance);
+      final newLeftOffset = robiPosition + polarToCartesianRad(rotationRad + piOver2, halfTrackWidth) + polarToCartesianRad(rotationRad, leftDistance);
 
       robiStates[i] = LeftRightRobiState(
         timeStamp: i * irReadResult.resolution,
