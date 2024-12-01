@@ -12,6 +12,8 @@ import '../editor/obstacles/obstacles_serializer.dart';
 import '../robi_api/robi_utils.dart';
 
 final class SaveData {
+  static const compatibleFileVersion = 1;
+
   final List<MissionInstruction> instructions;
   final List<Obstacle> obstacles;
 
@@ -25,23 +27,42 @@ final class SaveData {
   static Future<SaveData?> fromJson(String json) async {
     try {
       final data = await JsonParser.parseIsolated(json);
-      final instructions = data["instructions"];
-      final obstacles = data["obstacles"];
 
-      List<MissionInstruction> decodedInstructions = [];
-      List<Obstacle> decodedObstacles = [];
+      final versionNumber = data["version"];
 
-      if (instructions != null) {
-        decodedInstructions = RobiPathSerializer.decode(instructions).toList(growable: false);
-      }
-      if (obstacles != null) {
-        decodedObstacles = await ObstaclesSerializer.decode(obstacles).toList();
+      if (versionNumber == null) {
+        showSnackBar("Version number not found in data");
+        return null;
       }
 
-      return SaveData(
-        instructions: decodedInstructions,
-        obstacles: decodedObstacles,
-      );
+      if (versionNumber is! int) {
+        showSnackBar("Version number is not an integer: $versionNumber");
+        return null;
+      }
+
+      switch (versionNumber) {
+        case 1:
+          final instructions = data["instructions"];
+          final obstacles = data["obstacles"];
+
+          List<MissionInstruction> decodedInstructions = [];
+          List<Obstacle> decodedObstacles = [];
+
+          if (instructions != null) {
+            decodedInstructions = RobiPathSerializer.decode(instructions).toList(growable: false);
+          }
+          if (obstacles != null) {
+            decodedObstacles = await ObstaclesSerializer.decode(obstacles).toList();
+          }
+
+          return SaveData(
+            instructions: decodedInstructions,
+            obstacles: decodedObstacles,
+          );
+        default:
+          showSnackBar("Unknown version number: $versionNumber");
+          return null;
+      }
     } catch (e) {
       return null;
     }
@@ -59,6 +80,7 @@ final class SaveData {
 
   Future<String> toJson() {
     final saveData = {
+      "version": compatibleFileVersion,
       "instructions": RobiPathSerializer.encode(instructions),
       "obstacles": ObstaclesSerializer.encode(obstacles),
     };
