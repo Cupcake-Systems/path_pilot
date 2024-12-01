@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:path_pilot/editor/editor.dart';
 import 'package:path_pilot/editor/instructions/instruction_details.dart';
+import 'package:path_pilot/editor/painters/robi_painter.dart';
 import 'package:vector_math/vector_math.dart' show Vector2;
 
 import '../../robi_api/robi_utils.dart';
@@ -13,6 +14,7 @@ abstract class AbstractEditor extends StatelessWidget {
   final MissionInstruction instruction;
   final RobiConfig robiConfig;
   final TimeChangeNotifier timeChangeNotifier;
+  final MissionInstruction? nextInstruction;
 
   late final InstructionResult instructionResult;
   late final bool isLastInstruction;
@@ -33,6 +35,7 @@ abstract class AbstractEditor extends StatelessWidget {
     required this.removed,
     required this.instruction,
     required this.robiConfig,
+    required this.nextInstruction,
     String? warning,
     this.entered,
     this.exited,
@@ -44,11 +47,21 @@ abstract class AbstractEditor extends StatelessWidget {
 
   String? _generateWarning() {
     if (_warning != null) return _warning;
-    if (isLastInstruction && instructionResult.highestFinalVelocity.abs() > 0.00001) {
+
+    if (isLastInstruction && instructionResult.highestFinalVelocity.abs() > floatTolerance) {
       return "Robi will not stop at the end";
     }
-    if ((instructionResult.highestMaxVelocity - instruction.targetVelocity).abs() > 0.000001) {
+    if ((instructionResult.highestMaxVelocity - instruction.targetVelocity).abs() > floatTolerance) {
       return "Robi will only reach ${roundToDigits(instructionResult.highestMaxVelocity * 100, 2)}cm/s";
+    }
+    if (instructionResult.highestMaxVelocity > robiConfig.maxVelocity) {
+      return "Robi will exceed the maximum velocity";
+    }
+    if (instructionResult.maxAcceleration > robiConfig.maxAcceleration) {
+      return "Robi will exceed the maximum acceleration";
+    }
+    if (nextInstruction != null && instructionResult.highestFinalVelocity > nextInstruction!.targetVelocity + floatTolerance) {
+      return "Robi's final velocity must be <= ${roundToDigits(nextInstruction!.targetVelocity * 100, 2)}cm/s";
     }
     return null;
   }
@@ -101,6 +114,12 @@ class _RemovableWarningCardState extends State<RemovableWarningCard> {
 
   @override
   Widget build(BuildContext context) {
+    final accelSliderMax = widget.robiConfig.maxAcceleration;
+    final velSliderMax = widget.robiConfig.maxVelocity;
+
+    final accelSliderValue = widget.instruction.acceleration > accelSliderMax ? accelSliderMax : widget.instruction.acceleration;
+    final velSliderValue = widget.instruction.targetVelocity > velSliderMax ? velSliderMax : widget.instruction.targetVelocity;
+
     return MouseRegion(
       onEnter: (event) => widget.entered?.call(widget.instructionResult),
       onExit: (event) => widget.exited?.call(),
@@ -166,11 +185,12 @@ class _RemovableWarningCardState extends State<RemovableWarningCard> {
                               children: [
                                 const Text("Acceleration"),
                                 Slider(
-                                  value: widget.instruction.acceleration,
+                                  value: accelSliderValue,
                                   onChanged: (value) {
                                     widget.instruction.acceleration = roundToDigits(value, 3);
                                     widget.change(widget.instruction);
                                   },
+                                  max: accelSliderMax,
                                 ),
                                 Text("${roundToDigits(widget.instruction.acceleration * 100, 2)}cm/s²"),
                               ],
@@ -179,12 +199,13 @@ class _RemovableWarningCardState extends State<RemovableWarningCard> {
                               children: [
                                 const Text("Target Velocity"),
                                 Slider(
-                                  value: widget.instruction.targetVelocity,
+                                  value: velSliderValue,
                                   onChanged: (value) {
                                     widget.instruction.targetVelocity = roundToDigits(value, 3);
                                     widget.change(widget.instruction);
                                   },
                                   min: 0.001,
+                                  max: velSliderMax,
                                 ),
                                 Text("${roundToDigits(widget.instruction.targetVelocity * 100, 2)}cm/s"),
                               ],

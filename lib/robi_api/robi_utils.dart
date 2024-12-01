@@ -194,6 +194,10 @@ abstract class InstructionResult {
 
   double get highestMaxVelocity => _maxOuterVelocity;
 
+  double get maxAcceleration => _outerAcceleration;
+
+  double get lowestInitialVelocity => _innerInitialVelocity;
+
   double _calculateAccelerationTime(double a, double vi, double accelerationDistance) {
     if (a == 0) return 0;
     return (-vi + sqrt(pow(vi, 2) + 2 * accelerationDistance * a)) / a;
@@ -522,7 +526,7 @@ class SimulationResult {
 }
 
 class RobiConfig {
-  final double wheelRadius, trackWidth, distanceWheelIr, wheelWidth, irDistance;
+  final double wheelRadius, trackWidth, distanceWheelIr, wheelWidth, irDistance, maxAcceleration, maxVelocity;
   final String name;
 
   const RobiConfig({
@@ -532,7 +536,20 @@ class RobiConfig {
     required this.wheelWidth,
     required this.irDistance,
     required this.name,
+    required this.maxAcceleration,
+    required this.maxVelocity,
   });
+
+  static const defaultConfig = RobiConfig(
+    wheelRadius: 0.032,
+    trackWidth: 0.135,
+    distanceWheelIr: 0.075,
+    wheelWidth: 0.025,
+    irDistance: 0.01,
+    name: "Default",
+    maxAcceleration: 0.5,
+    maxVelocity: 0.5,
+  );
 
   RobiConfig.fromJson(Map<String, dynamic> json)
       : wheelRadius = json["wheel_radius"],
@@ -540,6 +557,8 @@ class RobiConfig {
         distanceWheelIr = json["distance_wheel_ir"],
         wheelWidth = json["wheel_width"],
         irDistance = json["ir_distance"],
+        maxAcceleration = json["maximum_acceleration"],
+        maxVelocity = json["maximum_velocity"],
         name = json["name"];
 
   Map<String, dynamic> toJson() => {
@@ -548,6 +567,8 @@ class RobiConfig {
         "distance_wheel_ir": distanceWheelIr,
         "wheel_width": wheelWidth,
         "ir_distance": irDistance,
+        "maximum_acceleration": maxAcceleration,
+        "maximum_velocity": maxVelocity,
         "name": name,
       };
 }

@@ -19,10 +19,18 @@ class TurnInstructionEditor extends AbstractEditor {
     required super.exited,
     required super.robiConfig,
     required super.timeChangeNotifier,
+    required super.nextInstruction,
   }) : super(instruction: instruction);
 
   @override
   Widget build(BuildContext context) {
+
+    const turnDegreeSliderMax = 720.0;
+    final turnDegreeSliderValue = instruction.turnDegree > turnDegreeSliderMax ? turnDegreeSliderMax : instruction.turnDegree;
+
+    const innerRadiusSliderMax = 2.0;
+    final innerRadiusSliderValue = instruction.innerRadius > innerRadiusSliderMax ? innerRadiusSliderMax : instruction.innerRadius;
+
     return RemovableWarningCard(
       timeChangeNotifier: timeChangeNotifier,
       robiConfig: robiConfig,
@@ -50,13 +58,12 @@ class TurnInstructionEditor extends AbstractEditor {
           children: [
             const Text("Turn Degree"),
             Slider(
-              value: instruction.turnDegree,
+              value: turnDegreeSliderValue,
               onChanged: (value) {
                 instruction.turnDegree = value.roundToDouble();
                 change(instruction);
               },
-              min: 0,
-              max: 720,
+              max: turnDegreeSliderMax,
             ),
             Text("${instruction.turnDegree.round()}°"),
           ],
@@ -65,11 +72,12 @@ class TurnInstructionEditor extends AbstractEditor {
           children: [
             const Text("Inner Radius"),
             Slider(
-              value: instruction.innerRadius,
+              value: innerRadiusSliderValue,
               onChanged: (value) {
                 instruction.innerRadius = roundToDigits(value, 3);
                 change(instruction);
               },
+              max: innerRadiusSliderMax,
             ),
             Text("${roundToDigits(instruction.innerRadius * 100, 2)}cm"),
           ],

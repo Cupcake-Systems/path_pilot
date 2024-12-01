@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:path_pilot/app_storage.dart';
-import 'package:path_pilot/file_browser.dart';
 
 import '../editor/robi_config.dart';
 import '../robi_api/robi_utils.dart';
@@ -28,24 +27,24 @@ class _RobiConfigSettingsPageState extends State<RobiConfigSettingsPage> {
         children: [
           const Divider(height: 1),
           RadioListTile(
-            title: Text(defaultRobiConfig.name, style: const TextStyle(fontWeight: FontWeight.bold)),
-            value: defaultRobiConfig,
+            title: Text(RobiConfig.defaultConfig.name, style: const TextStyle(fontWeight: FontWeight.bold)),
+            value: RobiConfig.defaultConfig,
             groupValue: selectedConfig,
             subtitle: Align(
               alignment: Alignment.centerLeft,
               child: IconButton(
                 icon: const Icon(Icons.visibility),
-                onPressed: () => viewRobiConfigDialog(defaultRobiConfig),
+                onPressed: () => viewRobiConfigDialog(RobiConfig.defaultConfig),
               ),
             ),
-            onChanged: (value) => selectConfig(value ?? defaultRobiConfig),
+            onChanged: (value) => selectConfig(value ?? RobiConfig.defaultConfig),
           ),
           const Divider(height: 1),
           for (final config in RobiConfigStorage.configs) ...[
             RadioListTile<RobiConfig>(
               groupValue: selectedConfig,
               value: config,
-              onChanged: (value) => selectConfig(value ?? defaultRobiConfig),
+              onChanged: (value) => selectConfig(value ?? RobiConfig.defaultConfig),
               title: Text(config.name, style: const TextStyle(fontWeight: FontWeight.bold)),
               subtitle: Row(
                 mainAxisSize: MainAxisSize.min,
@@ -80,7 +79,7 @@ class _RobiConfigSettingsPageState extends State<RobiConfigSettingsPage> {
                   IconButton(
                     onPressed: () {
                       RobiConfigStorage.remove(config);
-                      selectConfig(defaultRobiConfig);
+                      selectConfig(RobiConfig.defaultConfig);
                     },
                     icon: const Icon(Icons.delete),
                   ),
@@ -96,7 +95,7 @@ class _RobiConfigSettingsPageState extends State<RobiConfigSettingsPage> {
           showDialog(
             context: context,
             builder: (context) => RobiConfigurator(
-              initialConfig: defaultRobiConfig,
+              initialConfig: RobiConfig.defaultConfig,
               title: "New Configuration",
               addedConfig: (config) => setState(() => RobiConfigStorage.add(config)),
             ),

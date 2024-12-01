@@ -20,10 +20,14 @@ class DriveInstructionEditor extends AbstractEditor {
     required super.exited,
     required super.robiConfig,
     required super.timeChangeNotifier,
+    required super.nextInstruction,
   }) : super(instruction: instruction);
 
   @override
   Widget build(BuildContext context) {
+    const driveSliderMax = 5.0;
+    final driveSliderValue = instruction.targetDistance > driveSliderMax ? driveSliderMax : instruction.targetDistance;
+
     return RemovableWarningCard(
       timeChangeNotifier: timeChangeNotifier,
       robiConfig: robiConfig,
@@ -51,12 +55,12 @@ class DriveInstructionEditor extends AbstractEditor {
           children: [
             const Text("Distance to drive"),
             Slider(
-              value: instruction.targetDistance,
+              value: driveSliderValue,
               onChanged: (value) {
                 instruction.targetDistance = roundToDigits(value, 3);
                 change(instruction);
               },
-              max: 5,
+              max: driveSliderMax,
             ),
             Text("${roundToDigits(instruction.targetDistance * 100, 2)}cm"),
           ],

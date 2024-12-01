@@ -30,7 +30,7 @@ class FileBrowser extends StatefulWidget {
 }
 
 class _FileBrowserState extends State<FileBrowser> with WidgetsBindingObserver {
-  RobiConfig selectedRobiConfig = defaultRobiConfig;
+  RobiConfig selectedRobiConfig = RobiConfig.defaultConfig;
   ViewMode viewMode = ViewMode.instructions;
   SubViewMode subViewMode = Platform.isAndroid ? SubViewMode.editor : SubViewMode.split;
   bool showObstacles = true;
@@ -523,8 +523,6 @@ class _FileBrowserState extends State<FileBrowser> with WidgetsBindingObserver {
     });
   }
 }
-
-const defaultRobiConfig = RobiConfig(wheelRadius: 0.032, trackWidth: 0.135, distanceWheelIr: 0.075, wheelWidth: 0.025, irDistance: 0.01, name: "Default");
 
 Future<bool> getExternalStoragePermission() async {
   if (!Platform.isAndroid) return true;

@@ -18,10 +18,15 @@ class RapidTurnInstructionEditor extends AbstractEditor {
     required super.exited,
     required super.robiConfig,
     required super.timeChangeNotifier,
+    required super.nextInstruction,
   }) : super(instruction: instruction);
 
   @override
   Widget build(BuildContext context) {
+
+    const turnDegreeSliderMax = 720.0;
+    final turnDegreeSliderValue = instruction.turnDegree > turnDegreeSliderMax ? turnDegreeSliderMax : instruction.turnDegree;
+
     return RemovableWarningCard(
       timeChangeNotifier: timeChangeNotifier,
       robiConfig: robiConfig,
@@ -53,12 +58,12 @@ class RapidTurnInstructionEditor extends AbstractEditor {
           children: [
             const Text("Turn Degree"),
             Slider(
-              value: instruction.turnDegree,
+              value: turnDegreeSliderValue,
               onChanged: (value) {
                 instruction.turnDegree = value.roundToDouble();
                 change(instruction);
               },
-              max: 720,
+              max: turnDegreeSliderMax,
             ),
             Text("${instruction.turnDegree.round()}°"),
           ],

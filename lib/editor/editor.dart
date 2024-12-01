@@ -235,6 +235,7 @@ class _EditorState extends State<Editor> with AutomaticKeepAliveClientMixin {
 
   AbstractEditor instructionToEditor(int i) {
     final instruction = instructions[i];
+    final nextInstruction = instructions.elementAtOrNull(i + 1);
 
     void changeCallback(MissionInstruction newInstruction) {
       instructions[i] = newInstruction;
@@ -258,6 +259,7 @@ class _EditorState extends State<Editor> with AutomaticKeepAliveClientMixin {
         instructionIndex: i,
         exited: exitedCallback,
         entered: enteredCallback,
+        nextInstruction: nextInstruction,
       );
     } else if (instruction is TurnInstruction) {
       return TurnInstructionEditor(
@@ -271,6 +273,7 @@ class _EditorState extends State<Editor> with AutomaticKeepAliveClientMixin {
         instructionIndex: i,
         exited: exitedCallback,
         entered: enteredCallback,
+        nextInstruction: nextInstruction,
       );
     } else if (instruction is RapidTurnInstruction) {
       return RapidTurnInstructionEditor(
@@ -284,6 +287,7 @@ class _EditorState extends State<Editor> with AutomaticKeepAliveClientMixin {
         instructionIndex: i,
         exited: exitedCallback,
         entered: enteredCallback,
+        nextInstruction: nextInstruction,
       );
     }
     throw UnsupportedError("");
@@ -312,7 +316,7 @@ class _EditorState extends State<Editor> with AutomaticKeepAliveClientMixin {
         // Ensure the initial velocity for the next instruction is always <= than the target velocity
         // because an instruction cannot decelerate to target velocity, only accelerate.
         if (currentResult.highestFinalVelocity > nextInstruction.targetVelocity) {
-          instruction.acceleration = 1; // TODO: Calculate the value
+          instruction.acceleration = widget.selectedRobiConfig.maxAcceleration;
         }
       }
 
