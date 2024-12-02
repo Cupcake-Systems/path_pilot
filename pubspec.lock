@@ -218,10 +218,10 @@ packages:
     dependency: "direct main"
     description:
       name: flutter_resizable_container
-      sha256: "5b15c79c6cc338ed79640c706bb5176baa3333d92fd3627ad279aa3e25d2f0e7"
+      sha256: ccca2c4da19acabd7456cc6ca6724ed2d1545d97b53b87fc67cfa1c3fa754acd
       url: "https://pub.dev"
     source: hosted
-    version: "3.0.0"
+    version: "3.0.3"
   flutter_test:
     dependency: "direct dev"
     description: flutter
