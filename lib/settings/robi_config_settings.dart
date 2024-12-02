@@ -90,7 +90,7 @@ class _RobiConfigSettingsPageState extends State<RobiConfigSettingsPage> {
           ],
         ],
       ),
-      floatingActionButton: ElevatedButton.icon(
+      floatingActionButton: FloatingActionButton(
         onPressed: () {
           showDialog(
             context: context,
@@ -101,8 +101,7 @@ class _RobiConfigSettingsPageState extends State<RobiConfigSettingsPage> {
             ),
           );
         },
-        label: const Text("Add"),
-        icon: const Icon(Icons.add),
+        child: const Icon(Icons.add),
       ),
     );
   }
