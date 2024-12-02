@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:ui';
 
+import 'package:path_pilot/helper/dialogs.dart';
 import 'package:path_pilot/robi_api/robi_utils.dart';
 import 'package:path_pilot/settings/settings.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -12,7 +13,7 @@ class AppData {
 
   static Future<void> init() async {
     _prefs = await SharedPreferences.getInstance();
-    RobiConfigStorage.init();
+    await RobiConfigStorage.init();
   }
 }
 
@@ -25,17 +26,18 @@ class RobiConfigStorage {
 
   static List<RobiConfig> get configs => _storedConfigs;
 
-  static void init() {
-    _storedConfigs = _loadConfigs();
+  static Future<void> init() async {
+    _storedConfigs = await _loadConfigs();
   }
 
-  static List<RobiConfig> _loadConfigs() {
+  static Future<List<RobiConfig>> _loadConfigs() async {
     try {
       final storedString = AppData._prefs.getString(_storageKey);
       if (storedString == null) return [];
-      final List jsonList = JsonParser.parseIsolated(storedString) as List;
+      final List jsonList = await JsonParser.parseIsolated(storedString) as List;
       return jsonList.map((e) => RobiConfig.fromJson(e)).toList();
     } catch (e) {
+      showSnackBar("Failed to load RobiConfigs: $e");
       return [];
     }
   }
