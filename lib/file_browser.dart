@@ -501,6 +501,7 @@ class _FileBrowserState extends State<FileBrowser> with WidgetsBindingObserver {
       bytes: Uint8List(0),
       context: context,
       extension: ".robi_script.json",
+      showSuccessMessage: false,
     );
 
     if (result == null) return;
