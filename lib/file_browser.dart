@@ -51,12 +51,15 @@ class _FileBrowserState extends State<FileBrowser> with WidgetsBindingObserver {
   void startAutoSaveTimer() async {
     if (_autoSaveRunning) return;
     _autoSaveRunning = true;
+    logger.info("Auto save timer started");
     while (_autoSaveRunning) {
       await Future.delayed(Duration(minutes: SettingsStorage.autoSaveInterval));
       if (SettingsStorage.autoSave && !isSavedNotifier.isSaved) {
-        saveFile(false);
+        logger.info("Auto saving file");
+        await saveFile(false);
       }
     }
+    logger.info("Auto save timer stopped");
   }
 
   static void stopAutoSaveTimer() => _autoSaveRunning = false;
@@ -77,9 +80,10 @@ class _FileBrowserState extends State<FileBrowser> with WidgetsBindingObserver {
   }
 
   @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
+  Future<void> didChangeAppLifecycleState(AppLifecycleState state) async {
     if (!isSavedNotifier.isSaved && SettingsStorage.saveTriggers.contains(state)) {
-      saveFile(false);
+      logger.info("Auto saving file due to app lifecycle state change: $state");
+      await saveFile(false);
     }
   }
 
@@ -462,6 +466,8 @@ class _FileBrowserState extends State<FileBrowser> with WidgetsBindingObserver {
 
     if (loaded == null) return;
 
+    logger.info("${loaded.measurements.length} IR readings loaded from $result");
+
     setState(() {
       irReadResult = loaded;
     });
@@ -473,6 +479,7 @@ class _FileBrowserState extends State<FileBrowser> with WidgetsBindingObserver {
     isSavedNotifier.isSaving = true;
     final res = await loadedData.saveToFileWithStatusMessage(openedFile!, showSuccessMessage: showStatusMessage);
     if (res != null) {
+      logger.info("${loadedData.instructions.length} instructions and ${loadedData.obstacles.length} obstacles saved");
       isSavedNotifier.isSaved = true;
     }
     return res;
@@ -491,6 +498,8 @@ class _FileBrowserState extends State<FileBrowser> with WidgetsBindingObserver {
 
     if (result == null) return;
 
+    logger.info("${loadedData.instructions.length} instructions and ${loadedData.obstacles.length} obstacles saved to ${result.absolute.path}");
+
     isSavedNotifier.isSaved = true;
 
     setState(() => openedFile = result.absolute.path);
@@ -505,6 +514,8 @@ class _FileBrowserState extends State<FileBrowser> with WidgetsBindingObserver {
     );
 
     if (result == null) return;
+
+    logger.info("New file created at ${result.absolute.path}");
 
     isSavedNotifier.isSaved = true;
 
