@@ -33,19 +33,27 @@ class LogViewer extends StatelessWidget {
           return GroupedListView(
             elements: lines,
             groupBy: (line) => line.date,
-            groupHeaderBuilder: (msg) => ListTile(
-              title: Text(msg.date),
-            ),
+            groupHeaderBuilder: (msg) => ListTile(title: Text(msg.date)),
             itemComparator: (a, b) => a.time.compareTo(b.time),
             useStickyGroupSeparators: true,
             stickyHeaderBackgroundColor: const Color(0xFF202020),
+            order: GroupedListOrder.DESC,
             itemBuilder: (context, line) {
               return Card(
                 clipBehavior: Clip.antiAlias,
-                child: ListTile(
-                  leading: Icon(line.level.icon),
-                  title: Text("${line.formattedTime} - ${line.message}"),
-                  tileColor: line.level.color,
+                color: line.level.color,
+                child: Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Row(
+                    children: [
+                      Icon(line.level.icon, size: 20),
+                      const SizedBox(width: 8),
+                      Text(
+                        "${line.formattedTime} - ${line.message}",
+                        style: const TextStyle(fontSize: 13),
+                      ),
+                    ],
+                  ),
                 ),
               );
             },
