@@ -39,7 +39,7 @@ class Logger {
 
       await logFile.writeAsString(msg, mode: FileMode.append, flush: true);
     } catch (e) {
-      print("Failed to write to log file: $e");
+      dev.log("Failed to write to log file: $e");
     }
   }
 
