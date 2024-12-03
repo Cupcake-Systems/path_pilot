@@ -36,6 +36,7 @@ class LogViewer extends StatelessWidget {
             groupHeaderBuilder: (msg) => ListTile(
               title: Text(msg.date),
             ),
+            itemComparator: (a, b) => a.time.compareTo(b.time),
             useStickyGroupSeparators: true,
             stickyHeaderBackgroundColor: const Color(0xFF202020),
             itemBuilder: (context, line) {
