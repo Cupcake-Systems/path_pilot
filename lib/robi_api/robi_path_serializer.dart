@@ -1,4 +1,5 @@
 import 'package:path_pilot/editor/add_instruction_dialog.dart';
+import 'package:path_pilot/main.dart';
 import 'package:path_pilot/robi_api/robi_utils.dart';
 
 class InstructionContainer {
@@ -62,8 +63,8 @@ class RobiPathSerializer {
     for (final e in json) {
       try {
         yield InstructionContainer.fromJson(e).instruction;
-      } catch (e) {
-        // ignore
+      } catch (e, s) {
+        logger.errorWithStackTrace("Failed to decode instruction\nJSON: $json", e, s);
       }
     }
   }

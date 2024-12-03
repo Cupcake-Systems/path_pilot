@@ -2,6 +2,7 @@ import 'dart:io';
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
+import 'package:path_pilot/main.dart';
 import 'package:vector_math/vector_math.dart' show Aabb2, Vector2;
 
 abstract class Obstacle {
@@ -144,7 +145,8 @@ class ImageObstacle extends Obstacle {
       final bytes = await File(newImgPath).readAsBytes();
       _image = await decodeImageFromList(bytes);
       _imagePath = newImgPath;
-    } catch (e) {
+    } catch (e, s) {
+      logger.errorWithStackTrace("Failed to read and decode image '$newImgPath'", e, s);
       return false;
     }
     return true;
@@ -176,8 +178,8 @@ class ImageObstacle extends Obstacle {
         img = await decodeImageFromList(bytes);
       }
       return ImageObstacle(paint: paint, img: img, imgPath: imgPath, x: x, y: y, w: w, h: h);
-    } catch (e) {
-      // failed to load image
+    } catch (e, s) {
+      logger.errorWithStackTrace("Failed to load image", e, s);
     }
     return null;
   }

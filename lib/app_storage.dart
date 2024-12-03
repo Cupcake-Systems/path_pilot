@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:ui';
 
 import 'package:path_pilot/helper/dialogs.dart';
+import 'package:path_pilot/main.dart';
 import 'package:path_pilot/robi_api/robi_utils.dart';
 import 'package:path_pilot/settings/settings.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -36,7 +37,8 @@ class RobiConfigStorage {
       if (storedString == null) return [];
       final List jsonList = await JsonParser.parseIsolated(storedString) as List;
       return jsonList.map((e) => RobiConfig.fromJson(e)).toList();
-    } catch (e) {
+    } catch (e, s) {
+      logger.errorWithStackTrace("Failed to load Robi configs", e, s);
       showSnackBar("Failed to load RobiConfigs: $e");
       return [];
     }
@@ -70,8 +72,6 @@ class SettingsStorage {
   static const String _autoSaveIntervalKey = "autoSaveInterval";
   static const String _autoSaveKey = "autoSave";
   static const String _limitFpsKey = "limitFps";
-
-
 
   static final Set<AppLifecycleState> _autoSaveTriggers =
       AppData._prefs.getStringList(_saveOnTriggerKey)?.map((e) => AppLifecycleState.values.firstWhere((element) => element.name == e)).toSet() ?? availableSaveTriggers;

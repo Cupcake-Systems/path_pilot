@@ -1,3 +1,5 @@
+import 'package:path_pilot/main.dart';
+
 import 'obstacle.dart';
 
 class ObstaclesSerializer {
@@ -23,8 +25,8 @@ class ObstaclesSerializer {
             if (json != null) yield json;
             break;
         }
-      } catch (e) {
-        // ignore
+      } catch (e, s) {
+        logger.errorWithStackTrace("Failed to decode obstacle\nJSON: $json", e, s);
       }
     }
   }

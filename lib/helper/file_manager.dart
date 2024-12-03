@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:path_pilot/file_browser.dart';
 import 'package:path_pilot/helper/dialogs.dart';
+import 'package:path_pilot/main.dart';
 
 get fileSystemShortcuts => getShortcuts();
 
@@ -41,7 +42,7 @@ List<FilesystemPickerShortcut> getShortcuts() {
   } else if (Platform.isWindows) {
     final userName = Platform.environment["USERNAME"];
 
-    final drives = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("").map((e) => Directory("$e:/")).where((e) => e.existsSync()).toList();
+    final drives = "ABCDEFGHIJKLMNOPQRSTUVWXY".split("").map((e) => Directory("$e:/")).where((e) => e.existsSync()).toList();
 
     return [
       for (final drive in drives) ...[
@@ -99,7 +100,8 @@ Future<File?> writeBytesToFileWithStatusMessage(
       showSnackBar(msg, duration: const Duration(seconds: 2));
     }
     return f;
-  } catch (e) {
+  } catch (e, s) {
+    logger.errorWithStackTrace("Failed to write ${content.length} bytes to $path", e, s);
     showSnackBar("Failed to write to $path: $e");
     return null;
   }
@@ -270,7 +272,8 @@ Future<Uint8List?> readBytesFromFileWithWithStatusMessage(String path) async {
   try {
     final f = File(path);
     return await f.readAsBytes();
-  } catch (e) {
+  } catch (e, s) {
+    logger.errorWithStackTrace("Failed to read from $path", e, s);
     showSnackBar("Failed to read from $path: $e");
     return null;
   }

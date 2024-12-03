@@ -6,6 +6,7 @@ import 'package:path_pilot/editor/obstacles/obstacle.dart';
 import 'package:path_pilot/helper/dialogs.dart';
 import 'package:path_pilot/helper/file_manager.dart';
 import 'package:path_pilot/helper/json_parser.dart';
+import 'package:path_pilot/main.dart';
 import 'package:path_pilot/robi_api/robi_path_serializer.dart';
 
 import '../editor/obstacles/obstacles_serializer.dart';
@@ -63,7 +64,8 @@ final class SaveData {
           showSnackBar("Unknown version number: $versionNumber");
           return null;
       }
-    } catch (e) {
+    } catch (e, s) {
+      logger.errorWithStackTrace("Failed to decode save data\nJSON string: $json", e, s);
       return null;
     }
   }

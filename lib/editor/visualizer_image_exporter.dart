@@ -8,6 +8,7 @@ import 'package:path_pilot/editor/painters/line_painter.dart';
 import 'package:path_pilot/editor/painters/line_painter_settings/line_painter_visibility_settings.dart';
 import 'package:path_pilot/editor/visualizer.dart';
 import 'package:path_pilot/helper/dialogs.dart';
+import 'package:path_pilot/main.dart';
 
 import '../helper/file_manager.dart';
 import '../helper/geometry.dart';
@@ -232,8 +233,9 @@ class _VisualizerImageExporterState extends State<VisualizerImageExporter> {
                                           context: context,
                                           extension: ".png",
                                         );
-                                      } catch (e) {
+                                      } catch (e, s) {
                                         setState(() => isConvertingToImage = false);
+                                        logger.errorWithStackTrace("Failed to convert image", e, s);
                                         showSnackBar("Failed to convert image: $e");
                                         return;
                                       }

@@ -4,6 +4,7 @@ import 'dart:typed_data';
 import 'package:path_pilot/editor/painters/robi_painter.dart';
 import 'package:path_pilot/helper/dialogs.dart';
 import 'package:path_pilot/helper/file_manager.dart';
+import 'package:path_pilot/main.dart';
 import 'package:path_pilot/robi_api/robi_utils.dart';
 import 'package:vector_math/vector_math.dart';
 
@@ -106,7 +107,8 @@ class IrReadResult {
     if (bytes == null) return null;
     try {
       return IrReadResult.fromDataWithStatusMessage(bytes.buffer);
-    } on Exception {
+    } catch(e, s) {
+      logger.errorWithStackTrace("Failed to decode data from '$path'", e, s);
       showSnackBar("Failed to decode data!");
       return null;
     }
