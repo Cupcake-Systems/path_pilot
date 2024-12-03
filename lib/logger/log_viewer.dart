@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:grouped_list/grouped_list.dart';
 import 'package:path_pilot/logger/logger.dart';
 
 class LogViewer extends StatelessWidget {
@@ -29,10 +30,15 @@ class LogViewer extends StatelessWidget {
             return const Center(child: Text("No data"));
           }
 
-          return ListView.builder(
-            itemCount: lines.length,
-            itemBuilder: (context, index) {
-              final line = lines[index];
+          return GroupedListView(
+            elements: lines,
+            groupBy: (line) => line.date,
+            groupHeaderBuilder: (msg) => ListTile(
+              title: Text(msg.date),
+            ),
+            useStickyGroupSeparators: true,
+            stickyHeaderBackgroundColor: const Color(0xFF202020),
+            itemBuilder: (context, line) {
               return Card(
                 clipBehavior: Clip.antiAlias,
                 child: ListTile(

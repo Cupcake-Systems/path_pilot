@@ -82,7 +82,7 @@ class _FileBrowserState extends State<FileBrowser> with WidgetsBindingObserver {
   @override
   Future<void> didChangeAppLifecycleState(AppLifecycleState state) async {
     if (!isSavedNotifier.isSaved && SettingsStorage.saveTriggers.contains(state)) {
-      logger.info("Auto saving file due to app lifecycle state change: $state");
+      logger.info("Auto saving file due to app lifecycle state change: ${state.name}");
       await saveFile(false);
     }
   }
@@ -586,7 +586,7 @@ enum SubViewMode {
 }
 
 class IsSavedNotifier extends ChangeNotifier {
-  bool _isSaved = false, _isSaving = false;
+  bool _isSaved = true, _isSaving = false;
   DateTime? _lastSave;
 
   DateTime? get lastSave => _lastSave;
