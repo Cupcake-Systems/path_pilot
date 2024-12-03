@@ -9,9 +9,13 @@ import 'package:path_pilot/app_storage.dart';
 import 'package:path_pilot/constants.dart';
 import 'package:path_pilot/editor/painters/robi_painter.dart';
 import 'package:path_pilot/file_browser.dart';
+import 'package:path_provider/path_provider.dart';
+
+import 'logger/logger.dart';
 
 late final PackageInfo packageInfo;
 final deviceInfo = DeviceInfoPlugin();
+late final Logger logger;
 
 final rand = Random();
 final snackBarKey = GlobalKey<ScaffoldMessengerState>();
@@ -23,6 +27,10 @@ Future<void> main() async {
   packageInfo = await PackageInfo.fromPlatform();
   await RobiPainter.init();
   await SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+  final localDir = await getApplicationDocumentsDirectory();
+  logger = Logger("${localDir.path}/log.txt");
+
+  logger.info("App started");
 
   runApp(const MyApp());
 }
