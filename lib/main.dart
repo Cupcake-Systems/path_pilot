@@ -22,15 +22,16 @@ final snackBarKey = GlobalKey<ScaffoldMessengerState>();
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  final localDir = await getApplicationDocumentsDirectory();
+  logger = Logger("${localDir.path}/log.txt");
+  logger.info("App started");
+
   LicenseRegistry.addLicense(() => Stream<LicenseEntry>.value(const LicenseEntryWithLineBreaks(<String>["path_pilot"], license)));
   await AppData.init();
   packageInfo = await PackageInfo.fromPlatform();
   await RobiPainter.init();
   await SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
-  final localDir = await getApplicationDocumentsDirectory();
-  logger = Logger("${localDir.path}/log.txt");
-
-  logger.info("App started");
 
   runApp(const MyApp());
 }
