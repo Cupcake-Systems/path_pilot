@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'dart:math';
 
 import 'package:device_info_plus/device_info_plus.dart';
@@ -15,6 +16,8 @@ import 'logger/logger.dart';
 
 late final PackageInfo packageInfo;
 final deviceInfo = DeviceInfoPlugin();
+
+late final LogFile logFile;
 late final Logger logger;
 
 final rand = Random();
@@ -22,14 +25,15 @@ final snackBarKey = GlobalKey<ScaffoldMessengerState>();
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  packageInfo = await PackageInfo.fromPlatform();
 
   final localDir = await getApplicationDocumentsDirectory();
-  logger = Logger("${localDir.path}/log.txt");
-  logger.info("App started");
+  logFile = LogFile(File("${localDir.path}/log.txt"));
+  logger = Logger(logFile);
+  logger.info("App V${packageInfo.version} started");
 
   LicenseRegistry.addLicense(() => Stream<LicenseEntry>.value(const LicenseEntryWithLineBreaks(<String>["path_pilot"], license)));
   await AppData.init();
-  packageInfo = await PackageInfo.fromPlatform();
   await RobiPainter.init();
   await SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
 
