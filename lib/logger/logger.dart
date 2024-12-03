@@ -49,6 +49,8 @@ class Logger {
 
   Future<void> error(String message) => log(LogLevel.error, message);
 
+  Future<void> errorWithStackTrace(String message, Object error, StackTrace stackTrace) => this.error("$message:\n$error\n$stackTrace");
+
   Future<void> debug(String message) => log(LogLevel.debug, message);
 }
 
