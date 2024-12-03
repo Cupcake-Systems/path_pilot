@@ -52,6 +52,10 @@ class Logger {
 
   Future<void> errorWithStackTrace(String message, Object error, StackTrace stackTrace) => this.error("$message:\n$error\n$stackTrace");
 
+  Future<void> fatal(String message) => log(LogLevel.fatal, message);
+
+  Future<void> fatalWithStackTrace(String message, Object error, StackTrace stackTrace) => fatal("$message:\n$error\n$stackTrace");
+
   Future<void> debug(String message) => log(LogLevel.debug, message);
 }
 
@@ -85,7 +89,6 @@ class _LogMessageTracker {
 }
 
 class LogFile {
-
   final File file;
 
   LogFile(this.file);
@@ -171,7 +174,7 @@ enum LogLevel {
       return warning;
     } else if (s == error.name) {
       return error;
-    } else if (s == fatal.name){
+    } else if (s == fatal.name) {
       return fatal;
     } else if (s == debug.name) {
       return debug;
