@@ -1,7 +1,6 @@
 import 'dart:developer' as dev;
 import 'dart:io';
 import 'dart:async';
-import 'dart:ui';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -152,6 +151,7 @@ enum LogLevel {
   info("INFO", 0, Color(0xFF2196F3), Icons.info),
   warning("WARNING", 1, Color(0xFFFFC107), Icons.warning),
   error("ERROR", 2, Color(0xFFF44336), Icons.error),
+  fatal("FATAL", 3, Color(0xFFB71C1C), Icons.error_outline),
   debug("DEBUG", 0, Color(0xFF7F7F7F), Icons.bug_report);
 
   final String name;
@@ -171,6 +171,8 @@ enum LogLevel {
       return warning;
     } else if (s == error.name) {
       return error;
+    } else if (s == fatal.name){
+      return fatal;
     } else if (s == debug.name) {
       return debug;
     } else {
