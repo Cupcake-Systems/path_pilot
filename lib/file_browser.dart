@@ -509,7 +509,7 @@ class _FileBrowserState extends State<FileBrowser> with WidgetsBindingObserver {
 
     setState(() {
       loadedData = SaveData.empty;
-      openedFile = null;
+      openedFile = result.absolute.path;
       simulationResult = null;
     });
   }
