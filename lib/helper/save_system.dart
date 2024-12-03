@@ -71,13 +71,19 @@ final class SaveData {
   }
 
   static Future<SaveData?> fromFileWithStatusMessage(String path) async {
-    final json = await readStringFromFileWithStatusMessage(path);
+    final parsed = await readStringFromFileWithStatusMessage(path);
+
+    if (parsed == null) return null;
+
+    if (parsed.isEmpty) return SaveData.empty;
+
+    final json = await fromJson(parsed);
     if (json == null) {
       showSnackBar("Failed to decode data from $path");
       return null;
     }
-    if (json.isEmpty) return SaveData.empty;
-    return fromJson(json);
+
+    return json;
   }
 
   Future<String> toJson() {
