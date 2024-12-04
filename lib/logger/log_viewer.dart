@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:grouped_list/grouped_list.dart';
 import 'package:path_pilot/logger/logger.dart';
+import 'package:intl/intl.dart';
 
 class LogViewer extends StatelessWidget {
   final LogFile logFile;
+  static final DateFormat timeFormat = DateFormat("HH:mm:ss");
 
   const LogViewer({super.key, required this.logFile});
 
@@ -49,7 +51,7 @@ class LogViewer extends StatelessWidget {
                       Icon(line.level.icon, size: 20),
                       const SizedBox(width: 8),
                       Text(
-                        "${line.formattedTime} - ${line.message}",
+                        "${timeFormat.format(line.time)} - ${line.message}",
                         style: const TextStyle(fontSize: 13),
                       ),
                     ],
