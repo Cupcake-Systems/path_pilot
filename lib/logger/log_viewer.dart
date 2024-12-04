@@ -77,7 +77,7 @@ class _LogViewerState extends State<LogViewer> {
                 clipBehavior: Clip.antiAlias,
                 color: line.level.color,
                 child: Padding(
-                  padding: const EdgeInsets.all(8.0),
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
                   child: Row(
                     children: [
                       Icon(line.level.icon, size: 20),
