@@ -99,6 +99,7 @@ Future<File?> writeBytesToFileWithStatusMessage(
       }
       showSnackBar(msg, duration: const Duration(seconds: 2));
     }
+    logger.info("Successfully wrote ${content.length} bytes to $path");
     return f;
   } catch (e, s) {
     logger.errorWithStackTrace("Failed to write ${content.length} bytes to $path", e, s);
@@ -137,6 +138,7 @@ Future<File?> pickFileAndWriteWithStatusMessage({
   final hasPermission = await getExternalStoragePermission();
 
   if (!hasPermission) {
+    logger.warning("Storage permission not granted, aborting file pick");
     showSnackBar("Please grant storage permission");
     return null;
   }
@@ -271,7 +273,9 @@ Future<String?> pickSingleFile({
 Future<Uint8List?> readBytesFromFileWithWithStatusMessage(String path) async {
   try {
     final f = File(path);
-    return await f.readAsBytes();
+    final res = await f.readAsBytes();
+    logger.info("Successfully read ${res.length} bytes from $path");
+    return res;
   } catch (e, s) {
     logger.errorWithStackTrace("Failed to read from $path", e, s);
     showSnackBar("Failed to read from $path: $e");

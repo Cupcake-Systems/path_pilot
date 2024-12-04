@@ -78,11 +78,12 @@ class IrReadResult {
         final dataLineCount = data.asByteData(dataLineOffset).lengthInBytes ~/ dataLineBytes;
 
         if (dataLineCount == 0) {
+          logger.error("No data found in file");
           showSnackBar("No data found!");
           return null;
         }
 
-        return IrReadResult(
+        final irReadRes = IrReadResult(
           versionNumber: data.asByteData(0, versionNumberBytes).getUint16(0),
           resolution: data.asByteData(versionNumberBytes, resolutionBytes).getUint16(0) / 1000,
           measurements: [
@@ -96,7 +97,12 @@ class IrReadResult {
               ),
           ],
         );
+
+        logger.info("Successfully loaded ${irReadRes.measurements.length} measurements with resolution ${irReadRes.resolution}");
+
+        return irReadRes;
       default:
+        logger.error("Unsupported file version: $versionNumber");
         showSnackBar("Unsupported file version: $versionNumber");
         return null;
     }

@@ -26,17 +26,22 @@ final class SaveData {
   static const SaveData empty = SaveData(instructions: [], obstacles: []);
 
   static Future<SaveData?> fromJsonWithStatusMessage(String json) async {
+
+    logger.info("Decoding save data from JSON string");
+
     try {
       final data = await JsonParser.parseIsolated(json);
 
       final versionNumber = data["version"];
 
       if (versionNumber == null) {
+        logger.error("Version number not found in data");
         showSnackBar("Version number not found in data");
         return null;
       }
 
       if (versionNumber is! int) {
+        logger.error("Version number is not an integer: $versionNumber");
         showSnackBar("Version number is not an integer: $versionNumber");
         return null;
       }
@@ -56,11 +61,14 @@ final class SaveData {
             decodedObstacles = await ObstaclesSerializer.decode(obstacles).toList();
           }
 
+          logger.info("Decoded ${decodedInstructions.length} instructions and ${decodedObstacles.length} obstacles");
+
           return SaveData(
             instructions: decodedInstructions,
             obstacles: decodedObstacles,
           );
         default:
+          logger.error("Unknown version number: $versionNumber");
           showSnackBar("Unknown version number: $versionNumber");
           return null;
       }
@@ -72,6 +80,9 @@ final class SaveData {
   }
 
   static Future<SaveData?> fromFileWithStatusMessage(String path) async {
+
+    logger.info("Reading save data from file: $path");
+
     final parsed = await readStringFromFileWithStatusMessage(path);
 
     if (parsed == null) return null;
@@ -96,12 +107,20 @@ final class SaveData {
 
   Future<File?> saveToFileWithStatusMessage(String path, {bool showSuccessMessage = true}) async {
     final json = await toJson();
-    return writeStringToFileWithStatusMessage(
+    final f = await writeStringToFileWithStatusMessage(
       path,
       json,
       showSuccessMessage: showSuccessMessage,
       successMessage: "Data saved successfully",
     );
+
+    if (f != null) {
+      logger.info("Saved data to file: $path");
+    } else {
+      logger.error("Failed to save data to file: $path");
+    }
+
+    return f;
   }
 
   SaveData copyWith({List<MissionInstruction>? instructions, List<Obstacle>? obstacles}) {

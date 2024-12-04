@@ -2,9 +2,9 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 
-import 'package:flutter/cupertino.dart';
 import 'package:path_pilot/helper/file_manager.dart';
 import 'package:path_pilot/helper/json_parser.dart';
+import 'package:path_pilot/main.dart';
 import 'package:path_pilot/robi_api/robi_utils.dart';
 
 final class Exported {
@@ -34,13 +34,9 @@ class Exporter {
     return Uint8List.fromList(gZipJson);
   }
 
-  static Future<File?> exportToFile(RobiConfig config, List<InstructionResult> instructions, BuildContext context) async {
+  static Future<File?> exportToFileWithStatusMessage(RobiConfig config, List<InstructionResult> instructions, String filePath) async {
+    logger.info("Exporting ${instructions.length} instructions to file: $filePath");
     final bytes = await encodeAndCompress(config, instructions);
-    if (!context.mounted) return null;
-    return await pickFileAndWriteWithStatusMessage(
-      bytes: bytes,
-      context: context,
-      extension: ".json.gz",
-    );
+    return writeBytesToFileWithStatusMessage(filePath, bytes, showFilePathInMessage: true);
   }
 }

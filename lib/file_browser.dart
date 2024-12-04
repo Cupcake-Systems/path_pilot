@@ -166,7 +166,10 @@ class _FileBrowserState extends State<FileBrowser> with WidgetsBindingObserver {
                         const PopupMenuDivider(height: 1),
                         PopupMenuItem(
                           enabled: !isSaving && !isSavedNotifier.isSaved,
-                          onTap: saveFile,
+                          onTap: () {
+                            logger.info("User requested to save file");
+                            saveFile();
+                          },
                           child: ListTile(
                             enabled: !isSaving && !isSavedNotifier.isSaved,
                             title: const Text("Save"),
@@ -189,16 +192,26 @@ class _FileBrowserState extends State<FileBrowser> with WidgetsBindingObserver {
                         ),
                         const PopupMenuDivider(height: 1),
                         PopupMenuItem(
-                          onTap: () {
+                          onTap: () async {
                             if (simulationResult == null || simulationResult!.instructionResults.isEmpty) {
                               showSnackBar("Nothing to export");
                               return;
                             }
-                            Exporter.exportToFile(
-                              selectedRobiConfig,
-                              simulationResult!.instructionResults,
-                              context,
+
+                            final encoded = await Exporter.encodeAndCompress(selectedRobiConfig, simulationResult!.instructionResults);
+
+                            if (!context.mounted) return;
+
+                            final pickedFile = await pickFileAndWriteWithStatusMessage(
+                              context: context,
+                              extension: ".json.gz",
+                              bytes: encoded,
                             );
+
+                            if (pickedFile != null) {
+                              logger.info("Exported simulation results to ${pickedFile.path}");
+                              showSnackBar("Exported simulation results to ${pickedFile.path}");
+                            }
                           },
                           child: const ListTile(
                             title: Text("Export"),
@@ -466,11 +479,7 @@ class _FileBrowserState extends State<FileBrowser> with WidgetsBindingObserver {
 
     if (loaded == null) return;
 
-    logger.info("Loaded ${loaded.measurements.length} IR readings from $result");
-
-    setState(() {
-      irReadResult = loaded;
-    });
+    setState(() => irReadResult = loaded);
   }
 
   Future<File?> saveFile([bool showStatusMessage = true]) async {
@@ -479,7 +488,6 @@ class _FileBrowserState extends State<FileBrowser> with WidgetsBindingObserver {
     isSavedNotifier.isSaving = true;
     final res = await loadedData.saveToFileWithStatusMessage(openedFile!, showSuccessMessage: showStatusMessage);
     if (res != null) {
-      logger.info("Saved ${loadedData.instructions.length} instructions and ${loadedData.obstacles.length} obstacles");
       isSavedNotifier.isSaved = true;
     }
     return res;
@@ -540,8 +548,6 @@ class _FileBrowserState extends State<FileBrowser> with WidgetsBindingObserver {
     setState(() => isOpening = false);
 
     if (loadedData == null) return;
-
-    logger.info("Loaded ${loadedData.instructions.length} instructions and ${loadedData.obstacles.length} obstacles from $result");
 
     isSavedNotifier.isSaved = true;
 
