@@ -25,7 +25,7 @@ final class SaveData {
 
   static const SaveData empty = SaveData(instructions: [], obstacles: []);
 
-  static Future<SaveData?> fromJson(String json) async {
+  static Future<SaveData?> fromJsonWithStatusMessage(String json) async {
     try {
       final data = await JsonParser.parseIsolated(json);
 
@@ -65,6 +65,7 @@ final class SaveData {
           return null;
       }
     } catch (e, s) {
+      showSnackBar("Failed to decode save data");
       logger.errorWithStackTrace("Failed to decode save data\nJSON string: $json", e, s);
       return null;
     }
@@ -77,13 +78,7 @@ final class SaveData {
 
     if (parsed.isEmpty) return SaveData.empty;
 
-    final json = await fromJson(parsed);
-    if (json == null) {
-      showSnackBar("Failed to decode data from $path");
-      return null;
-    }
-
-    return json;
+    return fromJsonWithStatusMessage(parsed);
   }
 
   Future<String> toJson() {
