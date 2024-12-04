@@ -72,6 +72,7 @@ class SettingsStorage {
   static const String _autoSaveIntervalKey = "autoSaveInterval";
   static const String _autoSaveKey = "autoSave";
   static const String _limitFpsKey = "limitFps";
+  static const String _sendLogKey = "sendLog";
 
   static final Set<AppLifecycleState> _autoSaveTriggers =
       AppData._prefs.getStringList(_saveOnTriggerKey)?.map((e) => AppLifecycleState.values.firstWhere((element) => element.name == e)).toSet() ?? availableSaveTriggers;
@@ -116,4 +117,19 @@ class SettingsStorage {
   static bool get limitFps => AppData._prefs.getBool(_limitFpsKey) ?? true;
 
   static set limitFps(bool value) => AppData._prefs.setBool(_limitFpsKey, value);
+
+  static bool get sendLog => AppData._prefs.getBool(_sendLogKey) ?? true;
+
+  static set sendLog(bool value) => AppData._prefs.setBool(_sendLogKey, value);
+}
+
+class PreservingStorage {
+  static const String _shouldSubmitLogKey = "shouldSubmitLog";
+  static const String _userIdKey = "userId";
+
+  static bool get shouldSubmitLog => AppData._prefs.getBool(_shouldSubmitLogKey) ?? false;
+
+  static set shouldSubmitLog(bool value) => AppData._prefs.setBool(_shouldSubmitLogKey, value);
+
+  static int get userId => AppData._prefs.getInt(_userIdKey) ?? rand.nextInt(4294967296);
 }

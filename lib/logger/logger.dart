@@ -5,6 +5,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:path_pilot/app_storage.dart';
 
 class Logger {
   final LogFile logFile;
@@ -25,6 +26,9 @@ class Logger {
     if (tracker.shouldLog(now)) {
       tracker.incrementCount();
       await _writeToFile(logMessage);
+      if (logMessage.level.level > LogLevel.error.level) {
+        PreservingStorage.shouldSubmitLog = true;
+      }
     } else if (!tracker.isBlockedMessageLogged) {
       tracker.markBlockedMessageLogged();
       final suppressedMessage = LogMessage(message: "Message suppressed: $message", time: now, level: LogLevel.warning);
@@ -38,7 +42,7 @@ class Logger {
         dev.log(logMessage.message, name: 'Logger', time: logMessage.time);
       }
 
-      await logFile.add(logMessage);
+      logFile.add(logMessage);
     } catch (e) {
       dev.log("Failed to write to log file", error: e);
     }
@@ -90,21 +94,78 @@ class _LogMessageTracker {
 
 class LogFile {
   final File file;
+  final void Function(WriteOperation op) onOperationCompleted;
 
-  LogFile(this.file);
+  bool _runRoutine = false;
+  bool _isWriting = false;
+  final _writeQueue = <WriteOperation>[];
 
-  Future<void> add(LogMessage message) async {
-    await file.writeAsString("${message.toCsvLine()}\n", mode: FileMode.append, flush: true);
+  LogFile(this.file, {required this.onOperationCompleted}) {
+    _writeRoutine();
   }
 
-  Future<String> readRaw() => file.readAsString();
+  void add(LogMessage message) => _writeQueue.add(
+        WriteOperation(
+          mode: FileMode.append,
+          data: "${message.toCsvLine()}\n",
+          flush: true,
+        ),
+      );
+
+  void _writeRoutine() async {
+    if (_runRoutine) return;
+    _runRoutine = true;
+    while (_runRoutine) {
+      while (_writeQueue.isNotEmpty) {
+        _isWriting = true;
+        final op = _writeQueue.removeAt(0);
+        await op.execute(file);
+      }
+
+      _isWriting = false;
+
+      await Future.delayed(const Duration(milliseconds: 500));
+    }
+  }
+
+  Future<void> awaitWrite() async {
+    while (_isWriting) {
+      await Future.delayed(const Duration(milliseconds: 50));
+    }
+  }
+
+  void stop() => _runRoutine = false;
+
+  Future<String> readRaw() async {
+    await awaitWrite();
+    return file.readAsString();
+  }
 
   Future<List<LogMessage>> read() async {
+    await awaitWrite();
     final lines = await file.readAsLines();
     return lines.map((e) => LogMessage.tryParseFromCsvLine(e)).whereType<LogMessage>().toList();
   }
 
-  Future<void> clear() => file.writeAsString("");
+  void clear() => _writeQueue.add(
+        const WriteOperation(
+          mode: FileMode.write,
+          data: "",
+          flush: true,
+        ),
+      );
+}
+
+final class WriteOperation {
+  final FileMode mode;
+  final String data;
+  final bool flush;
+
+  const WriteOperation({required this.mode, required this.data, required this.flush});
+
+  Future<void> execute(File file) async {
+    await file.writeAsString(data, mode: mode, flush: flush);
+  }
 }
 
 final class LogMessage {
@@ -125,6 +186,12 @@ final class LogMessage {
     final escapedMessage = withoutSemicolons.replaceAll("\n", "\\n").replaceAll("\r", "");
     return "${time.toIso8601String()};$level;$escapedMessage";
   }
+
+  Map<String, String> toJson() => {
+        "message": message,
+        "time": time.toIso8601String(),
+        "level": level.name,
+      };
 
   static final simSplitPattern = RegExp(r'(?<!\\);');
 

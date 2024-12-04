@@ -10,6 +10,7 @@ import 'package:path_pilot/app_storage.dart';
 import 'package:path_pilot/constants.dart';
 import 'package:path_pilot/editor/painters/robi_painter.dart';
 import 'package:path_pilot/file_browser.dart';
+import 'package:path_pilot/logger/log_uploader.dart';
 import 'package:path_provider/path_provider.dart';
 
 import 'logger/logger.dart';
@@ -28,7 +29,7 @@ Future<void> main() async {
   packageInfo = await PackageInfo.fromPlatform();
 
   final localDir = await getApplicationDocumentsDirectory();
-  logFile = LogFile(File("${localDir.path}/log.txt"));
+  logFile = LogFile(File("${localDir.path}/log.txt"), onOperationCompleted: (op) {});
   logger = Logger(logFile);
   logger.info("App V${packageInfo.version} started");
 
@@ -36,6 +37,9 @@ Future<void> main() async {
   await AppData.init();
   await RobiPainter.init();
   await SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+
+  final logUploader = LogUploader(logFile);
+  logUploader.startUploadRoutine();
 
   runApp(const MyApp());
 }

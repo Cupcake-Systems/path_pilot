@@ -112,6 +112,16 @@ class _SettingsPageState extends State<SettingsPage> {
             ),
           Padding(
             padding: const EdgeInsets.all(16),
+            child: Text("Error Reporting", style: headerStyle),
+          ),
+          SwitchListTile(
+            title: const Text("Send Anonymous Logs"),
+            subtitle: const Text("Automatically send anonymous log files to developers when an error occurs."),
+            value: SettingsStorage.sendLog,
+            onChanged: (value) => setState(() => SettingsStorage.sendLog = value),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(16),
             child: Text("Advanced", style: headerStyle),
           ),
           SwitchListTile(

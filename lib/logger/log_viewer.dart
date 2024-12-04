@@ -33,9 +33,8 @@ class _LogViewerState extends State<LogViewer> {
             onPressed: () async {
               final conf = await confirmDialog(context, "Delete Log", "Are you sure you want to clear the log file?");
               if (!conf) return;
-              setState(() async {
-                await widget.logFile.clear();
-              });
+
+              setState(()  => widget.logFile.clear());
               if (context.mounted) {
                 showSnackBar("Log file cleared");
               }
