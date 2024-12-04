@@ -44,3 +44,5 @@ app.*.map.json
 
 *.robi_script.json
 *.bin
+
+lib/backend_api/secrets.dart

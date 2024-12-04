@@ -27,6 +27,7 @@ Future<bool> submitLog(LogFile logFile) async {
       headers: {
         "Content-Type": "application/json",
         ...identificationHeader,
+        ...validationHeader,
       },
     );
 
