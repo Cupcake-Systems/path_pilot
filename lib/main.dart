@@ -28,8 +28,12 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   packageInfo = await PackageInfo.fromPlatform();
 
-  final localDir = await getApplicationDocumentsDirectory();
-  logFile = LogFile(File("${localDir.path}/log.txt"), onOperationCompleted: (op) {});
+  final localDir = "${(await getApplicationDocumentsDirectory()).path}/path_pilot";
+  if (!await Directory(localDir).exists()) {
+    await Directory(localDir).create(recursive: true);
+  }
+
+  logFile = LogFile(File("$localDir/log.txt"), onOperationCompleted: (op) {});
   logger = Logger(logFile);
   logger.info("App V${packageInfo.version} started");
 
