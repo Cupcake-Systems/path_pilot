@@ -466,7 +466,7 @@ class _FileBrowserState extends State<FileBrowser> with WidgetsBindingObserver {
 
     if (loaded == null) return;
 
-    logger.info("${loaded.measurements.length} IR readings loaded from $result");
+    logger.info("Loaded ${loaded.measurements.length} IR readings from $result");
 
     setState(() {
       irReadResult = loaded;
@@ -479,7 +479,7 @@ class _FileBrowserState extends State<FileBrowser> with WidgetsBindingObserver {
     isSavedNotifier.isSaving = true;
     final res = await loadedData.saveToFileWithStatusMessage(openedFile!, showSuccessMessage: showStatusMessage);
     if (res != null) {
-      logger.info("${loadedData.instructions.length} instructions and ${loadedData.obstacles.length} obstacles saved");
+      logger.info("Saved ${loadedData.instructions.length} instructions and ${loadedData.obstacles.length} obstacles");
       isSavedNotifier.isSaved = true;
     }
     return res;
@@ -498,7 +498,7 @@ class _FileBrowserState extends State<FileBrowser> with WidgetsBindingObserver {
 
     if (result == null) return;
 
-    logger.info("${loadedData.instructions.length} instructions and ${loadedData.obstacles.length} obstacles saved to ${result.absolute.path}");
+    logger.info("Saved ${loadedData.instructions.length} instructions and ${loadedData.obstacles.length} obstacles to ${result.absolute.path}");
 
     isSavedNotifier.isSaved = true;
 
@@ -540,6 +540,8 @@ class _FileBrowserState extends State<FileBrowser> with WidgetsBindingObserver {
     setState(() => isOpening = false);
 
     if (loadedData == null) return;
+
+    logger.info("Loaded ${loadedData.instructions.length} instructions and ${loadedData.obstacles.length} obstacles from $result");
 
     isSavedNotifier.isSaved = true;
 
