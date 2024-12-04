@@ -24,7 +24,7 @@ class _LogViewerState extends State<LogViewer> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Log Viewer"),
+        title: const Text("App Log"),
         actions: [
           IconButton(
             onPressed: () => setState(() {}),
