@@ -126,10 +126,25 @@ class SettingsStorage {
 class PreservingStorage {
   static const String _shouldSubmitLogKey = "shouldSubmitLog";
   static const String _userIdKey = "userId";
+  static const String _lastSubmittedLogTimeKey = "lastSubmittedLogTime";
 
   static bool get shouldSubmitLog => AppData._prefs.getBool(_shouldSubmitLogKey) ?? false;
 
   static set shouldSubmitLog(bool value) => AppData._prefs.setBool(_shouldSubmitLogKey, value);
 
   static int get userId => AppData._prefs.getInt(_userIdKey) ?? rand.nextInt(4294967296);
+
+  static DateTime? get lastSubmittedLogTime {
+    final time = AppData._prefs.getInt(_lastSubmittedLogTimeKey);
+    if (time == null) return null;
+    return DateTime.fromMillisecondsSinceEpoch(time);
+  }
+
+  static set lastSubmittedLogTime(DateTime? value) {
+    if (value == null) {
+      AppData._prefs.remove(_lastSubmittedLogTimeKey);
+      return;
+    }
+    AppData._prefs.setInt(_lastSubmittedLogTimeKey, value.millisecondsSinceEpoch);
+  }
 }

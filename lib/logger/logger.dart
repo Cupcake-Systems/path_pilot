@@ -148,6 +148,14 @@ class LogFile {
     return lines.map((e) => LogMessage.tryParseFromCsvLine(e)).whereType<LogMessage>().toList();
   }
 
+  static Iterable<LogMessage> filterByDay(List<LogMessage> messages, DateTime day) {
+    final start = DateTime(day.year, day.month, day.day);
+    final end = start.add(const Duration(days: 1));
+    return messages.where((e) => e.time.isAfter(start) && e.time.isBefore(end));
+  }
+
+  static Iterable<LogMessage> since(List<LogMessage> messages, DateTime time) => messages.where((e) => e.time.difference(time).inMilliseconds > 10);
+
   void clear() => _writeQueue.add(
         const WriteOperation(
           mode: FileMode.write,
