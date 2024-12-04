@@ -4,6 +4,7 @@ import 'package:grouped_list/grouped_list.dart';
 import 'package:path_pilot/helper/dialogs.dart';
 import 'package:path_pilot/logger/logger.dart';
 import 'package:intl/intl.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 
 class LogViewer extends StatefulWidget {
@@ -24,7 +25,10 @@ class _LogViewerState extends State<LogViewer> {
         title: const Text("Log Viewer"),
         actions: [
           IconButton(
-            onPressed: () => launchUrlString(widget.logFile.file.path),
+            onPressed: () {
+              final uri = Uri.file(widget.logFile.file.path);
+              launchUrl(uri, mode: LaunchMode.externalApplication);
+            },
             icon: const Icon(Icons.description),
           ),
           const SizedBox(width: 8),
