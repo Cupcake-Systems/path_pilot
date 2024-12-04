@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:path_pilot/app_storage.dart';
 
+import '../backend_api/submit_log.dart';
+import '../helper/dialogs.dart';
+import '../main.dart';
+
 const availableFrameRates = [10, 30, 60];
 const availableAutoSaveIntervals = [1, 2, 5, 10, 15, 30];
 const availableSaveTriggers = {
@@ -22,6 +26,8 @@ class SettingsPage extends StatefulWidget {
 }
 
 class _SettingsPageState extends State<SettingsPage> {
+  bool isSubmitting = false;
+
   @override
   Widget build(BuildContext context) {
     final headerStyle = Theme.of(context).textTheme.titleSmall!.copyWith(color: Theme.of(context).colorScheme.onPrimaryContainer);
@@ -120,6 +126,27 @@ class _SettingsPageState extends State<SettingsPage> {
             value: SettingsStorage.sendLog,
             onChanged: (value) => setState(() => SettingsStorage.sendLog = value),
           ),
+          const Divider(height: 1),
+          ListTile(
+            title: const Text("Send Log to Developers"),
+            subtitle: const Text("Tap to manually send the current log file to the developers."),
+            trailing: const Icon(Icons.send),
+            enabled: !isSubmitting,
+            onTap: () async {
+              if (isSubmitting) return;
+
+              final conf = await confirmDialog(context, "Send Log", "Are you sure you want to send the log to the developers?");
+              if (!conf) return;
+
+              logger.info("User requested to send log");
+
+              setState(() => isSubmitting = true);
+              final success = await submitLog(logFile);
+              setState(() => isSubmitting = false);
+
+              showSnackBar(success ? "Log sent successfully" : "Failed to send log");
+            },
+          ),
           Padding(
             padding: const EdgeInsets.all(16),
             child: Text("Advanced", style: headerStyle),
@@ -128,9 +155,12 @@ class _SettingsPageState extends State<SettingsPage> {
             title: const Text("Developer Mode"),
             subtitle: const Text("Enable advanced debugging tools and additional features."),
             value: SettingsStorage.developerMode,
-            onChanged: (value) => setState(() {
-              SettingsStorage.developerMode = value;
-            }),
+            onChanged: (value) {
+              logger.info("User ${value ? "enabled" : "disabled"} developer mode");
+              setState(() {
+                SettingsStorage.developerMode = value;
+              });
+            },
           ),
         ],
       ),
