@@ -23,8 +23,10 @@ class LogUploader {
 
   void _uploadRoutine() async {
     while (_runRoutine) {
-      if (PreservingStorage.shouldSubmitLog) {
-        await uploadLog();
+      if (PreservingStorage.shouldSubmitLog && SettingsStorage.sendLog) {
+        logger.info("The app has logged an error, submitting log");
+        final success = await uploadLog();
+        PreservingStorage.shouldSubmitLog = !success;
       }
       await Future.delayed(routineDelay);
     }
