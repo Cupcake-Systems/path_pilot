@@ -90,15 +90,18 @@ class _LogMessageTracker {
 
 class LogFile {
   final File file;
-  final void Function(WriteOperation op) onOperationCompleted;
+  final Map<String, void Function(WriteOperation op)> _registeredListeners = {};
 
   bool _runRoutine = false;
   bool _isWriting = false;
   final _writeQueue = <WriteOperation>[];
 
-  LogFile(this.file, {required this.onOperationCompleted}) {
+  LogFile(this.file) {
     _writeRoutine();
   }
+
+  void registerListener(String key, void Function(WriteOperation op) listener) => _registeredListeners[key] = listener;
+  void unregisterListener(String key) => _registeredListeners.remove(key);
 
   void add(LogMessage message) => _writeQueue.add(
         WriteOperation(
@@ -118,6 +121,9 @@ class LogFile {
 
         try {
           await op.execute(file);
+          for (final listener in _registeredListeners.values) {
+            listener(op);
+          }
         } catch (e, s) {
           dev.log("Failed to write log event", error: e, stackTrace: s);
         }

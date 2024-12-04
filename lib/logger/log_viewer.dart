@@ -21,6 +21,19 @@ class LogViewer extends StatefulWidget {
 
 class _LogViewerState extends State<LogViewer> {
   bool isSubmitting = false;
+  static const listenerKey = "LogViewer";
+
+  @override
+  void initState() {
+    super.initState();
+    widget.logFile.registerListener(listenerKey, (op) => setState(() {}));
+  }
+
+  @override
+  void dispose() {
+    widget.logFile.unregisterListener(listenerKey);
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -28,11 +41,6 @@ class _LogViewerState extends State<LogViewer> {
       appBar: AppBar(
         title: const Text("App Log"),
         actions: [
-          IconButton(
-            onPressed: () => setState(() {}),
-            icon: const Icon(Icons.refresh),
-          ),
-          const SizedBox(width: 8),
           StatefulBuilder(
             builder: (context, setState1) {
               return PopupMenuButton(

@@ -33,7 +33,7 @@ Future<void> main() async {
     await Directory(localDir).create(recursive: true);
   }
 
-  logFile = LogFile(File("$localDir/log.txt"), onOperationCompleted: (op) {});
+  logFile = LogFile(File("$localDir/log.txt"));
   logger = Logger(logFile);
   logger.info("App V${packageInfo.version} started");
 
