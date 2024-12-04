@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:path_pilot/app_storage.dart';
 
 import '../backend_api/submit_log.dart';
@@ -162,6 +163,34 @@ class _SettingsPageState extends State<SettingsPage> {
               });
             },
           ),
+          const Divider(height: 1),
+          ListTile(
+            trailing: IconButton(
+              onPressed: () async {
+                await Clipboard.setData(ClipboardData(text: PreservingStorage.userId.toString()));
+                showSnackBar("User ID copied to clipboard");
+              },
+              icon: const Icon(Icons.copy),
+            ),
+            title: const Text("Your User ID"),
+            subtitle: Wrap(
+              spacing: 8,
+              children: [
+                const Text("Copy this ID to share it with the developers for support."),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(6),
+                    color: Colors.red,
+                  ),
+                  child: const Text(
+                    "Do not share it with anyone else!",
+                    style: TextStyle(color: Colors.white),
+                  ),
+                ),
+              ],
+            ),
+          )
         ],
       ),
     );
