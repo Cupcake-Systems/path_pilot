@@ -227,8 +227,8 @@ final class LogMessage {
 }
 
 enum LogLevel {
-  info("INFO", 0, Color(0xFF2196F3), Icons.info),
-  warning("WARNING", 1, Color(0xFFFFC107), Icons.warning),
+  info("INFO", 0, Color(0xFF3E434B), Icons.info),
+  warning("WARNING", 1, Color(0xFFDCAE21), Icons.warning),
   error("ERROR", 2, Color(0xFFF44336), Icons.error),
   fatal("FATAL", 3, Color(0xFFB71C1C), Icons.error_outline),
   debug("DEBUG", 0, Color(0xFF7F7F7F), Icons.bug_report);
