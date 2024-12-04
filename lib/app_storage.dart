@@ -15,6 +15,7 @@ class AppData {
   static Future<void> init() async {
     _prefs = await SharedPreferences.getInstance();
     await RobiConfigStorage.init();
+    PreservingStorage.init();
   }
 }
 
@@ -128,11 +129,17 @@ class PreservingStorage {
   static const String _userIdKey = "userId";
   static const String _lastSubmittedLogTimeKey = "lastSubmittedLogTime";
 
+  static void init() {
+    if (!AppData._prefs.containsKey(_userIdKey)) {
+      AppData._prefs.setInt(_userIdKey, rand.nextInt(4294967296));
+    }
+  }
+
   static bool get shouldSubmitLog => AppData._prefs.getBool(_shouldSubmitLogKey) ?? false;
 
   static set shouldSubmitLog(bool value) => AppData._prefs.setBool(_shouldSubmitLogKey, value);
 
-  static int get userId => AppData._prefs.getInt(_userIdKey) ?? rand.nextInt(4294967296);
+  static int get userId => AppData._prefs.getInt(_userIdKey)!;
 
   static DateTime? get lastSubmittedLogTime {
     final time = AppData._prefs.getInt(_lastSubmittedLogTimeKey);
