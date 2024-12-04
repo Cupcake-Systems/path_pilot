@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 import 'package:http/http.dart' as http;
 import 'package:path_pilot/backend_api/urls.dart';
 import 'package:path_pilot/helper/json_parser.dart';

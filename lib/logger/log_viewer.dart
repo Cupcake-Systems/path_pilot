@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:grouped_list/grouped_list.dart';
+import 'package:path_pilot/backend_api/submit_log.dart';
 import 'package:path_pilot/helper/dialogs.dart';
 import 'package:path_pilot/logger/logger.dart';
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:url_launcher/url_launcher_string.dart';
 
 class LogViewer extends StatefulWidget {
   final LogFile logFile;
@@ -18,6 +18,8 @@ class LogViewer extends StatefulWidget {
 }
 
 class _LogViewerState extends State<LogViewer> {
+  bool isSubmitting = false;
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -25,23 +27,62 @@ class _LogViewerState extends State<LogViewer> {
         title: const Text("Log Viewer"),
         actions: [
           IconButton(
-            onPressed: () {
-              final uri = Uri.file(widget.logFile.file.path);
-              launchUrl(uri, mode: LaunchMode.externalApplication);
-            },
-            icon: const Icon(Icons.description),
+            onPressed: () => setState(() {}),
+            icon: const Icon(Icons.refresh),
           ),
           const SizedBox(width: 8),
-          IconButton(
-            icon: const Icon(Icons.delete),
-            onPressed: () async {
-              final conf = await confirmDialog(context, "Delete Log", "Are you sure you want to clear the log file?");
-              if (!conf) return;
+          PopupMenuButton(
+            itemBuilder: (context) {
+              return [
+                PopupMenuItem(
+                  enabled: !isSubmitting,
+                  onTap: () async {
+                    if (isSubmitting) {
+                      showSnackBar("Already sending log");
+                      return;
+                    }
 
-              setState(()  => widget.logFile.clear());
-              if (context.mounted) {
-                showSnackBar("Log file cleared");
-              }
+                    final conf = await confirmDialog(context, "Send Log", "Are you sure you want to send the log to the developers?");
+                    if (!conf) return;
+
+                    isSubmitting = true;
+                    await submitLog(widget.logFile);
+                    isSubmitting = false;
+                  },
+                  child: const ListTile(
+                    leading: Icon(Icons.send),
+                    title: Text("Send log"),
+                  ),
+                ),
+                PopupMenuItem(
+                  child: const ListTile(
+                    leading: Icon(Icons.open_in_browser),
+                    title: Text("Open log file"),
+                  ),
+                  onTap: () async {
+                    final success = await launchUrl(
+                      Uri.file(widget.logFile.file.path),
+                      mode: LaunchMode.externalApplication,
+                    );
+                    if (!success) showSnackBar("Failed to open log file");
+                  },
+                ),
+                PopupMenuItem(
+                  child: const ListTile(
+                    leading: Icon(Icons.delete),
+                    title: Text("Clear log file"),
+                  ),
+                  onTap: () async {
+                    final conf = await confirmDialog(context, "Delete Log", "Are you sure you want to clear the log file?");
+                    if (!conf) return;
+
+                    setState(() => widget.logFile.clear());
+                    if (context.mounted) {
+                      showSnackBar("Log file cleared");
+                    }
+                  },
+                ),
+              ];
             },
           ),
         ],
