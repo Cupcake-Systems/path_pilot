@@ -121,8 +121,8 @@ final class LogMessage {
   String get date => DateFormat('yyyy-MM-dd').format(time);
 
   String toCsvLine() {
-    final withoutSemicolons = message.replaceAll(";", "\\;");
-    final escapedMessage = withoutSemicolons.replaceAll("\n", "\\n");
+    final withoutSemicolons = message.trim().replaceAll(";", "\\;");
+    final escapedMessage = withoutSemicolons.replaceAll("\n", "\\n").replaceAll("\r", "");
     return "${time.toIso8601String()};$level;$escapedMessage";
   }
 
