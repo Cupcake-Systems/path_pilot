@@ -7,9 +7,6 @@ import '../main.dart';
 
 Future<bool> submitLog(LogFile logFile) async {
   try {
-
-    logger.info("Submitting log");
-
     final msgs = await logFile.read();
 
     final jsonMsgs = msgs.map((e) => e.toJson()).toList();

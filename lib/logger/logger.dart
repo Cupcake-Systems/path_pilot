@@ -14,7 +14,7 @@ class Logger {
 
   Logger(this.logFile);
 
-  Future<void> log(LogLevel level, String message) async {
+  void log(LogLevel level, String message) {
     final now = DateTime.now();
     final tracker = _messageTracker.putIfAbsent(
       message,
@@ -25,42 +25,38 @@ class Logger {
 
     if (tracker.shouldLog(now)) {
       tracker.incrementCount();
-      await _writeToFile(logMessage);
+      _addToFile(logMessage);
       if (logMessage.level.level > LogLevel.error.level) {
         PreservingStorage.shouldSubmitLog = true;
       }
     } else if (!tracker.isBlockedMessageLogged) {
       tracker.markBlockedMessageLogged();
       final suppressedMessage = LogMessage(message: "Message suppressed: $message", time: now, level: LogLevel.warning);
-      await _writeToFile(suppressedMessage);
+      _addToFile(suppressedMessage);
     }
   }
 
-  Future<void> _writeToFile(LogMessage logMessage) async {
-    try {
-      if (kDebugMode) {
-        dev.log(logMessage.message, name: 'Logger', time: logMessage.time);
-      }
-
-      logFile.add(logMessage);
-    } catch (e) {
-      dev.log("Failed to write to log file", error: e);
+  void _addToFile(LogMessage logMessage) {
+    if (kDebugMode) {
+      dev.log(logMessage.message, name: 'Logger', time: logMessage.time);
     }
+
+    logFile.add(logMessage);
   }
 
-  Future<void> info(String message) => log(LogLevel.info, message);
+  void info(String message) => log(LogLevel.info, message);
 
-  Future<void> warning(String message) => log(LogLevel.warning, message);
+  void warning(String message) => log(LogLevel.warning, message);
 
-  Future<void> error(String message) => log(LogLevel.error, message);
+  void error(String message) => log(LogLevel.error, message);
 
-  Future<void> errorWithStackTrace(String message, Object error, StackTrace stackTrace) => this.error("$message:\n$error\n$stackTrace");
+  void errorWithStackTrace(String message, Object error, StackTrace stackTrace) => this.error("$message:\n$error\n$stackTrace");
 
-  Future<void> fatal(String message) => log(LogLevel.fatal, message);
+  void fatal(String message) => log(LogLevel.fatal, message);
 
-  Future<void> fatalWithStackTrace(String message, Object error, StackTrace stackTrace) => fatal("$message:\n$error\n$stackTrace");
+  void fatalWithStackTrace(String message, Object error, StackTrace stackTrace) => fatal("$message:\n$error\n$stackTrace");
 
-  Future<void> debug(String message) => log(LogLevel.debug, message);
+  void debug(String message) => log(LogLevel.debug, message);
 }
 
 class _LogMessageTracker {
@@ -119,7 +115,12 @@ class LogFile {
       while (_writeQueue.isNotEmpty) {
         _isWriting = true;
         final op = _writeQueue.removeAt(0);
-        await op.execute(file);
+
+        try {
+          await op.execute(file);
+        } catch (e, s) {
+          dev.log("Failed to write log event", error: e, stackTrace: s);
+        }
       }
 
       _isWriting = false;

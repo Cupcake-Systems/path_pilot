@@ -7,6 +7,8 @@ import 'package:path_pilot/logger/logger.dart';
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../main.dart';
+
 class LogViewer extends StatefulWidget {
   final LogFile logFile;
   static final DateFormat timeFormat = DateFormat("HH:mm:ss");
@@ -46,6 +48,7 @@ class _LogViewerState extends State<LogViewer> {
                     if (!conf) return;
 
                     isSubmitting = true;
+                    logger.info("User requested to send log");
                     await submitLog(widget.logFile);
                     isSubmitting = false;
                   },
