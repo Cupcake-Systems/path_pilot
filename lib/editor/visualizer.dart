@@ -332,25 +332,28 @@ class Visualizer extends StatelessWidget {
                             ),
                           ],
                         ),
-                        Wrap(
-                          alignment: WrapAlignment.end,
-                          crossAxisAlignment: WrapCrossAlignment.center,
-                          spacing: 8,
-                          children: [
-                            DropdownButton<double>(
-                              value: speedMultiplier,
-                              items: const [0.25, 0.5, 1.0, 2.0, 5.0, 10.0].map((e) => DropdownMenuItem(value: e, child: Text("$e x"))).toList(growable: false),
-                              onChanged: (value) => onSpeedMultiplierChanged(value ?? 1),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            Padding(
-                              padding: const EdgeInsets.only(right: 8.0),
-                              child: Text(
-                                "$timeString / $totalTimeString",
-                                textAlign: TextAlign.center,
+                        Padding(
+                          padding: const EdgeInsets.only(left: 8),
+                          child: Wrap(
+                            alignment: WrapAlignment.end,
+                            crossAxisAlignment: WrapCrossAlignment.center,
+                            spacing: 8,
+                            children: [
+                              DropdownButton<double>(
+                                value: speedMultiplier,
+                                items: const [0.25, 0.5, 1.0, 2.0, 5.0, 10.0].map((e) => DropdownMenuItem(value: e, child: Text("$e x"))).toList(growable: false),
+                                onChanged: (value) => onSpeedMultiplierChanged(value ?? 1),
+                                borderRadius: BorderRadius.circular(8),
                               ),
-                            ),
-                          ],
+                              Padding(
+                                padding: const EdgeInsets.only(right: 8.0),
+                                child: Text(
+                                  "$timeString / $totalTimeString",
+                                  textAlign: TextAlign.center,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ],
                     ),
