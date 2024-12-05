@@ -1,14 +1,13 @@
 import 'dart:convert';
 import 'dart:math';
 import 'package:crypto/crypto.dart';
+import 'package:flutter/foundation.dart';
 import 'package:path_pilot/backend_api/secrets.dart' as secrets;
 
 import '../app_storage.dart';
 
-//const protocol = "https";
-const protocol = "http";
-//const domain = "path_pilot.cupcake-systems.com";
-const domain = "127.0.0.1:8000";
+const protocol = kDebugMode? "http" : "https";
+const domain = kDebugMode? "localhost:8951" : "path-pilot.cupcake-systems.com";
 final userId = PreservingStorage.userId;
 
 const submitLogPath = "/logs/submit";
