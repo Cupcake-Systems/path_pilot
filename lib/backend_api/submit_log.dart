@@ -32,7 +32,7 @@ Future<bool> submitLog(LogFile logFile) async {
     );
 
     if (response.statusCode != 200) {
-      logger.error("Endpoint rejected log: ${response.body}");
+      logger.warning("Endpoint rejected log: ${response.body}");
       return false;
     }
 

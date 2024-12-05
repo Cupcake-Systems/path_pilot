@@ -35,13 +35,13 @@ final class SaveData {
       final versionNumber = data["version"];
 
       if (versionNumber == null) {
-        logger.error("Version number not found in data");
+        logger.warning("Version number not found in data");
         showSnackBar("Version number not found in data");
         return null;
       }
 
       if (versionNumber is! int) {
-        logger.error("Version number is not an integer: $versionNumber");
+        logger.warning("Version number is not an integer: $versionNumber");
         showSnackBar("Version number is not an integer: $versionNumber");
         return null;
       }
@@ -68,7 +68,7 @@ final class SaveData {
             obstacles: decodedObstacles,
           );
         default:
-          logger.error("Unknown version number: $versionNumber");
+          logger.warning("Unknown version number: $versionNumber");
           showSnackBar("Unknown version number: $versionNumber");
           return null;
       }

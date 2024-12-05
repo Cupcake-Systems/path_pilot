@@ -78,7 +78,7 @@ class IrReadResult {
         final dataLineCount = data.asByteData(dataLineOffset).lengthInBytes ~/ dataLineBytes;
 
         if (dataLineCount == 0) {
-          logger.error("No data found in file");
+          logger.warning("No data found in file");
           showSnackBar("No data found!");
           return null;
         }
@@ -102,7 +102,7 @@ class IrReadResult {
 
         return irReadRes;
       default:
-        logger.error("Unsupported file version: $versionNumber");
+        logger.warning("Unsupported file version: $versionNumber");
         showSnackBar("Unsupported file version: $versionNumber");
         return null;
     }
