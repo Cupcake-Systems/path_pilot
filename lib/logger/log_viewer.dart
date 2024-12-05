@@ -127,6 +127,7 @@ class _LogViewerState extends State<LogViewer> {
           }
 
           return GroupedListView(
+            padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
             elements: lines,
             groupBy: (line) => line.date,
             groupHeaderBuilder: (msg) => ListTile(title: Text(msg.date)),
