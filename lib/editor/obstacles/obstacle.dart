@@ -3,7 +3,7 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:path_pilot/main.dart';
-import 'package:vector_math/vector_math.dart' show Aabb2, Vector2;
+import 'package:vector_math/vector_math.dart' show Aabb2;
 
 abstract class Obstacle {
   final Paint paint;

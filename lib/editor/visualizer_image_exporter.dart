@@ -4,6 +4,8 @@ import 'dart:ui';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import 'package:path_pilot/app_storage.dart';
+import 'package:path_pilot/editor/painters/foreground_painter.dart';
 import 'package:path_pilot/editor/painters/line_painter.dart';
 import 'package:path_pilot/editor/painters/line_painter_settings/line_painter_visibility_settings.dart';
 import 'package:path_pilot/editor/visualizer.dart';
@@ -173,6 +175,16 @@ class _VisualizerImageExporterState extends State<VisualizerImageExporter> {
                                 child: RepaintBoundary(
                                   key: repaintKey,
                                   child: CustomPaint(
+                                    foregroundPainter: ForegroundPainter(
+                                      scale: zoom,
+                                      showDeveloperInfo: SettingsStorage.developerMode,
+                                      visibilitySettings: visibilitySettings,
+                                      simulationResult: viz.simulationResult,
+                                      irCalculatorResultAndSettings: viz.irCalculatorResultAndSettings,
+                                      currentMeasurement: viz.currentMeasurement,
+                                      robiState: viz.robiState,
+                                      robiStateType: viz.robiStateType,
+                                    ),
                                     painter: LinePainter(
                                       scale: zoom,
                                       robiConfig: viz.robiConfig,
@@ -182,10 +194,7 @@ class _VisualizerImageExporterState extends State<VisualizerImageExporter> {
                                       irPathApproximation: viz.irPathApproximation,
                                       offset: offset,
                                       robiState: viz.robiState,
-                                      robiStateType: viz.robiStateType,
                                       obstacles: viz.obstacles,
-                                      currentMeasurement: viz.currentMeasurement,
-                                      showDeveloperInfo: false,
                                       visibilitySettings: visibilitySettings,
                                     ),
                                   ),

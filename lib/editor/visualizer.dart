@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:path_pilot/app_storage.dart';
+import 'package:path_pilot/editor/painters/foreground_painter.dart';
 import 'package:path_pilot/editor/painters/ir_read_painter.dart';
 import 'package:path_pilot/editor/painters/ir_read_timeline_painter.dart';
 import 'package:path_pilot/editor/painters/line_painter.dart';
@@ -184,7 +185,6 @@ class Visualizer extends StatelessWidget {
             child: RepaintBoundary(
               child: CustomPaint(
                 painter: LinePainter(
-                  robiStateType: robiStateType,
                   robiState: robiState,
                   scale: zoom,
                   robiConfig: robiConfig,
@@ -194,8 +194,6 @@ class Visualizer extends StatelessWidget {
                   irPathApproximation: irPathApproximation,
                   offset: offset,
                   obstacles: obstacles,
-                  currentMeasurement: currentMeasurement,
-                  showDeveloperInfo: SettingsStorage.developerMode,
                   visibilitySettings: visibilitySettings,
                 ),
                 child: Container(),
@@ -203,144 +201,164 @@ class Visualizer extends StatelessWidget {
             ),
           ),
         ),
-        Align(
-          alignment: Alignment.bottomCenter,
-          child: Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [
-                  Theme.of(context).colorScheme.surface.withOpacity(0),
-                  Theme.of(context).colorScheme.surface,
-                ],
-                stops: const [0, 1],
+        Column(
+          children: [
+            Expanded(
+              child: IgnorePointer(
+                child: RepaintBoundary(
+                  child: CustomPaint(
+                    painter: ForegroundPainter(
+                      visibilitySettings: visibilitySettings,
+                      scale: zoom,
+                      simulationResult: simulationResult,
+                      irCalculatorResultAndSettings: irCalculatorResultAndSettings,
+                      currentMeasurement: currentMeasurement,
+                      robiState: robiState,
+                      robiStateType: robiStateType,
+                      showDeveloperInfo: SettingsStorage.developerMode,
+                    ),
+                    child: Container(),
+                  ),
+                ),
               ),
             ),
-            child: Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Stack(
-                    alignment: Alignment.center,
-                    children: [
-                      Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Expanded(
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 8),
-                              child: timeLinePainter(),
+            Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Theme.of(context).colorScheme.surface.withOpacity(0),
+                    Theme.of(context).colorScheme.surface,
+                  ],
+                  stops: const [0, 1],
+                ),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Expanded(
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: 8),
+                                child: timeLinePainter(),
+                              ),
                             ),
-                          ),
-                        ],
-                      ),
-                      SliderTheme(
-                        data: SliderThemeData(
-                          thumbShape: SliderComponentShape.noThumb,
-                          trackHeight: 4,
-                          overlayColor: Theme.of(context).colorScheme.primary,
-                          overlayShape: const RoundSliderOverlayShape(overlayRadius: 8),
+                          ],
                         ),
-                        child: Slider(
-                          value: time,
-                          onChanged: enableTimeInput ? (value) => onTimeChanged(value, offset) : null,
-                          max: totalTime,
-                          min: 0,
+                        SliderTheme(
+                          data: SliderThemeData(
+                            thumbShape: SliderComponentShape.noThumb,
+                            trackHeight: 4,
+                            overlayColor: Theme.of(context).colorScheme.primary,
+                            overlayShape: const RoundSliderOverlayShape(overlayRadius: 8),
+                          ),
+                          child: Slider(
+                            value: time,
+                            onChanged: enableTimeInput ? (value) => onTimeChanged(value, offset) : null,
+                            max: totalTime,
+                            min: 0,
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 4),
-                  Wrap(
-                    alignment: WrapAlignment.spaceBetween,
-                    children: [
-                      Wrap(
-                        crossAxisAlignment: WrapCrossAlignment.center,
-                        alignment: WrapAlignment.start,
-                        spacing: 8,
-                        children: [
-                          IconButton(
-                            onPressed: () => onTogglePlay(!play),
-                            icon: Icon(play ? Icons.pause : Icons.play_arrow),
-                            iconSize: 32,
-                          ),
-                          IconButton(
-                            onPressed: () => onZoomChanged(zoom, offset, !lockToRobi),
-                            icon: Icon(lockToRobi ? Icons.lock : Icons.lock_open),
-                          ),
-                          IconButton(
-                            onPressed: () => onZoomChanged(zoom, Offset.zero, false),
-                            icon: const Icon(Icons.center_focus_strong),
-                          ),
-                          PopupMenuButton(
-                            tooltip: "",
-                            icon: Icon(
-                              Icons.visibility,
-                              color: Colors.grey[400],
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Wrap(
+                      alignment: WrapAlignment.spaceBetween,
+                      children: [
+                        Wrap(
+                          crossAxisAlignment: WrapCrossAlignment.center,
+                          alignment: WrapAlignment.start,
+                          spacing: 8,
+                          children: [
+                            IconButton(
+                              onPressed: () => onTogglePlay(!play),
+                              icon: Icon(play ? Icons.pause : Icons.play_arrow),
+                              iconSize: 32,
                             ),
-                            itemBuilder: (context) {
-                              Widget createEntry(LinePainterVisibility v) => CheckedPopupMenuItem(
-                                value: visibilitySettings.isVisible(v),
-                                checked: visibilitySettings.isVisible(v),
-                                child: Text(LinePainterVisibilitySettings.nameOf(v)),
-                                onTap: () {
-                                  visibilitySettings.set(v, !visibilitySettings.isVisible(v));
-                                  onVisibilitySettingsChange(visibilitySettings);
-                                },
-                              );
-
-                              final widgets = <PopupMenuEntry>[];
-                              for (final v in visibilitySettings.availableUniversalSettings) {
-                                widgets.add(PopupMenuItem(child: createEntry(v)));
-                              }
-
-                              widgets.add(const PopupMenuDivider());
-                              for (final v in visibilitySettings.availableNonUniversalSettings) {
-                                widgets.add(PopupMenuItem(
-                                  child: createEntry(v),
-                                ));
-                              }
-
-                              return widgets;
-                            },
-                          ),
-                          IconButton(
-                            onPressed: () => Navigator.of(context).push(MaterialPageRoute(
-                              builder: (context) => VisualizerImageExporter(viz: this),
-                            )),
-                            icon: const Icon(Icons.image),
-                          ),
-                        ],
-                      ),
-                      Wrap(
-                        alignment: WrapAlignment.end,
-                        crossAxisAlignment: WrapCrossAlignment.center,
-                        spacing: 8,
-                        children: [
-                          DropdownButton<double>(
-                            value: speedMultiplier,
-                            items: const [0.25, 0.5, 1.0, 2.0, 5.0, 10.0].map((e) => DropdownMenuItem(value: e, child: Text("$e x"))).toList(growable: false),
-                            onChanged: (value) => onSpeedMultiplierChanged(value ?? 1),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.only(right: 8.0),
-                            child: Text(
-                              "$timeString / $totalTimeString",
-                              textAlign: TextAlign.center,
+                            IconButton(
+                              onPressed: () => onZoomChanged(zoom, offset, !lockToRobi),
+                              icon: Icon(lockToRobi ? Icons.lock : Icons.lock_open),
                             ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ],
+                            IconButton(
+                              onPressed: () => onZoomChanged(zoom, Offset.zero, false),
+                              icon: const Icon(Icons.center_focus_strong),
+                            ),
+                            PopupMenuButton(
+                              tooltip: "",
+                              icon: Icon(
+                                Icons.visibility,
+                                color: Colors.grey[400],
+                              ),
+                              itemBuilder: (context) {
+                                Widget createEntry(LinePainterVisibility v) => CheckedPopupMenuItem(
+                                      value: visibilitySettings.isVisible(v),
+                                      checked: visibilitySettings.isVisible(v),
+                                      child: Text(LinePainterVisibilitySettings.nameOf(v)),
+                                      onTap: () {
+                                        visibilitySettings.set(v, !visibilitySettings.isVisible(v));
+                                        onVisibilitySettingsChange(visibilitySettings);
+                                      },
+                                    );
+
+                                final widgets = <PopupMenuEntry>[];
+                                for (final v in visibilitySettings.availableUniversalSettings) {
+                                  widgets.add(PopupMenuItem(child: createEntry(v)));
+                                }
+
+                                widgets.add(const PopupMenuDivider());
+                                for (final v in visibilitySettings.availableNonUniversalSettings) {
+                                  widgets.add(PopupMenuItem(
+                                    child: createEntry(v),
+                                  ));
+                                }
+
+                                return widgets;
+                              },
+                            ),
+                            IconButton(
+                              onPressed: () => Navigator.of(context).push(MaterialPageRoute(
+                                builder: (context) => VisualizerImageExporter(viz: this),
+                              )),
+                              icon: const Icon(Icons.image),
+                            ),
+                          ],
+                        ),
+                        Wrap(
+                          alignment: WrapAlignment.end,
+                          crossAxisAlignment: WrapCrossAlignment.center,
+                          spacing: 8,
+                          children: [
+                            DropdownButton<double>(
+                              value: speedMultiplier,
+                              items: const [0.25, 0.5, 1.0, 2.0, 5.0, 10.0].map((e) => DropdownMenuItem(value: e, child: Text("$e x"))).toList(growable: false),
+                              onChanged: (value) => onSpeedMultiplierChanged(value ?? 1),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            Padding(
+                              padding: const EdgeInsets.only(right: 8.0),
+                              child: Text(
+                                "$timeString / $totalTimeString",
+                                textAlign: TextAlign.center,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
             ),
-          ),
+          ],
         ),
       ],
     );
