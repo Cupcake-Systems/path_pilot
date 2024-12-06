@@ -37,12 +37,9 @@ class _DeveloperSettingsPageState extends State<DeveloperSettingsPage> {
           const Divider(height: 1),
           Padding(
             padding: const EdgeInsets.all(16),
-            child: Wrap(
-              spacing: 16,
-              crossAxisAlignment: WrapCrossAlignment.center,
+            child: Row(
               children: [
-                const Text("Backend URL"),
-                IntrinsicWidth(
+                Expanded(
                   child: TextFormField(
                     controller: _backendUrlController,
                     onChanged: (s) {
@@ -52,9 +49,15 @@ class _DeveloperSettingsPageState extends State<DeveloperSettingsPage> {
                     onEditingComplete: saveBackendUrl,
                     validator: (s) => getValidUrl(s).$1,
                     autovalidateMode: AutovalidateMode.always,
+                    decoration: const InputDecoration(
+                      hintText: "https://example.com",
+                      label: Text("Backend URL"),
+                    ),
                   ),
                 ),
+                const SizedBox(width: 8),
                 IconButton(onPressed: saveBackendUrl, icon: const Icon(Icons.save)),
+                const SizedBox(width: 8),
                 IconButton(
                   onPressed: () {
                     DeveloperSettings.backendUrl = apiUrl;
