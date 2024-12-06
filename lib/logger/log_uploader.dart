@@ -5,7 +5,7 @@ import 'package:path_pilot/main.dart';
 
 class LogUploader {
   final LogFile logFile;
-  static const routineDelay = Duration(minutes: 5);
+  Duration routineDelay = const Duration(minutes: 5);
   bool _runRoutine = false;
 
   LogUploader(this.logFile);
@@ -25,8 +25,15 @@ class LogUploader {
     while (_runRoutine) {
       if (PreservingStorage.shouldSubmitLog && SettingsStorage.sendLog) {
         logger.info("The app has logged an error, submitting log");
+        
         final success = await uploadLog();
-        PreservingStorage.shouldSubmitLog = !success;
+
+        if (success) {
+          PreservingStorage.shouldSubmitLog = false;
+        } else {
+          routineDelay *= 2;
+          logger.info("Failed to submit log, retrying in ${routineDelay.inMinutes} minutes");
+        }
       }
       await Future.delayed(routineDelay);
     }
