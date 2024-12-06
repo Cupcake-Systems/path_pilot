@@ -24,7 +24,7 @@ class TurnInstructionEditor extends AbstractEditor {
 
   @override
   Widget build(BuildContext context) {
-    const turnDegreeSliderMax = 720.0;
+    const turnDegreeSliderMax = 360.0;
     final turnDegreeSliderValue = instruction.turnDegree > turnDegreeSliderMax ? turnDegreeSliderMax : instruction.turnDegree;
 
     const innerRadiusSliderMax = 2.0;
@@ -73,7 +73,7 @@ class TurnInstructionEditor extends AbstractEditor {
           },
           max: innerRadiusSliderMax,
         ),
-        Text("Turn Direction ${instruction.left ? "Left" : "Right"}"),
+        Text("Turn Direction: ${instruction.left ? "Left" : "Right"}"),
         Switch(
           value: !instruction.left,
           onChanged: (value) {

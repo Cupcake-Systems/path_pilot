@@ -23,7 +23,7 @@ class RapidTurnInstructionEditor extends AbstractEditor {
 
   @override
   Widget build(BuildContext context) {
-    const turnDegreeSliderMax = 720.0;
+    const turnDegreeSliderMax = 360.0;
     final turnDegreeSliderValue = instruction.turnDegree > turnDegreeSliderMax ? turnDegreeSliderMax : instruction.turnDegree;
 
     return RemovableWarningCard(
