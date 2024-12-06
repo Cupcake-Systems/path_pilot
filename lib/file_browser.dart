@@ -35,6 +35,7 @@ class _FileBrowserState extends State<FileBrowser> with WidgetsBindingObserver {
   SubViewMode subViewMode = Platform.isAndroid ? SubViewMode.editor : SubViewMode.split;
   bool showObstacles = true;
   final isSavedNotifier = IsSavedNotifier();
+  bool get canSave => openedFile != null && !isSavedNotifier.isSaving && !isSavedNotifier.isSaved;
 
   // Instructions Editor
   String? openedFile;
@@ -53,7 +54,7 @@ class _FileBrowserState extends State<FileBrowser> with WidgetsBindingObserver {
     logger.info("Auto save timer started");
     while (_autoSaveRunning) {
       await Future.delayed(Duration(minutes: SettingsStorage.autoSaveInterval));
-      if (SettingsStorage.autoSave && !isSavedNotifier.isSaved) {
+      if (SettingsStorage.autoSave && canSave) {
         logger.info("Auto saving file");
         await saveFile(false);
       }
@@ -80,7 +81,7 @@ class _FileBrowserState extends State<FileBrowser> with WidgetsBindingObserver {
 
   @override
   Future<void> didChangeAppLifecycleState(AppLifecycleState state) async {
-    if (!isSavedNotifier.isSaved && SettingsStorage.saveTriggers.contains(state)) {
+    if (canSave && SettingsStorage.saveTriggers.contains(state)) {
       logger.info("Auto saving file due to app lifecycle state change: ${state.name}");
       await saveFile(false);
     }
@@ -468,7 +469,7 @@ class _FileBrowserState extends State<FileBrowser> with WidgetsBindingObserver {
   }
 
   Future<File?> saveFile([bool showStatusMessage = true]) async {
-    if (openedFile == null) return null;
+    if (!canSave) return null;
 
     isSavedNotifier.isSaving = true;
     final res = await loadedData.saveToFileWithStatusMessage(openedFile!, showSuccessMessage: showStatusMessage);
