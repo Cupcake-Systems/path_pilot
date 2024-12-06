@@ -41,6 +41,7 @@ class _ObstacleCreatorState extends State<ObstacleCreator> {
       body: obstacles.isEmpty
           ? const Center(child: Text("Add a first obstacle"))
           : ReorderableListView.builder(
+              padding: const EdgeInsets.only(bottom: 80),
               itemCount: obstacles.length,
               itemBuilder: (BuildContext context, int i) {
                 return Column(
