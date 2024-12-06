@@ -28,9 +28,7 @@ class LogUploader {
 
         final success = await uploadLog();
 
-        if (success) {
-          PreservingStorage.shouldSubmitLog = false;
-        } else {
+        if (!success) {
           routineDelay *= 2;
           logger.info("Failed to submit log, retrying in ${routineDelay.inMinutes} minutes");
         }

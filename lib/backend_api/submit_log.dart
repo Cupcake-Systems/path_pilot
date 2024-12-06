@@ -39,6 +39,7 @@ Future<bool> submitLog(LogFile logFile) async {
     }
 
     PreservingStorage.lastSubmittedLogTime = msgsSinceLastSubmit.last.time;
+    PreservingStorage.shouldSubmitLog = false;
 
     logger.info("${msgsSinceLastSubmit.length} new log entries submitted successfully");
 
