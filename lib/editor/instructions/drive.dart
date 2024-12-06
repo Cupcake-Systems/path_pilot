@@ -43,7 +43,7 @@ class DriveInstructionEditor extends AbstractEditor {
           padding: const EdgeInsets.all(8.0),
           child: Wrap(
             children: [
-              Icon(userInstructionToIcon[UserInstruction.drive], size: 18),
+              Icon(UserInstruction.drive.icon, size: 18),
               const SizedBox(width: 8),
               Text("Drive ${(instruction.targetDistance * 100).round()}cm", overflow: TextOverflow.fade, maxLines: 2),
             ],

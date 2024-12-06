@@ -16,29 +16,9 @@ abstract class Obstacle {
 
   ObstacleType get type;
 
-  String get name => getName(type);
+  String get name => type.name;
 
   Map<String, dynamic> toJson();
-
-  static IconData getIcon(ObstacleType type) {
-    switch (type) {
-      case ObstacleType.rectangle:
-        return Icons.square;
-      case ObstacleType.circle:
-        return Icons.circle;
-      case ObstacleType.image:
-        return Icons.image;
-    }
-  }
-
-  static String getName(ObstacleType type) {
-    switch (type) {
-      case ObstacleType.rectangle:
-      case ObstacleType.circle:
-      case ObstacleType.image:
-        return "${type.name[0].toUpperCase()}${type.name.substring(1)}";
-    }
-  }
 
   String get details;
 
@@ -245,7 +225,19 @@ Image location: $_imagePath""";
 }
 
 enum ObstacleType {
-  rectangle,
-  circle,
-  image,
+  rectangle("Rectangle", Icons.square),
+  circle("Circle", Icons.circle),
+  image("Image", Icons.image);
+
+  final String name;
+  final IconData icon;
+
+  const ObstacleType(this.name, this.icon);
+
+  factory ObstacleType.fromString(String s) {
+    for (final element in ObstacleType.values) {
+      if (element.name == s) return element;
+    }
+    throw UnsupportedError("Unknown obstacle type");
+  }
 }

@@ -23,11 +23,10 @@ class _AddInstructionDialogState extends State<AddInstructionDialog> {
   UserInstruction selectedInstruction = UserInstruction.drive;
 
   RadioListTile createRadioButtonForAdd(UserInstruction value) {
-    final IconData? icon = userInstructionToIcon[value];
     return RadioListTile<UserInstruction>(
       title: ListTile(
-        title: Text(camelToSentence(value.name)),
-        leading: Icon(icon),
+        title: Text(value.name),
+        leading: Icon(value.icon),
       ),
       value: value,
       groupValue: selectedInstruction,
@@ -77,9 +76,21 @@ class _AddInstructionDialogState extends State<AddInstructionDialog> {
 }
 
 enum UserInstruction {
-  drive,
-  turn,
-  rapidTurn,
+  drive("Drive", Icons.arrow_upward),
+  turn("Turn", Icons.turn_right),
+  rapidTurn("Rapid Turn", Icons.turn_right),;
+
+  final String name;
+  final IconData icon;
+
+  const UserInstruction(this.name, this.icon);
+
+  factory UserInstruction.fromString(String s) {
+    for (final element in UserInstruction.values) {
+      if (element.name == s) return element;
+    }
+    throw UnsupportedError("Unknown user instruction");
+  }
 }
 
 MissionInstruction addInstruction(UserInstruction instruction, RobiConfig robiConfig) {
@@ -116,11 +127,3 @@ MissionInstruction addInstruction(UserInstruction instruction, RobiConfig robiCo
 const Map<String, List<UserInstruction>> groupedUserInstructions = {
   "Basic": [UserInstruction.drive, UserInstruction.turn, UserInstruction.rapidTurn],
 };
-
-const Map<UserInstruction, IconData> userInstructionToIcon = {
-  UserInstruction.drive: Icons.arrow_upward,
-  UserInstruction.turn: Icons.turn_right,
-  UserInstruction.rapidTurn: Icons.turn_right,
-};
-
-String camelToSentence(String text) => text.replaceAllMapped(RegExp(r'^([a-z])|[A-Z]'), (Match m) => m[1] == null ? " ${m[0]}" : m[1]!.toUpperCase());

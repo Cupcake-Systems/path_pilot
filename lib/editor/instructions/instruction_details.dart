@@ -213,16 +213,7 @@ class _InstructionDetailsWidgetState extends State<InstructionDetailsWidget> {
                     initialSelection: xAxisMode,
                     label: const Text("X-Axis"),
                     onSelected: (value) => setState(() => xAxisMode = value ?? XAxisType.position),
-                    dropdownMenuEntries: [
-                      const DropdownMenuEntry<XAxisType>(
-                        value: XAxisType.time,
-                        label: "Time",
-                      ),
-                      const DropdownMenuEntry<XAxisType>(
-                        value: XAxisType.position,
-                        label: "Position",
-                      ),
-                    ],
+                    dropdownMenuEntries: XAxisType.values.map((e) => e.dropdownMenuEntry).toList(),
                   ),
                   const SizedBox(height: 16),
                   DropdownMenu<YAxisType>(
@@ -230,20 +221,7 @@ class _InstructionDetailsWidgetState extends State<InstructionDetailsWidget> {
                     width: 180,
                     onSelected: (value) => setState(() => yAxisMode = value ?? YAxisType.velocity),
                     label: const Text("Y-Axis"),
-                    dropdownMenuEntries: [
-                      const DropdownMenuEntry<YAxisType>(
-                        value: YAxisType.position,
-                        label: "Position",
-                      ),
-                      const DropdownMenuEntry<YAxisType>(
-                        value: YAxisType.velocity,
-                        label: "Velocity",
-                      ),
-                      const DropdownMenuEntry<YAxisType>(
-                        value: YAxisType.acceleration,
-                        label: "Acceleration",
-                      ),
-                    ],
+                    dropdownMenuEntries: YAxisType.values.map((e) => e.dropdownMenuEntry).toList(),
                   ),
                 ],
               ),
@@ -339,12 +317,25 @@ class _InstructionDetailsWidgetState extends State<InstructionDetailsWidget> {
 }
 
 enum XAxisType {
-  time,
-  position,
+
+  time("Time"),
+  position("Position");
+
+  final String label;
+
+  DropdownMenuEntry<XAxisType> get dropdownMenuEntry => DropdownMenuEntry(value: this, label: label);
+
+  const XAxisType(this.label);
 }
 
 enum YAxisType {
-  position,
-  velocity,
-  acceleration,
+  position("Position"),
+  velocity("Velocity"),
+  acceleration("Acceleration");
+
+  final String label;
+
+  DropdownMenuEntry<YAxisType> get dropdownMenuEntry => DropdownMenuEntry(value: this, label: label);
+
+  const YAxisType(this.label);
 }

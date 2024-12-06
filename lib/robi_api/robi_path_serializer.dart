@@ -6,13 +6,6 @@ class InstructionContainer {
   late final UserInstruction type;
   late final MissionInstruction instruction;
 
-  static UserInstruction getInstructionTypeFromString(String s) {
-    for (final element in UserInstruction.values) {
-      if (element.name == s) return element;
-    }
-    throw UnsupportedError("");
-  }
-
   InstructionContainer(this.instruction) : type = instructionToType(instruction);
 
   static UserInstruction instructionToType(MissionInstruction instruction) {
@@ -28,7 +21,7 @@ class InstructionContainer {
   }
 
   InstructionContainer.fromJson(Map<String, dynamic> json) {
-    type = getInstructionTypeFromString(json["type"]);
+    type = UserInstruction.fromString(json["type"]);
     final instJson = json["instruction"];
 
     switch (type) {

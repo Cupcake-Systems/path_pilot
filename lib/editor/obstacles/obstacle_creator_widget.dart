@@ -49,7 +49,7 @@ class _ObstacleCreatorState extends State<ObstacleCreator> {
                   children: [
                     ListTile(
                       title: Text(obstacles[i].name),
-                      leading: Icon(Obstacle.getIcon(obstacles[i].type), color: obstacles[i].paint.color),
+                      leading: Icon(obstacles[i].type.icon, color: obstacles[i].paint.color),
                       subtitle: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -81,7 +81,7 @@ class _ObstacleCreatorState extends State<ObstacleCreator> {
                                                 label: const Text('Obstacle Type'),
                                                 dropdownMenuEntries: ObstacleType.values
                                                     .map(
-                                                      (type) => DropdownMenuEntry(value: type, label: Obstacle.getName(type)),
+                                                      (type) => DropdownMenuEntry(value: type, label: type.name),
                                                     )
                                                     .toList(),
                                                 onSelected: (value) async {

@@ -13,7 +13,7 @@ class ObstaclesSerializer {
   static Stream<Obstacle> decode(List json) async* {
     for (final obstacleJson in json) {
       try {
-        switch (getObstacleTypeFromString(obstacleJson["type"])) {
+        switch (ObstacleType.fromString(obstacleJson["type"])) {
           case ObstacleType.rectangle:
             yield RectangleObstacle.fromJson(obstacleJson);
             break;
@@ -29,12 +29,5 @@ class ObstaclesSerializer {
         logger.errorWithStackTrace("Failed to decode obstacle\nJSON: $json", e, s);
       }
     }
-  }
-
-  static ObstacleType getObstacleTypeFromString(String s) {
-    for (final element in ObstacleType.values) {
-      if (element.name == s) return element;
-    }
-    throw UnsupportedError("Unknown obstacle type");
   }
 }

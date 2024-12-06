@@ -35,6 +35,7 @@ class _FileBrowserState extends State<FileBrowser> with WidgetsBindingObserver {
   SubViewMode subViewMode = Platform.isAndroid ? SubViewMode.editor : SubViewMode.split;
   bool showObstacles = true;
   final isSavedNotifier = IsSavedNotifier();
+
   bool get canSave => openedFile != null && !isSavedNotifier.isSaving && !isSavedNotifier.isSaved;
 
   // Instructions Editor
@@ -131,20 +132,7 @@ class _FileBrowserState extends State<FileBrowser> with WidgetsBindingObserver {
             value: subViewMode,
             padding: const EdgeInsets.symmetric(horizontal: 8),
             borderRadius: BorderRadius.circular(8),
-            items: [
-              const DropdownMenuItem(
-                value: SubViewMode.visualizer,
-                child: Text("Visualizer"),
-              ),
-              const DropdownMenuItem(
-                value: SubViewMode.editor,
-                child: Text("Editor"),
-              ),
-              const DropdownMenuItem(
-                value: SubViewMode.split,
-                child: Text("Split"),
-              ),
-            ],
+            items: SubViewMode.values.map((e) => e.dropdownItem).toList(),
             onChanged: (value) => setState(() => subViewMode = value ?? subViewMode),
           ),
           const SizedBox(width: 10),
@@ -287,17 +275,13 @@ class _FileBrowserState extends State<FileBrowser> with WidgetsBindingObserver {
                       style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                     ),
                   ),
-                  RadioListTile(
-                    value: ViewMode.instructions,
-                    groupValue: viewMode,
-                    onChanged: (value) => setState(() => viewMode = ViewMode.instructions),
-                    title: const Text("Instructions"),
-                  ),
-                  RadioListTile(
-                    value: ViewMode.irReadings,
-                    groupValue: viewMode,
-                    onChanged: (value) => setState(() => viewMode = ViewMode.irReadings),
-                    title: const Text("IR Readings"),
+                  ...ViewMode.values.map(
+                    (v) => RadioListTile(
+                      value: v,
+                      groupValue: viewMode,
+                      onChanged: (value) => setState(() => viewMode = value ?? v),
+                      title: Text(v.name),
+                    ),
                   ),
                   const Divider(height: 1),
                   ListTile(
@@ -569,14 +553,24 @@ Future<bool> getExternalStoragePermission() async {
 }
 
 enum ViewMode {
-  instructions,
-  irReadings,
+  instructions("Instructions"),
+  irReadings("IR Readings");
+
+  final String name;
+
+  const ViewMode(this.name);
 }
 
 enum SubViewMode {
-  visualizer,
-  editor,
-  split,
+  visualizer("Visualizer"),
+  editor("Editor"),
+  split("Split");
+
+  final String name;
+
+  DropdownMenuItem<SubViewMode> get dropdownItem => DropdownMenuItem(value: this, child: Text(name));
+
+  const SubViewMode(this.name);
 }
 
 class IsSavedNotifier extends ChangeNotifier {
