@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -169,43 +170,141 @@ class GroupedListViewWidget extends StatelessWidget {
       stickyHeaderBackgroundColor: const Color(0xFF202020),
       order: GroupedListOrder.DESC,
       itemBuilder: (context, line) {
-        bool isExpanded = false;
-        return StatefulBuilder(
-          builder: (context, setState1) {
-            return Card(
-              clipBehavior: Clip.antiAlias,
-              color: line.level.color,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 4),
-                child: Row(
-                  children: [
-                    Icon(line.level.icon, size: 20),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: GestureDetector(
-                        onTap: () => setState1(() => isExpanded = !isExpanded),
-                        child: Text(
-                          line.message,
-                          style: const TextStyle(fontFamily: "RobotoMono"),
-                          maxLines: isExpanded ? null : 3,
-                          overflow: isExpanded ? TextOverflow.visible : TextOverflow.fade,
+        return Card(
+          clipBehavior: Clip.antiAlias,
+          color: line.level.color,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 4),
+            child: Row(
+              children: [
+                Icon(line.level.icon, size: 20),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) => LogMessageDetailsPage(message: line),
                         ),
-                      ),
+                      );
+                    },
+                    child: Text(
+                      line.message,
+                      style: const TextStyle(fontFamily: "RobotoMono"),
+                      maxLines: 3,
+                      overflow: TextOverflow.fade,
                     ),
-                    IconButton(
-                      onPressed: () async {
-                        await Clipboard.setData(ClipboardData(text: line.message));
-                        showSnackBar("Copied to clipboard");
-                      },
-                      icon: const Icon(Icons.copy, size: 18),
-                    ),
-                  ],
+                  ),
                 ),
-              ),
-            );
-          },
+                IconButton(
+                  onPressed: () => Clipboard.setData(ClipboardData(text: jsonEncode(line.toJson()))),
+                  icon: const Icon(Icons.copy, size: 18),
+                ),
+              ],
+            ),
+          ),
         );
       },
+    );
+  }
+}
+
+class LogMessageDetailsPage extends StatefulWidget {
+  final LogMessage message;
+
+  const LogMessageDetailsPage({super.key, required this.message});
+
+  @override
+  State<LogMessageDetailsPage> createState() => _LogMessageDetailsPageState();
+}
+
+class _LogMessageDetailsPageState extends State<LogMessageDetailsPage> {
+  late bool wrapLines = !Platform.isAndroid || !widget.message.message.replaceFirst("\n", "").contains("\n");
+
+  @override
+  Widget build(BuildContext context) {
+    final errorText = Text(
+      widget.message.message,
+      style: const TextStyle(fontFamily: "RobotoMono", fontSize: 11),
+    );
+
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text("Log Message Details"),
+      ),
+      body: ListView(
+        padding: const EdgeInsets.only(bottom: 80),
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text("Logged at ${widget.message.time}"),
+                const SizedBox(height: 8),
+                Wrap(
+                  children: [
+                    const Text("Severity: "),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 4),
+                      decoration: BoxDecoration(
+                        color: widget.message.level.color,
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: Text(widget.message.level.name),
+                    )
+                  ],
+                ),
+              ],
+            ),
+          ),
+          Card(
+            clipBehavior: Clip.antiAlias,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (wrapLines) ...[
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: errorText,
+                  ),
+                ] else
+                  SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    padding: const EdgeInsets.all(8),
+                    child: errorText,
+                  ),
+                const Divider(height: 1),
+                Padding(
+                  padding: const EdgeInsets.all(4),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      IconButton(
+                        onPressed: () => Clipboard.setData(ClipboardData(text: widget.message.message)),
+                        icon: const Icon(Icons.copy),
+                      ),
+                      Wrap(
+                        spacing: 8,
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        children: [
+                          const Text("Wrap"),
+                          Checkbox(value: wrapLines, onChanged: (value) => setState(() => wrapLines = value ?? wrapLines)),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () => Clipboard.setData(ClipboardData(text: jsonEncode(widget.message.toJson()))),
+        child: const Icon(Icons.copy),
+      ),
     );
   }
 }
