@@ -63,8 +63,8 @@ class RobiPathSerializer {
     for (final e in json) {
       try {
         yield InstructionContainer.fromJson(e).instruction;
-      } catch (e, s) {
-        logger.errorWithStackTrace("Failed to decode instruction\nJSON: $json", e, s);
+      } catch (err, s) {
+        logger.errorWithStackTrace("Failed to decode instruction\nJSON: $e", err, s);
       }
     }
   }
