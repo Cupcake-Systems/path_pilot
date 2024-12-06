@@ -136,56 +136,76 @@ class _LogViewerState extends State<LogViewer> {
             return const Center(child: Text("No log entries"));
           }
 
-          return GroupedListView(
-            padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
-            elements: lines,
-            groupBy: (line) => line.date,
-            groupHeaderBuilder: (msg) => ListTile(title: Text(msg.date)),
-            itemComparator: (a, b) => a.time.compareTo(b.time),
-            useStickyGroupSeparators: true,
-            stickyHeaderBackgroundColor: const Color(0xFF202020),
-            order: GroupedListOrder.DESC,
-            itemBuilder: (context, line) {
-              bool isExpanded = false;
-              return StatefulBuilder(
-                builder: (context, setState1) {
-                  return Card(
-                    clipBehavior: Clip.antiAlias,
-                    color: line.level.color,
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 4),
-                      child: Row(
-                        children: [
-                          Icon(line.level.icon, size: 20),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: GestureDetector(
-                              onTap: () => setState1(() => isExpanded = !isExpanded),
-                              child: Text(
-                                "${LogViewer.timeFormat.format(line.time)} - ${line.message}",
-                                style: const TextStyle(fontFamily: "RobotoMono"),
-                                maxLines: isExpanded ? null : 3,
-                                overflow: isExpanded ? TextOverflow.visible : TextOverflow.fade,
-                              ),
-                            ),
-                          ),
-                          IconButton(
-                            onPressed: () async {
-                              await Clipboard.setData(ClipboardData(text: line.message));
-                              showSnackBar("Copied to clipboard");
-                            },
-                            icon: const Icon(Icons.copy, size: 18),
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
-                }
-              );
-            },
-          );
+          return GroupedListViewWidget(lines: lines);
         },
       ),
+    );
+  }
+}
+
+class GroupedListViewWidget extends StatelessWidget {
+  final List<LogMessage> lines;
+
+  const GroupedListViewWidget({super.key, required this.lines});
+
+  @override
+  Widget build(BuildContext context) {
+    const timeThreshold = Duration(seconds: 2);
+    final timeFormat = DateFormat('dd.MM.yy HH:mm:ss');
+
+    // Helper to group by time clusters
+    String groupByTimeCluster(DateTime timestamp) {
+      final normalizedTime = timestamp.millisecondsSinceEpoch ~/ timeThreshold.inMilliseconds;
+      return timeFormat.format(DateTime.fromMillisecondsSinceEpoch(normalizedTime * timeThreshold.inMilliseconds));
+    }
+
+    return GroupedListView<LogMessage, String>(
+      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+      elements: lines,
+      groupBy: (line) => groupByTimeCluster(line.time),
+      groupHeaderBuilder: (msg) => ListTile(title: Text(timeFormat.format(msg.time))),
+      itemComparator: (a, b) => a.time.compareTo(b.time),
+      useStickyGroupSeparators: true,
+      stickyHeaderBackgroundColor: const Color(0xFF202020),
+      order: GroupedListOrder.DESC,
+      itemBuilder: (context, line) {
+        bool isExpanded = false;
+        return StatefulBuilder(
+          builder: (context, setState1) {
+            return Card(
+              clipBehavior: Clip.antiAlias,
+              color: line.level.color,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 4),
+                child: Row(
+                  children: [
+                    Icon(line.level.icon, size: 20),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: () => setState1(() => isExpanded = !isExpanded),
+                        child: Text(
+                          line.message,
+                          style: const TextStyle(fontFamily: "RobotoMono"),
+                          maxLines: isExpanded ? null : 3,
+                          overflow: isExpanded ? TextOverflow.visible : TextOverflow.fade,
+                        ),
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: () async {
+                        await Clipboard.setData(ClipboardData(text: line.message));
+                        showSnackBar("Copied to clipboard");
+                      },
+                      icon: const Icon(Icons.copy, size: 18),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
     );
   }
 }
