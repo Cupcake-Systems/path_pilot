@@ -293,6 +293,7 @@ class _FileBrowserState extends State<FileBrowser> with WidgetsBindingObserver {
                   ListTile(
                     leading: const Icon(Icons.square_rounded),
                     title: const Text("Obstacles"),
+                    subtitle: Text(loadedData.obstacles.isEmpty ? "None" : "${loadedData.obstacles.length} obstacle${loadedData.obstacles.length == 1 ? "" : "s"}"),
                     onTap: () {
                       Navigator.of(context).push(
                         MaterialPageRoute(
@@ -310,13 +311,14 @@ class _FileBrowserState extends State<FileBrowser> with WidgetsBindingObserver {
                     },
                     trailing: Checkbox(
                       value: showObstacles,
-                      onChanged: (value) => setState(() => showObstacles = value == true),
+                      onChanged: loadedData.obstacles.isEmpty ? null : (value) => setState(() => showObstacles = value == true),
                     ),
                   ),
                   const Divider(height: 1),
                   ListTile(
                     leading: const Icon(Icons.build_circle),
                     title: const Text("Robi Configs"),
+                    subtitle: Text("Selected: ${selectedRobiConfig.name}"),
                     onTap: () async {
                       await Navigator.of(context).push(
                         MaterialPageRoute(
