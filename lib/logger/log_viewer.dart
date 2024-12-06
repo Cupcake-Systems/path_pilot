@@ -52,9 +52,7 @@ class _LogViewerState extends State<LogViewer> {
           if (!autoReload)
             IconButton(
               icon: const Icon(Icons.refresh),
-              onPressed: () {
-                setState(() => logEnd = autoReload ? null : 100);
-              },
+              onPressed: () => setState(() {}),
             ),
           StatefulBuilder(builder: (context, setState1) {
             return PopupMenuButton(
