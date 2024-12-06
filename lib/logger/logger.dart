@@ -60,7 +60,7 @@ class Logger {
 }
 
 class _LogMessageTracker {
-  static const _timeLimit = Duration(milliseconds: 100);
+  static const _timeLimit = Duration(seconds: 5);
   static const _maxCount = 10;
 
   DateTime lastLogTime;
