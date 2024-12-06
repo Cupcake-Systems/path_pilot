@@ -235,7 +235,7 @@ class _FileBrowserState extends State<FileBrowser> with WidgetsBindingObserver {
                           ),
                         ),
                       ],
-                    ] else if (viewMode == ViewMode.irReadings) ...[
+                    ] else if (viewMode == ViewMode.irReadings && irReadResult != null) ...[
                       PopupMenuItem(
                         onTap: () => setState(() => irReadResult = null),
                         child: const ListTile(title: Text("Close"), leading: Icon(Icons.close)),
