@@ -96,10 +96,14 @@ class _FileBrowserState extends State<FileBrowser> with WidgetsBindingObserver {
           title: const Text("New"),
           onTap: newFile,
           leading: const Icon(Icons.add),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+          mouseCursor: SystemMouseCursors.basic,
         ),
         ListTile(
           title: const Text("Open"),
           onTap: openFile,
+          contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+          mouseCursor: SystemMouseCursors.basic,
           leading: isOpening
               ? const SizedBox(
                   width: 20,
@@ -112,6 +116,8 @@ class _FileBrowserState extends State<FileBrowser> with WidgetsBindingObserver {
         ListTile(
           title: const Text("Import IR Reading"),
           onTap: importIrReading,
+          contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+          mouseCursor: SystemMouseCursors.basic,
           leading: isOpening
               ? const SizedBox(
                   width: 20,
@@ -148,7 +154,7 @@ class _FileBrowserState extends State<FileBrowser> with WidgetsBindingObserver {
                 final isSaving = isSavedNotifier.isSaving;
                 return PopupMenuButton(
                   itemBuilder: (context) => <PopupMenuEntry>[
-                    for (final action in availableNewFileActions) PopupMenuItem(child: action),
+                    for (final action in availableNewFileActions) PopupMenuItem(padding: EdgeInsets.zero, child: action),
                     if (viewMode == ViewMode.instructions) ...[
                       if (openedFile != null) ...[
                         const PopupMenuDivider(height: 1),

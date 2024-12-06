@@ -277,7 +277,7 @@ class Visualizer extends StatelessWidget {
                         Wrap(
                           crossAxisAlignment: WrapCrossAlignment.center,
                           alignment: WrapAlignment.start,
-                          spacing: 8,
+                          spacing: 4,
                           children: [
                             IconButton(
                               onPressed: () => onTogglePlay(!play),
@@ -287,10 +287,6 @@ class Visualizer extends StatelessWidget {
                             IconButton(
                               onPressed: () => onZoomChanged(zoom, offset, !lockToRobi),
                               icon: Icon(lockToRobi ? Icons.lock : Icons.lock_open),
-                            ),
-                            IconButton(
-                              onPressed: () => onZoomChanged(zoom, Offset.zero, false),
-                              icon: const Icon(Icons.center_focus_strong),
                             ),
                             PopupMenuButton(
                               tooltip: "",
@@ -302,11 +298,12 @@ class Visualizer extends StatelessWidget {
                                 Widget createEntry(LinePainterVisibility v) => CheckedPopupMenuItem(
                                       value: visibilitySettings.isVisible(v),
                                       checked: visibilitySettings.isVisible(v),
-                                      child: Text(LinePainterVisibilitySettings.nameOf(v)),
+                                      padding: EdgeInsets.zero,
                                       onTap: () {
                                         visibilitySettings.set(v, !visibilitySettings.isVisible(v));
                                         onVisibilitySettingsChange(visibilitySettings);
                                       },
+                                      child: Text(LinePainterVisibilitySettings.nameOf(v)),
                                     );
 
                                 final widgets = <PopupMenuEntry>[];
@@ -314,7 +311,7 @@ class Visualizer extends StatelessWidget {
                                   widgets.add(PopupMenuItem(child: createEntry(v)));
                                 }
 
-                                widgets.add(const PopupMenuDivider());
+                                widgets.add(const PopupMenuDivider(height: 1));
                                 for (final v in visibilitySettings.availableNonUniversalSettings) {
                                   widgets.add(PopupMenuItem(
                                     child: createEntry(v),
@@ -324,11 +321,28 @@ class Visualizer extends StatelessWidget {
                                 return widgets;
                               },
                             ),
-                            IconButton(
-                              onPressed: () => Navigator.of(context).push(MaterialPageRoute(
-                                builder: (context) => VisualizerImageExporter(viz: this),
-                              )),
-                              icon: const Icon(Icons.image),
+                            PopupMenuButton(
+                              tooltip: "",
+                              itemBuilder: (context) {
+                                return [
+                                  PopupMenuItem(
+                                    onTap: () => onZoomChanged(zoom, Offset.zero, false),
+                                    child: const ListTile(
+                                      leading: Icon(Icons.center_focus_strong),
+                                      title: Text("Center"),
+                                    ),
+                                  ),
+                                  PopupMenuItem(
+                                    onTap: () => Navigator.of(context).push(MaterialPageRoute(
+                                      builder: (context) => VisualizerImageExporter(viz: this),
+                                    )),
+                                    child: const ListTile(
+                                      leading: Icon(Icons.image),
+                                      title: Text("Export as image"),
+                                    ),
+                                  ),
+                                ];
+                              },
                             ),
                           ],
                         ),
