@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:ui';
 
+import 'package:path_pilot/backend_api/urls.dart';
 import 'package:path_pilot/helper/dialogs.dart';
 import 'package:path_pilot/main.dart';
 import 'package:path_pilot/robi_api/robi_utils.dart';
@@ -154,4 +155,12 @@ class PreservingStorage {
     }
     AppData._prefs.setInt(_lastSubmittedLogTimeKey, value.millisecondsSinceEpoch);
   }
+}
+
+class DeveloperSettings {
+  static const String _backendUrlKey = "backendUrl";
+
+  static String get backendUrl => AppData._prefs.getString(_backendUrlKey) ?? apiUrl;
+
+  static set backendUrl(String value) => AppData._prefs.setString(_backendUrlKey, value);
 }

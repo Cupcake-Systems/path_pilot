@@ -5,6 +5,7 @@ import 'package:path_pilot/app_storage.dart';
 import '../backend_api/submit_log.dart';
 import '../helper/dialogs.dart';
 import '../main.dart';
+import 'developer_settings_page.dart';
 
 const availableFrameRates = [10, 30, 60];
 const availableAutoSaveIntervals = [1, 2, 5, 10, 15, 30];
@@ -163,6 +164,20 @@ class _SettingsPageState extends State<SettingsPage> {
               });
             },
           ),
+          if (SettingsStorage.developerMode) ...[
+            const Divider(height: 1),
+            ListTile(
+              title: const Text("Advanced Developer Settings"),
+              subtitle: const Text("Access advanced developer settings."),
+              onTap: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => const DeveloperSettingsPage(),
+                  ),
+                );
+              },
+            ),
+          ],
           const Divider(height: 1),
           ListTile(
             trailing: IconButton(

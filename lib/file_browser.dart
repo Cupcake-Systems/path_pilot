@@ -21,7 +21,6 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 
 import 'editor/ir_visualizer/ir_visualizer.dart';
-import 'logger/log_viewer.dart';
 
 class FileBrowser extends StatefulWidget {
   const FileBrowser({super.key});
@@ -350,20 +349,6 @@ class _FileBrowserState extends State<FileBrowser> with WidgetsBindingObserver {
                     onTap: () => launchUrlString("$repoUrl/wiki"),
                     title: const Text('Wiki'),
                   ),
-                  if (SettingsStorage.developerMode) ...[
-                    const Divider(height: 1),
-                    ListTile(
-                      leading: const Icon(Icons.description),
-                      title: const Text("Log"),
-                      onTap: () {
-                        Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (context) => LogViewer(logFile: logFile),
-                          ),
-                        );
-                      },
-                    )
-                  ],
                 ],
               ),
             ),

@@ -6,18 +6,18 @@ import 'package:path_pilot/backend_api/secrets.dart' as secrets;
 
 import '../app_storage.dart';
 
-const protocol = kDebugMode? "http" : "https";
-const domain = kDebugMode? "localhost:8951" : "path-pilot.cupcake-systems.com";
+const apiUrl = kDebugMode? "http://localhost:8951" : "https://path-pilot.cupcake-systems.com";
 final userId = PreservingStorage.userId;
+String get userSetApiUrl => DeveloperSettings.backendUrl;
 
-const submitLogPath = "/logs/submit";
-const submitLogUrl = "$protocol://$domain$submitLogPath";
+const submitLogPath = "logs/submit";
+String get submitLogUrl => "$userSetApiUrl/$submitLogPath";
 
-final identificationHeader = {
+final identificationHeader = Map.unmodifiable({
   "Authorization": "Bearer ${userId.toString()}",
-};
+});
 
-Map get validationHeader => {"validation-token": generateSecureKey()};
+Map get validationHeader => Map.unmodifiable({"validation-token": generateSecureKey()});
 
 String generateSecureKey({int length = 16}) {
   if (length < 16) {
