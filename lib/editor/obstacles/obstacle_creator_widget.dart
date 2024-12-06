@@ -104,6 +104,7 @@ class _ObstacleCreatorState extends State<ObstacleCreator> {
                                                     obstacles[i] = newObstacle;
                                                   });
                                                   setState(() {});
+                                                  widget.onObstaclesChange(obstacles);
                                                 },
                                               ),
                                             ),
