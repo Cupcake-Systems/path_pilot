@@ -25,11 +25,16 @@ class LogViewer extends StatefulWidget {
 class _LogViewerState extends State<LogViewer> {
   bool isSubmitting = false;
   static const listenerKey = "LogViewer";
+  int? logEnd = 50;
+
+  bool get autoReload => logEnd != null;
 
   @override
   void initState() {
     super.initState();
-    widget.logFile.registerListener(listenerKey, (op) => setState(() {}));
+    widget.logFile.registerListener(listenerKey, (op) {
+      if (autoReload) setState(() {});
+    });
   }
 
   @override
@@ -44,6 +49,13 @@ class _LogViewerState extends State<LogViewer> {
       appBar: AppBar(
         title: const Text("App Log"),
         actions: [
+          if (!autoReload)
+            IconButton(
+              icon: const Icon(Icons.refresh),
+              onPressed: () {
+                setState(() => logEnd = autoReload ? null : 100);
+              },
+            ),
           StatefulBuilder(builder: (context, setState1) {
             return PopupMenuButton(
               itemBuilder: (context) {
@@ -117,7 +129,7 @@ class _LogViewerState extends State<LogViewer> {
         ],
       ),
       body: FutureBuilder(
-        future: widget.logFile.read(),
+        future: widget.logFile.read(0, logEnd),
         builder: (context, snapshot) {
           if (snapshot.connectionState != ConnectionState.done) {
             return const Center(child: CircularProgressIndicator());
@@ -137,7 +149,14 @@ class _LogViewerState extends State<LogViewer> {
             return const Center(child: Text("No log entries"));
           }
 
-          return GroupedListViewWidget(lines: lines);
+          return GroupedListViewWidget(
+            lines: lines,
+            loadAll: logEnd == null
+                ? null
+                : () {
+                    setState(() => logEnd = null);
+                  },
+          );
         },
       ),
     );
@@ -146,8 +165,9 @@ class _LogViewerState extends State<LogViewer> {
 
 class GroupedListViewWidget extends StatelessWidget {
   final List<LogMessage> lines;
+  final void Function()? loadAll;
 
-  const GroupedListViewWidget({super.key, required this.lines});
+  const GroupedListViewWidget({super.key, required this.lines, required this.loadAll});
 
   @override
   Widget build(BuildContext context) {
@@ -161,6 +181,7 @@ class GroupedListViewWidget extends StatelessWidget {
     }
 
     return GroupedListView<LogMessage, String>(
+      shrinkWrap: true,
       padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
       elements: lines,
       groupBy: (line) => groupByTimeCluster(line.time),
@@ -169,6 +190,12 @@ class GroupedListViewWidget extends StatelessWidget {
       useStickyGroupSeparators: true,
       stickyHeaderBackgroundColor: const Color(0xFF202020),
       order: GroupedListOrder.DESC,
+      footer: loadAll == null
+          ? null
+          : ElevatedButton(
+              onPressed: loadAll,
+              child: const Text("Load all"),
+            ),
       itemBuilder: (context, line) {
         return Card(
           clipBehavior: Clip.antiAlias,

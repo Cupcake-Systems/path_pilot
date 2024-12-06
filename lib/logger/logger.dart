@@ -7,6 +7,8 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:path_pilot/app_storage.dart';
 
+import '../main.dart';
+
 class Logger {
   final LogFile logFile;
   final Map<String, _LogMessageTracker> _messageTracker = {};
@@ -50,11 +52,11 @@ class Logger {
 
   void error(String message) => log(LogLevel.error, message);
 
-  void errorWithStackTrace(String message, Object error, StackTrace? stackTrace) => this.error("$message\n\n$error${stackTrace == null? '' : '\n$stackTrace'}");
+  void errorWithStackTrace(String message, Object error, StackTrace? stackTrace) => this.error("$message\n\n$error${stackTrace == null ? '' : '\n$stackTrace'}");
 
   void fatal(String message) => log(LogLevel.fatal, message);
 
-  void fatalWithStackTrace(String message, Object error, StackTrace? stackTrace) => fatal("$message\n\n$error${stackTrace == null? '' : '\n$stackTrace'}");
+  void fatalWithStackTrace(String message, Object error, StackTrace? stackTrace) => fatal("$message\n\n$error${stackTrace == null ? '' : '\n$stackTrace'}");
 
   void debug(String message) => log(LogLevel.debug, message);
 }
@@ -101,6 +103,7 @@ class LogFile {
   }
 
   void registerListener(String key, void Function(WriteOperation op) listener) => _registeredListeners[key] = listener;
+
   void unregisterListener(String key) => _registeredListeners.remove(key);
 
   void add(LogMessage message) => _writeQueue.add(
@@ -148,10 +151,21 @@ class LogFile {
     return file.readAsString();
   }
 
-  Future<List<LogMessage>> read() async {
+  Future<List<LogMessage>> read([int start = 0, int? count]) async {
+    assert(() {
+      if (count != null) {
+        if (start > count) throw ArgumentError("Start index must be smaller than end index");
+      }
+      if (start < 0) throw ArgumentError("Start index must be positive");
+      return true;
+    }());
+
     await awaitWrite();
     final lines = await file.readAsLines();
-    return lines.map((e) => LogMessage.tryParseFromCsvLine(e)).whereType<LogMessage>().toList();
+
+    count ??= lines.length; // count can be larger than lines.length because .take will just take the rest of the list
+
+    return lines.reversed.skip(start).take(count).map((e) => LogMessage.tryParseFromCsvLine(e)).whereType<LogMessage>().toList();
   }
 
   static Iterable<LogMessage> filterByDay(List<LogMessage> messages, DateTime day) {
@@ -221,10 +235,11 @@ final class LogMessage {
   }
 
   static LogMessage? tryParseFromCsvLine(String line) {
+    if (line.isEmpty) return null;
     try {
       return LogMessage.fromCsvLine(line);
     } catch (e, s) {
-      dev.log("Failed to parse log message from CSV line: $line", error: e, stackTrace: s);
+      logger.errorWithStackTrace("Failed to parse log message from CSV line: $line", e, s);
       return null;
     }
   }
