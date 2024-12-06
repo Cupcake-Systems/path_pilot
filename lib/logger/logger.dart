@@ -50,11 +50,11 @@ class Logger {
 
   void error(String message) => log(LogLevel.error, message);
 
-  void errorWithStackTrace(String message, Object error, StackTrace? stackTrace) => this.error("$message:\n$error${stackTrace == null? '' : '\n$stackTrace'}");
+  void errorWithStackTrace(String message, Object error, StackTrace? stackTrace) => this.error("$message\n\n$error${stackTrace == null? '' : '\n$stackTrace'}");
 
   void fatal(String message) => log(LogLevel.fatal, message);
 
-  void fatalWithStackTrace(String message, Object error, StackTrace? stackTrace) => fatal("$message:\n$error${stackTrace == null? '' : '\n$stackTrace'}");
+  void fatalWithStackTrace(String message, Object error, StackTrace? stackTrace) => fatal("$message\n\n$error${stackTrace == null? '' : '\n$stackTrace'}");
 
   void debug(String message) => log(LogLevel.debug, message);
 }
