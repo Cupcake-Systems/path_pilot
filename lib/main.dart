@@ -45,6 +45,16 @@ Future<void> main() async {
   final logUploader = LogUploader(logFile);
   logUploader.startUploadRoutine();
 
+  FlutterError.onError = (details) {
+    FlutterError.presentError(details);
+    logger.fatalWithStackTrace("Flutter error caught", details.exception, details.stack);
+  };
+
+  PlatformDispatcher.instance.onError = (error, stack) {
+    logger.fatalWithStackTrace("Platform error caught", error, stack);
+    return true;
+  };
+
   runApp(const MyApp());
 }
 
