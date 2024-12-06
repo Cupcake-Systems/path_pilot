@@ -14,7 +14,6 @@ class LogUploader {
     if (_runRoutine) return;
     _runRoutine = true;
     _uploadRoutine();
-    logger.info("Started log upload routine");
   }
 
   void stopUploadRoutine() {
@@ -22,10 +21,11 @@ class LogUploader {
   }
 
   void _uploadRoutine() async {
+    logger.info("Started log upload routine");
     while (_runRoutine) {
       if (PreservingStorage.shouldSubmitLog && SettingsStorage.sendLog) {
         logger.info("The app has logged an error, submitting log");
-        
+
         final success = await uploadLog();
 
         if (success) {
@@ -37,6 +37,7 @@ class LogUploader {
       }
       await Future.delayed(routineDelay);
     }
+    logger.info("Stopped log upload routine");
   }
 
   Future<bool> uploadLog() => submitLog(logFile);
