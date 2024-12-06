@@ -38,112 +38,113 @@ class _ObstacleCreatorState extends State<ObstacleCreator> {
       appBar: AppBar(
         title: const Text('Obstacles'),
       ),
-      body: ReorderableListView.builder(
-        itemCount: obstacles.length,
-        itemBuilder: (BuildContext context, int i) {
-          return Column(
-            key: ObjectKey(obstacles[i]),
-            children: [
-              ListTile(
-                title: Text(obstacles[i].name),
-                leading: Icon(Obstacle.getIcon(obstacles[i].type), color: obstacles[i].paint.color),
-                subtitle: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+      body: obstacles.isEmpty
+          ? const Center(child: Text("Add a first obstacle"))
+          : ReorderableListView.builder(
+              itemCount: obstacles.length,
+              itemBuilder: (BuildContext context, int i) {
+                return Column(
+                  key: ObjectKey(obstacles[i]),
                   children: [
-                    Text(obstacles[i].details),
-                    ...imagePreview(obstacles[i]),
-                  ],
-                ),
-                trailing: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    IconButton(
-                      onPressed: () {
-                        showDialog(
-                          context: context,
-                          builder: (context) {
-                            return StatefulBuilder(builder: (context, setState1) {
-                              return AlertDialog(
-                                title: Text('Edit ${obstacles[i].name}'),
-                                clipBehavior: Clip.antiAlias,
-                                content: SingleChildScrollView(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Padding(
-                                        padding: const EdgeInsets.only(top: 10, bottom: 20),
-                                        child: DropdownMenu(
-                                          initialSelection: obstacles[i].type,
-                                          label: const Text('Obstacle Type'),
-                                          dropdownMenuEntries: ObstacleType.values
-                                              .map(
-                                                (type) => DropdownMenuEntry(value: type, label: Obstacle.getName(type)),
-                                              )
-                                              .toList(),
-                                          onSelected: (value) async {
+                    ListTile(
+                      title: Text(obstacles[i].name),
+                      leading: Icon(Obstacle.getIcon(obstacles[i].type), color: obstacles[i].paint.color),
+                      subtitle: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(obstacles[i].details),
+                          ...imagePreview(obstacles[i]),
+                        ],
+                      ),
+                      trailing: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          IconButton(
+                            onPressed: () {
+                              showDialog(
+                                context: context,
+                                builder: (context) {
+                                  return StatefulBuilder(builder: (context, setState1) {
+                                    return AlertDialog(
+                                      title: Text('Edit ${obstacles[i].name}'),
+                                      clipBehavior: Clip.antiAlias,
+                                      content: SingleChildScrollView(
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Padding(
+                                              padding: const EdgeInsets.only(top: 10, bottom: 20),
+                                              child: DropdownMenu(
+                                                initialSelection: obstacles[i].type,
+                                                label: const Text('Obstacle Type'),
+                                                dropdownMenuEntries: ObstacleType.values
+                                                    .map(
+                                                      (type) => DropdownMenuEntry(value: type, label: Obstacle.getName(type)),
+                                                    )
+                                                    .toList(),
+                                                onSelected: (value) async {
+                                                  if (value == null) return;
 
-                                            if (value == null) return;
+                                                  Obstacle newObstacle;
 
-                                            Obstacle newObstacle;
+                                                  switch (value) {
+                                                    case ObstacleType.rectangle:
+                                                      newObstacle = RectangleObstacle.base();
+                                                      break;
+                                                    case ObstacleType.circle:
+                                                      newObstacle = CircleObstacle.base();
+                                                      break;
+                                                    case ObstacleType.image:
+                                                      newObstacle = await ImageObstacle.base();
+                                                      break;
+                                                  }
 
-                                            switch (value) {
-                                              case ObstacleType.rectangle:
-                                                newObstacle = RectangleObstacle.base();
-                                                break;
-                                              case ObstacleType.circle:
-                                                newObstacle = CircleObstacle.base();
-                                                break;
-                                              case ObstacleType.image:
-                                                newObstacle = await ImageObstacle.base();
-                                                break;
-                                            }
-
-                                            setState1(() {
-                                              obstacles[i] = newObstacle;
-                                            });
-                                            setState(() {});
-                                          },
+                                                  setState1(() {
+                                                    obstacles[i] = newObstacle;
+                                                  });
+                                                  setState(() {});
+                                                },
+                                              ),
+                                            ),
+                                            buildObstacleSettings(i),
+                                            ElevatedButton.icon(
+                                              onPressed: () => Navigator.of(context).pop(),
+                                              label: const Text('Done'),
+                                              icon: const Icon(Icons.check),
+                                            ),
+                                          ],
                                         ),
                                       ),
-                                      buildObstacleSettings(i),
-                                      ElevatedButton.icon(
-                                        onPressed: () => Navigator.of(context).pop(),
-                                        label: const Text('Done'),
-                                        icon: const Icon(Icons.check),
-                                      ),
-                                    ],
-                                  ),
-                                ),
+                                    );
+                                  });
+                                },
                               );
-                            });
-                          },
-                        );
-                      },
-                      icon: const Icon(Icons.edit),
+                            },
+                            icon: const Icon(Icons.edit),
+                          ),
+                          const SizedBox(width: 10),
+                          IconButton(
+                            onPressed: () {
+                              setState(() => obstacles.removeAt(i));
+                              widget.onObstaclesChange(obstacles);
+                            },
+                            icon: const Icon(Icons.delete),
+                          ),
+                          if (!Platform.isAndroid) const SizedBox(width: 20),
+                        ],
+                      ),
                     ),
-                    const SizedBox(width: 10),
-                    IconButton(
-                      onPressed: () {
-                        setState(() => obstacles.removeAt(i));
-                        widget.onObstaclesChange(obstacles);
-                      },
-                      icon: const Icon(Icons.delete),
-                    ),
-                    if (!Platform.isAndroid) const SizedBox(width: 20),
+                    if (i != obstacles.length - 1) const Divider(),
                   ],
-                ),
-              ),
-              if (i != obstacles.length - 1) const Divider(),
-            ],
-          );
-        },
-        onReorder: (int oldIndex, int newIndex) {
-          if (oldIndex < newIndex) --newIndex;
-          setState(() => obstacles.insert(newIndex, obstacles.removeAt(oldIndex)));
-          widget.onObstaclesChange(obstacles);
-        },
-      ),
+                );
+              },
+              onReorder: (int oldIndex, int newIndex) {
+                if (oldIndex < newIndex) --newIndex;
+                setState(() => obstacles.insert(newIndex, obstacles.removeAt(oldIndex)));
+                widget.onObstaclesChange(obstacles);
+              },
+            ),
       floatingActionButton: ExpandableFab(
         type: ExpandableFabType.up,
         distance: 60,
