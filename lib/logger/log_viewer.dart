@@ -54,6 +54,7 @@ class _LogViewerState extends State<LogViewer> {
               icon: const Icon(Icons.refresh),
               onPressed: () => setState(() {}),
             ),
+          const SizedBox(width: 8),
           StatefulBuilder(builder: (context, setState1) {
             return PopupMenuButton(
               itemBuilder: (context) {
@@ -137,11 +138,13 @@ class _LogViewerState extends State<LogViewer> {
             return Center(child: Text("Error: ${snapshot.error}"));
           }
 
-          final lines = snapshot.data;
+          final data = snapshot.data;
 
-          if (lines == null) {
+          if (data == null) {
             return const Center(child: Text("No data"));
           }
+
+          final (lines, allCount) = data;
 
           if (lines.isEmpty) {
             return const Center(child: Text("No log entries"));
@@ -149,7 +152,7 @@ class _LogViewerState extends State<LogViewer> {
 
           return GroupedListViewWidget(
             lines: lines,
-            loadAll: logEnd == null
+            loadAll: logEnd == null || logEnd! >= allCount
                 ? null
                 : () {
                     setState(() => logEnd = null);

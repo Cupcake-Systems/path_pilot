@@ -8,7 +8,7 @@ import '../main.dart';
 
 Future<bool> submitLog(LogFile logFile) async {
   try {
-    final msgs = await logFile.read();
+    final msgs = (await logFile.read()).$1;
 
     final lastSubmittedLogTime = PreservingStorage.lastSubmittedLogTime;
     final msgsSinceLastSubmit = lastSubmittedLogTime == null ? msgs : LogFile.since(msgs, lastSubmittedLogTime);

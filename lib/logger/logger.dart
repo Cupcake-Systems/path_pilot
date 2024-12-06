@@ -151,7 +151,7 @@ class LogFile {
     return file.readAsString();
   }
 
-  Future<List<LogMessage>> read([int start = 0, int? count]) async {
+  Future<(List<LogMessage>, int)> read([int start = 0, int? count]) async {
     assert(() {
       if (count != null) {
         if (start > count) throw ArgumentError("Start index must be smaller than end index");
@@ -165,7 +165,10 @@ class LogFile {
 
     count ??= lines.length; // count can be larger than lines.length because .take will just take the rest of the list
 
-    return lines.reversed.skip(start).take(count).map((e) => LogMessage.tryParseFromCsvLine(e)).whereType<LogMessage>().toList();
+    return (
+      lines.reversed.skip(start).take(count).map((e) => LogMessage.tryParseFromCsvLine(e)).whereType<LogMessage>().toList(),
+      lines.length,
+    );
   }
 
   static Iterable<LogMessage> filterByDay(List<LogMessage> messages, DateTime day) {
