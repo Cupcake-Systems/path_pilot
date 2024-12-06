@@ -189,30 +189,32 @@ class _RemovableWarningCardState extends State<RemovableWarningCard> {
                         color: Colors.black12,
                         child: Padding(
                           padding: const EdgeInsets.all(16),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text("Acceleration: ${roundToDigits(widget.instruction.acceleration * 100, 2)}cm/s²"),
-                              Slider(
-                                value: accelSliderValue,
-                                onChanged: (value) {
-                                  widget.instruction.acceleration = roundToDigits(value, 3);
-                                  widget.change(widget.instruction);
-                                },
-                                max: accelSliderMax,
-                              ),
-                              Text("Target Velocity: ${roundToDigits(widget.instruction.targetVelocity * 100, 2)}cm/s"),
-                              Slider(
-                                value: velSliderValue,
-                                onChanged: (value) {
-                                  widget.instruction.targetVelocity = roundToDigits(value, 3);
-                                  widget.change(widget.instruction);
-                                },
-                                min: 0.001,
-                                max: velSliderMax,
-                              ),
-                              ...widget.children,
-                            ],
+                          child: GestureDetector( // Do not remove this, it prevents weird reordable list behavior
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text("Acceleration: ${roundToDigits(widget.instruction.acceleration * 100, 2)}cm/s²"),
+                                Slider(
+                                  value: accelSliderValue,
+                                  onChanged: (value) {
+                                    widget.instruction.acceleration = roundToDigits(value, 3);
+                                    widget.change(widget.instruction);
+                                  },
+                                  max: accelSliderMax,
+                                ),
+                                Text("Target Velocity: ${roundToDigits(widget.instruction.targetVelocity * 100, 2)}cm/s"),
+                                Slider(
+                                  value: velSliderValue,
+                                  onChanged: (value) {
+                                    widget.instruction.targetVelocity = roundToDigits(value, 3);
+                                    widget.change(widget.instruction);
+                                  },
+                                  min: 0.001,
+                                  max: velSliderMax,
+                                ),
+                                ...widget.children,
+                              ],
+                            ),
                           ),
                         ),
                       ),
