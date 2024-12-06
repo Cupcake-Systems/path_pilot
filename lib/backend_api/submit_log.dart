@@ -21,6 +21,8 @@ Future<bool> submitLog(LogFile logFile) async {
     final jsonMsgs = msgsSinceLastSubmit.map((e) => e.toJson()).toList();
     final encoded = await JsonParser.stringifyIsolated(jsonMsgs);
 
+    logger.info("Submitting ${msgsSinceLastSubmit.length} new log entries to $submitLogUrl");
+
     final response = await http.post(
       Uri.parse(submitLogUrl),
       body: encoded,
