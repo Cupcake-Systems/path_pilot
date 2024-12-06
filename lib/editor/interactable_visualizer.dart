@@ -270,7 +270,11 @@ class _InteractableInstructionsVisualizerState extends State<InteractableInstruc
         }
       },
       speedMultiplier: speedMultiplier,
-      onSpeedMultiplierChanged: (newSpeed) => setState(() => speedMultiplier = newSpeed),
+      onSpeedMultiplierChanged: (newSpeed) {
+        timeOffset = timeSnapshot;
+        deltaCounter.reset();
+        setState(() => speedMultiplier = newSpeed);
+      },
     );
   }
 
