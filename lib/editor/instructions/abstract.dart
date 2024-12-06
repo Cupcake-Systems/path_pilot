@@ -76,7 +76,7 @@ class RemovableWarningCard extends StatefulWidget {
   final TimeChangeNotifier timeChangeNotifier;
 
   final Widget header;
-  final List<TableRow> children;
+  final List<Widget> children;
 
   final InstructionResult instructionResult;
   final MissionInstruction instruction;
@@ -148,81 +148,85 @@ class _RemovableWarningCardState extends State<RemovableWarningCard> {
               visualDensity: VisualDensity.compact,
               childrenPadding: EdgeInsets.zero,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-              title: widget.header,
+              title: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  widget.header,
+                  if (widget.warningMessage != null) ...[
+                    SizedBox(
+                      height: 38,
+                      width: 38,
+                      child: IconButton(
+                        onPressed: () {
+                          showDialog(
+                            context: context,
+                            builder: (context) => AlertDialog(
+                              title: const Text("Warning"),
+                              content: Text(widget.warningMessage!),
+                              actions: [
+                                TextButton(
+                                  onPressed: () => Navigator.of(context).pop(),
+                                  child: const Text("Close"),
+                                ),
+                              ],
+                            ),
+                          );
+                        },
+                        icon: const Icon(Icons.warning, color: Colors.yellow),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
               trailing: IconButton(
                 onPressed: widget.removed,
                 icon: const Icon(Icons.delete),
               ),
-              subtitle: widget.warningMessage == null
-                  ? null
-                  : Card.filled(
-                      margin: const EdgeInsets.symmetric(horizontal: 4),
-                      color: Colors.yellow.withAlpha(50),
-                      child: Padding(
-                        padding: const EdgeInsets.all(8),
-                        child: Wrap(
-                          children: [
-                            const Icon(Icons.warning, size: 18),
-                            const SizedBox(width: 10),
-                            Text(widget.warningMessage ?? "", overflow: TextOverflow.fade, maxLines: 2),
-                          ],
-                        ),
-                      ),
-                    ),
               children: isExpanded
                   ? [
-                      Padding(
-                        padding: Platform.isAndroid ? const EdgeInsets.only(left: 16, bottom: 10, right: 16, top: 16) : const EdgeInsets.only(right: 30, left: 16, top: 16, bottom: 10),
-                        child: Table(
-                          columnWidths: const {
-                            0: IntrinsicColumnWidth(),
-                            1: FlexColumnWidth(),
-                            2: IntrinsicColumnWidth(),
-                          },
-                          defaultVerticalAlignment: TableCellVerticalAlignment.middle,
-                          children: [
-                            TableRow(
-                              children: [
-                                const Text("Acceleration"),
-                                Slider(
-                                  value: accelSliderValue,
-                                  onChanged: (value) {
-                                    widget.instruction.acceleration = roundToDigits(value, 3);
-                                    widget.change(widget.instruction);
-                                  },
-                                  max: accelSliderMax,
-                                ),
-                                Text("${roundToDigits(widget.instruction.acceleration * 100, 2)}cm/s²"),
-                              ],
-                            ),
-                            TableRow(
-                              children: [
-                                const Text("Target Velocity"),
-                                Slider(
-                                  value: velSliderValue,
-                                  onChanged: (value) {
-                                    widget.instruction.targetVelocity = roundToDigits(value, 3);
-                                    widget.change(widget.instruction);
-                                  },
-                                  min: 0.001,
-                                  max: velSliderMax,
-                                ),
-                                Text("${roundToDigits(widget.instruction.targetVelocity * 100, 2)}cm/s"),
-                              ],
-                            ),
-                            ...widget.children,
-                          ],
+                      Card.filled(
+                        margin: EdgeInsets.only(right: Platform.isAndroid ? 8 : 30, left: 8, bottom: 6, top: 4),
+                        color: Colors.black12,
+                        child: Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text("Acceleration: ${roundToDigits(widget.instruction.acceleration * 100, 2)}cm/s²"),
+                              Slider(
+                                value: accelSliderValue,
+                                onChanged: (value) {
+                                  widget.instruction.acceleration = roundToDigits(value, 3);
+                                  widget.change(widget.instruction);
+                                },
+                                max: accelSliderMax,
+                              ),
+                              Text("Target Velocity: ${roundToDigits(widget.instruction.targetVelocity * 100, 2)}cm/s"),
+                              Slider(
+                                value: velSliderValue,
+                                onChanged: (value) {
+                                  widget.instruction.targetVelocity = roundToDigits(value, 3);
+                                  widget.change(widget.instruction);
+                                },
+                                min: 0.001,
+                                max: velSliderMax,
+                              ),
+                              ...widget.children,
+                            ],
+                          ),
                         ),
                       ),
                       if (widget.instructionResult.totalTime > 0) ...[
-                        const Divider(height: 1),
-                        const SizedBox(height: 10),
-                        Padding(
-                          padding: Platform.isAndroid ? const EdgeInsets.all(16) : const EdgeInsets.only(left: 16, right: 30, top: 16, bottom: 16),
-                          child: InstructionDetailsWidget(
-                            instructionResult: widget.instructionResult,
-                            robiConfig: widget.robiConfig,
-                            timeChangeNotifier: widget.timeChangeNotifier,
+                        Card.filled(
+                          color: Colors.black12,
+                          margin: EdgeInsets.only(right: Platform.isAndroid ? 8 : 30, left: 8, bottom: 8, top: 6),
+                          child: Padding(
+                            padding: Platform.isAndroid ? const EdgeInsets.all(16) : const EdgeInsets.only(left: 16, right: 30, top: 16, bottom: 16),
+                            child: InstructionDetailsWidget(
+                              instructionResult: widget.instructionResult,
+                              robiConfig: widget.robiConfig,
+                              timeChangeNotifier: widget.timeChangeNotifier,
+                            ),
                           ),
                         ),
                       ],

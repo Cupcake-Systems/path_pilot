@@ -24,7 +24,6 @@ class TurnInstructionEditor extends AbstractEditor {
 
   @override
   Widget build(BuildContext context) {
-
     const turnDegreeSliderMax = 720.0;
     final turnDegreeSliderValue = instruction.turnDegree > turnDegreeSliderMax ? turnDegreeSliderMax : instruction.turnDegree;
 
@@ -42,6 +41,8 @@ class TurnInstructionEditor extends AbstractEditor {
       removed: removed,
       instructionResult: instructionResult,
       header: Card.filled(
+        color: Colors.black12,
+        margin: EdgeInsets.zero,
         child: Padding(
           padding: const EdgeInsets.all(8.0),
           child: Wrap(
@@ -54,46 +55,31 @@ class TurnInstructionEditor extends AbstractEditor {
         ),
       ),
       children: [
-        TableRow(
-          children: [
-            const Text("Turn Degree"),
-            Slider(
-              value: turnDegreeSliderValue,
-              onChanged: (value) {
-                instruction.turnDegree = value.roundToDouble();
-                change(instruction);
-              },
-              max: turnDegreeSliderMax,
-            ),
-            Text("${instruction.turnDegree.round()}°"),
-          ],
+        Text("Turn Angle: ${instruction.turnDegree.round()}°"),
+        Slider(
+          value: turnDegreeSliderValue,
+          onChanged: (value) {
+            instruction.turnDegree = value.roundToDouble();
+            change(instruction);
+          },
+          max: turnDegreeSliderMax,
         ),
-        TableRow(
-          children: [
-            const Text("Inner Radius"),
-            Slider(
-              value: innerRadiusSliderValue,
-              onChanged: (value) {
-                instruction.innerRadius = roundToDigits(value, 3);
-                change(instruction);
-              },
-              max: innerRadiusSliderMax,
-            ),
-            Text("${roundToDigits(instruction.innerRadius * 100, 2)}cm"),
-          ],
+        Text("Inner Radius: ${roundToDigits(instruction.innerRadius * 100, 2)}cm"),
+        Slider(
+          value: innerRadiusSliderValue,
+          onChanged: (value) {
+            instruction.innerRadius = roundToDigits(value, 3);
+            change(instruction);
+          },
+          max: innerRadiusSliderMax,
         ),
-        TableRow(
-          children: [
-            const Text("Turn"),
-            Switch(
-              value: !instruction.left,
-              onChanged: (value) {
-                instruction.left = !value;
-                change(instruction);
-              },
-            ),
-            Text(instruction.left ? "Left" : "Right"),
-          ],
+        Text("Turn Direction ${instruction.left ? "Left" : "Right"}"),
+        Switch(
+          value: !instruction.left,
+          onChanged: (value) {
+            instruction.left = !value;
+            change(instruction);
+          },
         ),
       ],
     );

@@ -39,6 +39,8 @@ class DriveInstructionEditor extends AbstractEditor {
       exited: exited,
       instructionResult: instructionResult,
       header: Card.filled(
+        color: Colors.black12,
+        margin: EdgeInsets.zero,
         child: Padding(
           padding: const EdgeInsets.all(8.0),
           child: Wrap(
@@ -51,19 +53,14 @@ class DriveInstructionEditor extends AbstractEditor {
         ),
       ),
       children: [
-        TableRow(
-          children: [
-            const Text("Distance to drive"),
-            Slider(
-              value: driveSliderValue,
-              onChanged: (value) {
-                instruction.targetDistance = roundToDigits(value, 3);
-                change(instruction);
-              },
-              max: driveSliderMax,
-            ),
-            Text("${roundToDigits(instruction.targetDistance * 100, 2)}cm"),
-          ],
+        Text("Distance to drive: ${roundToDigits(instruction.targetDistance * 100, 2)}cm"),
+        Slider(
+          value: driveSliderValue,
+          onChanged: (value) {
+            instruction.targetDistance = roundToDigits(value, 3);
+            change(instruction);
+          },
+          max: driveSliderMax,
         ),
       ],
     );
