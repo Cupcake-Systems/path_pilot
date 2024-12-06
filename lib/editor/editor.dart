@@ -176,7 +176,7 @@ class _EditorState extends State<Editor> with AutomaticKeepAliveClientMixin {
                                 IconButton(
                                   onPressed: () {
                                     for (int i = 0; i < randomInstructionsGenerationLength; i++) {
-                                      instructions.add(MissionInstruction.generateRandom());
+                                      instructions.add(MissionInstruction.generateRandom(widget.selectedRobiConfig));
                                     }
                                     final sw = Stopwatch()..start();
                                     rerunSimulationAndUpdate();

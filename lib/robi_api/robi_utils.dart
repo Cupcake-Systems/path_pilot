@@ -21,19 +21,19 @@ abstract class MissionInstruction {
     assert(targetFinalVelocity >= 0);
   }
 
-  MissionInstruction.random()
-      : targetVelocity = rand.nextDouble(),
-        acceleration = rand.nextDouble(),
-        targetFinalVelocity = rand.nextDouble();
+  MissionInstruction.random(double maxVelocity, double maxAcceleration)
+      : targetVelocity = rand.nextDouble() * maxVelocity,
+        acceleration = rand.nextDouble() * maxAcceleration,
+        targetFinalVelocity = rand.nextDouble() * maxVelocity;
 
-  static MissionInstruction generateRandom() {
+  static MissionInstruction generateRandom(RobiConfig config) {
     final random = rand.nextInt(3);
     if (random == 0) {
-      return DriveInstruction.random();
+      return DriveInstruction.random(config.maxVelocity, config.maxAcceleration);
     } else if (random == 1) {
-      return TurnInstruction.random();
+      return TurnInstruction.random(config.maxVelocity, config.maxAcceleration);
     } else {
-      return RapidTurnInstruction.random();
+      return RapidTurnInstruction.random(config.maxVelocity, config.maxAcceleration);
     }
   }
 
@@ -60,7 +60,7 @@ class DriveInstruction extends MissionInstruction {
           targetFinalVelocity: json["end_velocity"],
         );
 
-  DriveInstruction.random()
+  DriveInstruction.random(super.maxVelocity, super.maxAcceleration)
       : targetDistance = rand.nextDouble(),
         super.random();
 
@@ -88,7 +88,7 @@ class TurnInstruction extends MissionInstruction {
     assert(turnDegree >= 0);
   }
 
-  TurnInstruction.random()
+  TurnInstruction.random(super.maxVelocity, super.maxAcceleration)
       : turnDegree = rand.nextDouble() * 360,
         innerRadius = rand.nextDouble(),
         left = rand.nextBool(),
@@ -129,7 +129,7 @@ class RapidTurnInstruction extends MissionInstruction {
     assert(turnDegree > 0);
   }
 
-  RapidTurnInstruction.random()
+  RapidTurnInstruction.random(super.maxVelocity, super.maxAcceleration)
       : turnDegree = rand.nextDouble() * 360,
         left = rand.nextBool(),
         super.random();
