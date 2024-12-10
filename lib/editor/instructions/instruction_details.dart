@@ -135,7 +135,7 @@ class _InstructionDetailsWidgetState extends State<InstructionDetailsWidget> {
               child: ListenableBuilder(
                 builder: (context, child) {
                   double? progress = (widget.timeChangeNotifier.time - widget.instructionResult.timeStamp) / widget.instructionResult.totalTime;
-                  if (progress > 1) progress = null;
+                  if (progress > 1 || progress < 0) progress = null;
                   return LineChart(
                     LineChartData(
                       borderData: FlBorderData(
